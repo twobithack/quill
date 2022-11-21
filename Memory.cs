@@ -12,7 +12,7 @@ namespace Sonic
       _memory = new byte[MaxAddress];
     }
 
-    private byte Get(int address)
+    private byte Read(int address)
     {
       if (address > MaxAddress)
       {
@@ -22,7 +22,7 @@ namespace Sonic
       return _memory[address];
     }
 
-    private void Set(int address, byte value)
+    private void Write(int address, byte value)
     {
       if (address > MaxAddress)
       {
@@ -34,8 +34,8 @@ namespace Sonic
     
     public byte this[int index]
     {
-      get => return Get(index);
-      set => Set(index, value);
+      get => Read(index);
+      set => Write(index, value);
     }
   }
 }
