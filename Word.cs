@@ -2,8 +2,8 @@ namespace Sonic
 {
   public class Word
   {
-    public byte High = 0x00;
-    public byte Low = 0x00;
+    public byte High;
+    public byte Low;
 
     public Word();
     public Word(byte lowByte) => Low = lowByte;
