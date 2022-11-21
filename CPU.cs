@@ -16,7 +16,7 @@ namespace Sonic
 
     private Word FetchWord() => new Word(Fetch(), Fetch());
     
-    public Step()
+    public void Step()
     {
       // fetch
       var instruction = Fetch();
