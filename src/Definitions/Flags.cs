@@ -1,7 +1,7 @@
 namespace Sonic.Definitions
 {
   [Flags]
-  public enum StatusFlags
+  public enum Flags : byte
   {
     None = 0,
     Sign = 1,

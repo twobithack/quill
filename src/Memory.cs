@@ -4,22 +4,23 @@ namespace Sonic
   {
     private const ushort MaxAddress = ushort.MaxValue - Unusable; 
     private const ushort Unusable = 0x2000;
-    private byte[] _memory = new byte[MaxAddress];
+    private byte[] _memory;
 
     public Memory()
-    {      
+    {
+      _memory = new byte[MaxAddress + 1];
     }
 
-    private byte Read(ushort address) => (byte)_memory[Resolve(address)];
+    private byte Read(ushort address) => (byte)_memory[Fix(address)];
 
-    private void Write(ushort address, byte value) => _memory[Resolve(address)] = value;
+    private void Write(ushort address, byte value) => _memory[Fix(address)] = value;
 
-    private ushort Resolve(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
+    private ushort Fix(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
     
-    public byte this[ushort index]
+    public byte this[ushort address]
     {
-      get => Read(index);
-      set => Write(index, value);
+      get => Read(address);
+      set => Write(address, value);
     }
   }
 }
