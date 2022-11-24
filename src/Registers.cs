@@ -37,7 +37,6 @@ namespace Sonic
     private bool Iff1;
     private bool Iff2;
 
-    private ushort _af;
     // registers pairs
     private ushort AF
     {
@@ -87,5 +86,16 @@ namespace Sonic
       get => Util.ConcatBytes(Bp, Cp);
       set => value.ExtractBytes(ref Bp, ref Cp);
     }
+    
+    private Flags _flags
+    {
+      get => (Flags) F;
+      set => F = (byte) value;
+    }
+
+    private void SetFlag(Flags flag, bool value) => _flags = value
+                                                           ? _flags | flag 
+                                                           : _flags & ~flag;
+    
   }
 }

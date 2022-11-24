@@ -14,25 +14,43 @@ namespace Sonic
       _memory = new Memory();
     }
     
-    private Flags _flags
-    {
-      get => (Flags) F;
-      set => F = (byte) value;
-    }
-
-    private void SetFlag(Flags flag, bool value) => _flags = value
-                                                           ? _flags | flag 
-                                                           : _flags & ~flag;
-    
     public void Step()
     {
       var opcode = Fetch();
-      Decode(opcode);
+      var instruction = Decode(opcode);
+      Execute(instruction);
+
       _instructionCount++;
     }
     
     private byte Fetch() => _memory[PC++];
-    private ushort FetchWord() => Util.ConcatBytes(Fetch(), Fetch());
+    private ushort FetchWord()
+    {
+      var low = Fetch();
+      var high = Fetch();
+      return Util.ConcatBytes(high, low);
+    }
+
+    private Instruction Decode(byte opcode)
+    {
+      var instruction = new Instruction(opcode);
+
+      if (instruction.isPrefixed)
+      {
+        instruction.Opcode = Fetch();
+      }
+
+      switch (instruction.Operation)
+      {
+        case 0x00:
+          NOP();
+          break;
+      }
+
+      return instruction;
+    }
+
+    private void Execute(Instruction x) {}
 
     public override String ToString()
     {

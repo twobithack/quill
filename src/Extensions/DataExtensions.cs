@@ -4,16 +4,16 @@ namespace Sonic.Extensions
   {
     public static string ToHex(this byte value) => value.ToString("X2");
 
-    public static string ToHex(this ushort word) => $"{word.GetHighByte().ToHex()}-{word.GetLowByte().ToHex()}"; 
+    public static string ToHex(this ushort word) => $"{word.HighByte().ToHex()}-{word.LowByte().ToHex()}"; 
 
-    private static byte GetHighByte(this ushort word) => (byte)(word >> 8);
+    public static byte HighByte(this ushort word) => (byte)(word >> 8);
 
-    private static byte GetLowByte(this ushort word) => (byte)word;
+    public static byte LowByte(this ushort word) => (byte)word;
 
     public static void ExtractBytes(this ushort word, ref byte high, ref byte low)
     {
-      high = word.GetHighByte();
-      low = word.GetLowByte();
+      high = word.HighByte();
+      low = word.LowByte();
     }
   }
 }
