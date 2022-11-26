@@ -1,4 +1,12 @@
+# Z80
+https://www.smspower.org/Development/Z80-Index
 https://clrhome.org/table
 http://www.z80.info/z80syntx.htm
 https://www.zilog.com/docs/z80/um0080.pdf
 https://wikiti.brandonw.net/index.php?title=Z80_Instruction_Set
+
+# VDP
+https://www.smspower.org/Development/VDPRegisters
+
+# SN76489 
+https://www.smspower.org/Development/SN76489
