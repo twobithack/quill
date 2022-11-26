@@ -3,6 +3,7 @@ namespace Sonic.Definitions
   public enum Operand 
   {
     None,
+    WordImmediate,
     A,
     B,
     C,
@@ -17,17 +18,6 @@ namespace Sonic.Definitions
     IX,
     IY,
     PC,
-    SP,
-    Ap,
-    Bp,
-    Cp,
-    Dp,
-    Ep,
-    Fp,
-    Lp,
-    HLp,
-    AFp,
-    BCp,
-    DEp
+    SP
   } 
 }
