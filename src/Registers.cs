@@ -1,7 +1,7 @@
-using Sonic.Definitions;
-using Sonic.Extensions;
+using Quill.Definitions;
+using Quill.Extensions;
 
-namespace Sonic
+namespace Quill
 {
   public partial class CPU
   {

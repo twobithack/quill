@@ -1,4 +1,4 @@
-namespace Sonic.Extensions
+namespace Quill.Extensions
 {
   public static class DataExtensions
   {

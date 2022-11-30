@@ -1,6 +1,6 @@
-using Sonic.Extensions;
+using Quill.Extensions;
 
-namespace Sonic 
+namespace Quill 
 {
   public class Memory
   {
