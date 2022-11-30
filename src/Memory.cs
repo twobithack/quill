@@ -1,3 +1,5 @@
+using Sonic.Extensions;
+
 namespace Sonic 
 {
   public class Memory
@@ -6,16 +8,16 @@ namespace Sonic
     private const ushort Unusable = 0x2000;
     private byte[] _memory;
 
-    public Memory()
+    public Memory() => _memory = new byte[MaxAddress + 1];
+
+    private byte Read(ushort address) => (byte)_memory[At(address)];
+    private void Write(ushort address, byte value) => _memory[At(address)] = value;
+    private void WriteWord(ushort address, ushort word)
     {
-      _memory = new byte[MaxAddress + 1];
+      _memory[address] = word.LowByte();
+      _memory[address.Increment()] = word.HighByte();
     }
-
-    private byte Read(ushort address) => (byte)_memory[Fix(address)];
-
-    private void Write(ushort address, byte value) => _memory[Fix(address)] = value;
-
-    private ushort Fix(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
+    private ushort At(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
     
     public byte this[ushort address]
     {

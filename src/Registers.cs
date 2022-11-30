@@ -61,31 +61,6 @@ namespace Sonic
       get => Util.ConcatBytes(H, L);
       set => value.ExtractBytes(ref H, ref L);
     }
-
-    // alternate register pairs
-    private ushort AFp
-    {
-      get => Util.ConcatBytes(Ap, Fp);
-      set => value.ExtractBytes(ref Ap, ref Fp);
-    }
-
-    private ushort BCp
-    {
-      get => Util.ConcatBytes(Bp, Cp);
-      set => value.ExtractBytes(ref Bp, ref Cp);
-    }
-    
-    private ushort DEp
-    {
-      get => Util.ConcatBytes(Bp, Cp);
-      set => value.ExtractBytes(ref Bp, ref Cp);
-    }
-
-    private ushort HLp
-    {
-      get => Util.ConcatBytes(Bp, Cp);
-      set => value.ExtractBytes(ref Bp, ref Cp);
-    }
     
     private Flags _flags
     {

@@ -21,13 +21,36 @@ namespace Sonic.Definitions
         Source = Operand.Implied;
         Destination = Operand.Implied;
       }
+
+      public bool IsWordOperation() => _wordOperands.Contains(Source) ||
+                                       _wordOperands.Contains(Destination);
     }
 
     public static Instruction Decode(byte[] op) => GetOpcodeTable(op[0], op[1])[op[2]];
     public static Instruction Decode(byte[] prefix, byte op) => GetOpcodeTable(prefix[0], prefix[1])[op];
     public static Instruction Decode(byte p0, byte p1, byte op) => GetOpcodeTable(p0, p1)[op];
-    public static bool IsPrefix(byte op) => _prefixes.Contains(op);
-    private static readonly byte[] _prefixes = new byte[] { 0xCB, 0xDD, 0xED ,0xFD };
+    public static bool IsPrefix(byte op) => _opcodePrefixes.Contains(op);
+
+    
+    private static readonly byte[] _opcodePrefixes = new byte[]
+    { 
+      0xCB,
+      0xDD, 
+      0xED,
+      0xFD 
+    };
+    
+    private static Operand[] _wordOperands = new Operand[]
+    {      
+      Operand.AF, 
+      Operand.BC, 
+      Operand.DE, 
+      Operand.HL, 
+      Operand.IX,  
+      Operand.IY, 
+      Operand.PC,
+      Operand.SP
+    };
   
     public static Instruction[] GetOpcodeTable(byte prefix0, byte prefix1) => new { prefix0, prefix1 } switch
     {
@@ -52,7 +75,7 @@ namespace Sonic.Definitions
       new Instruction(Operation.DEC,  Operand.B,          Operand.Implied),  
       new Instruction(Operation.LD,   Operand.B,          Operand.Immediate),  
       new Instruction(Operation.RLCA, Operand.Implied,    Operand.Implied),  
-      new Instruction(Operation.EX,   Operand.AF,         Operand.AFp),  
+      new Instruction(Operation.EX,   Operand.AF,         Operand.Implied),  
       new Instruction(Operation.ADD,  Operand.HL,         Operand.BC),  
       new Instruction(Operation.LD,   Operand.A,          Operand.BCi),  
       new Instruction(Operation.DEC,  Operand.BC,         Operand.Implied),  
@@ -70,7 +93,7 @@ namespace Sonic.Definitions
       new Instruction(Operation.DEC,  Operand.D,          Operand.Implied),  
       new Instruction(Operation.LD,   Operand.D,          Operand.Immediate),  
       new Instruction(Operation.RLA,  Operand.Implied,    Operand.Implied),  
-      new Instruction(Operation.JR,   Operand.Implied,    Operand.Relative),  
+      new Instruction(Operation.JR,   Operand.Implied,    Operand.Implied),  
       new Instruction(Operation.ADD,  Operand.HL,         Operand.DE),  
       new Instruction(Operation.LD,   Operand.A,          Operand.DEi),  
       new Instruction(Operation.DEC,  Operand.DE,         Operand.Implied),  
@@ -80,7 +103,7 @@ namespace Sonic.Definitions
       new Instruction(Operation.RRA,  Operand.Implied,    Operand.Implied),
 
       // Opcodes 0x20 - 0x2F
-      new Instruction(Operation.JR,   Operand.NonZero,    Operand.Relative),  
+      new Instruction(Operation.JR,   Operand.NonZero,    Operand.Implied),  
       new Instruction(Operation.LD,   Operand.DE,         Operand.Immediate),  
       new Instruction(Operation.LD,   Operand.DEi,        Operand.A),  
       new Instruction(Operation.INC,  Operand.DE,         Operand.Implied),  
@@ -88,7 +111,7 @@ namespace Sonic.Definitions
       new Instruction(Operation.DEC,  Operand.D,          Operand.Implied),  
       new Instruction(Operation.LD,   Operand.D,          Operand.Immediate),  
       new Instruction(Operation.DAA,  Operand.Implied,    Operand.Implied),  
-      new Instruction(Operation.JR,   Operand.Zero,       Operand.Relative),  
+      new Instruction(Operation.JR,   Operand.Zero,       Operand.Implied),  
       new Instruction(Operation.ADD,  Operand.HL,         Operand.HL),  
       new Instruction(Operation.LD,   Operand.HL,         Operand.Indirect),  
       new Instruction(Operation.DEC,  Operand.HL,         Operand.Implied),  
@@ -98,7 +121,7 @@ namespace Sonic.Definitions
       new Instruction(Operation.CPL,  Operand.Implied,    Operand.Implied), 
         
       // Opcodes 0x30 - 0x3F  
-      new Instruction(Operation.JR,   Operand.NonCarry,   Operand.Relative),  
+      new Instruction(Operation.JR,   Operand.NonCarry,   Operand.Implied),  
       new Instruction(Operation.LD,   Operand.SP,         Operand.Immediate),  
       new Instruction(Operation.LD,   Operand.Indirect,   Operand.A),  
       new Instruction(Operation.INC,  Operand.SP,         Operand.Implied),  
@@ -106,7 +129,7 @@ namespace Sonic.Definitions
       new Instruction(Operation.DEC,  Operand.HLi,        Operand.Implied),  
       new Instruction(Operation.LD,   Operand.HLi,        Operand.Immediate),  
       new Instruction(Operation.SCF,  Operand.Implied,    Operand.Implied),  
-      new Instruction(Operation.JR,   Operand.C,          Operand.Relative),  
+      new Instruction(Operation.JR,   Operand.C,          Operand.Implied),  
       new Instruction(Operation.ADD,  Operand.HL,         Operand.SP),  
       new Instruction(Operation.LD,   Operand.A,          Operand.Indirect),  
       new Instruction(Operation.DEC,  Operand.SP,         Operand.Implied),  
