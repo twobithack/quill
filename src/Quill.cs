@@ -1,4 +1,6 @@
-﻿namespace Quill
+﻿using Quill.Z80;
+
+namespace Quill
 {
   public class Quill
   {
