@@ -1,3 +1,4 @@
+using static Quill.Definitions.Constants;
 using Quill.Definitions;
 using Quill.Extensions;
 
@@ -5,29 +6,83 @@ namespace Quill.Z80
 {
   public partial class CPU
   {
+    private void SetArithmeticFlags()
+    {
+      
+    }
+
     private void ADC()
     {
       if (_cir.Destination == Operand.HL)
       {
-        var result = _reg.HL + GetWordOperand(_cir.Source);
-        if ((result >> 12) > ushort.MaxValue)
-        {
-          //_reg.SetFlag()
-        }
-        return;
+        var a = _reg.HL;
+        var b = GetWordOperand(_cir.Source);
+        var result = a + b;
+
+        if (_reg.Carry) result++;
+
+        _reg.Sign = ((result >> 15) & 1) != 0;
+        _reg.Zero = (result == 0);
+        _reg.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
+        _reg.Negative = false;
+        _reg.Carry = (result > ushort.MaxValue);
+        _reg.Overflow = _reg.Carry ^ ((a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue);
+
+        _reg.HL = (ushort)(result & ushort.MaxValue);
       }
-      
-      var result = _reg.A + GetByteOperand(_cir.Source);
+      else
+      {
+        var a = _reg.A;
+        var b = GetByteOperand(_cir.Source);
+        var result = a + b;
 
-      if (_reg.Flags.HasFlag(Flags.Carry))
-        result++;
+        if (_reg.Carry) result++;
 
-      //_reg.SetFlag(Flags.S, )
+        _reg.Sign = ((result >> 7) & 1) != 0;
+        _reg.Zero = (result == 0);
+        _reg.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
+        _reg.Negative = false;
+        _reg.Carry = (result > byte.MaxValue);
+        _reg.Overflow = _reg.Carry ^ ((a & sbyte.MaxValue) + (b & sbyte.MaxValue) > sbyte.MaxValue);
+
+        _reg.A = (byte)(result & byte.MaxValue);
+      }
     }
 
     private void ADD()
     {
+      if (_cir.IsWordOperation())
+      {
+        var a = GetWordOperand(_cir.Destination);
+        var b = GetWordOperand(_cir.Source);
+        var result = a + b;
 
+        _reg.Sign = (result & (1 << 15)) != 0;
+        _reg.Zero = (result == 0);
+        _reg.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
+        _reg.Negative = false;
+        _reg.Carry = (result > ushort.MaxValue);
+        _reg.Overflow = _reg.Carry ^ 
+                        (a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue;
+
+        SetWordValue((ushort)(result & ushort.MaxValue));
+      }
+      else
+      {
+        var a = _reg.A;
+        var b = GetByteOperand(_cir.Source);
+        var result = a + b;
+
+        _reg.Sign = (result & (1 << 7)) != 0;
+        _reg.Zero = (result == 0);
+        _reg.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
+        _reg.Negative = false;
+        _reg.Carry = (result > byte.MaxValue);
+        _reg.Overflow = _reg.Carry ^ (a & 0x7F) + (b & 0x7F) > 0x7F;
+        _reg.A = (byte)(result & byte.MaxValue);
+
+        
+      }
     }
 
     private void AND()

@@ -32,9 +32,9 @@ namespace Quill.Z80
 
     private ushort FetchWord()
     {
-      var low = FetchByte();
-      var high = FetchByte();
-      return Util.ConcatBytes(high, low);
+      var lowByte = FetchByte();
+      var highByte = FetchByte();
+      return highByte.Concatenate(lowByte);
     }
 
     private void FetchInstruction()

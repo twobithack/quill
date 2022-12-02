@@ -40,61 +40,85 @@ namespace Quill.Z80
     // register pair mappings
     public ushort AF
     {
-      get => Util.ConcatBytes(A, F);
-      set => value.ExtractBytes(ref A, ref F);
+      get => A.Concatenate(F);
+      set
+      {
+        A = value.GetHighByte();
+        F = value.GetLowByte();
+      }
     }
 
     public ushort BC
     {
-      get => Util.ConcatBytes(B, C);
-      set => value.ExtractBytes(ref B, ref C);
+      get => B.Concatenate(C);
+      set
+      {
+        B = value.GetHighByte();
+        C = value.GetLowByte();
+      }
     }
 
     public ushort DE
     {
-      get => Util.ConcatBytes(D, E);
-      set => value.ExtractBytes(ref D, ref E);
+      get => D.Concatenate(E);
+      set
+      {
+        D = value.GetHighByte();
+        E = value.GetLowByte();
+      }
     }
 
     public ushort HL
     {
-      get => Util.ConcatBytes(H, L);
-      set => value.ExtractBytes(ref H, ref L);
+      get => H.Concatenate(L);
+      set
+      {
+        H = value.GetHighByte();
+        L = value.GetLowByte();
+      }
     }
 
-    public ushort AFp
+    public bool Sign
     {
-      get => Util.ConcatBytes(Ap, Fp);
-      set => value.ExtractBytes(ref Ap, ref Fp);
+      get => _flags.HasFlag(Flags.Sign);
+      set => SetFlag(Flags.Sign, value);
     }
 
-    public ushort BCp
+    public bool Zero
     {
-      get => Util.ConcatBytes(Bp, Cp);
-      set => value.ExtractBytes(ref Bp, ref Cp);
+      get => _flags.HasFlag(Flags.Zero);
+      set => SetFlag(Flags.Zero, value);
     }
 
-    public ushort DEp
+    public bool Halfcarry
     {
-      get => Util.ConcatBytes(Dp, Ep);
-      set => value.ExtractBytes(ref Dp, ref Ep);
+      get => _flags.HasFlag(Flags.Halfcarry);
+      set => SetFlag(Flags.Halfcarry, value);
     }
 
-    public ushort HLp
+    public bool Parity
     {
-      get => Util.ConcatBytes(Hp, Lp);
-      set => value.ExtractBytes(ref Hp, ref Lp);
-    }
-    
-    public Flags Flags
-    {
-      get => (Flags) F;
-      set => F = (byte) value;
+      get => _flags.HasFlag(Flags.Parity);
+      set => SetFlag(Flags.Parity, value);
     }
 
-    public void SetFlag(Flags flag, bool value) => Flags = value
-                                                          ? Flags | flag 
-                                                          : Flags & ~flag;
+    public bool Overflow
+    {
+      get => _flags.HasFlag(Flags.Parity);
+      set => SetFlag(Flags.Parity, value);
+    }
+
+    public bool Negative
+    {
+      get => _flags.HasFlag(Flags.Negative);
+      set => SetFlag(Flags.Negative, value);
+    }
+
+    public bool Carry
+    {
+      get => _flags.HasFlag(Flags.Carry);
+      set => SetFlag(Flags.Carry, value);
+    }
     
     public byte ReadByte(Operand register)
     {
@@ -158,13 +182,23 @@ namespace Quill.Z80
       }
     }
 
+    private Flags _flags
+    {
+      get => (Flags) F;
+      set => F = (byte) value;
+    }
+
+    private void SetFlag(Flags flag, bool value) => _flags = value
+                                                          ? _flags | flag 
+                                                          : _flags & ~flag;
+
     public override String ToString()
     {
       return  $"╒══════════╤════════════╤════════════╤════════════╤════════════╕\r\n" +
               $"│Registers │  AF: {AF.ToHex()} │  BC: {BC.ToHex()} │  DE: {DE.ToHex()} │  HL: {HL.ToHex()} │\r\n" +
               $"│          │  IX: {IX.ToHex()} │  IY: {IY.ToHex()} │  PC: {PC.ToHex()} │  SP: {SP.ToHex()} │\r\n" +
               $"╘══════════╧════════════╧════════════╧════════════╧════════════╛\r\n" +
-              $"Flags: {Flags.ToString()}";
+              $"Flags: {_flags.ToString()}";
     }
   }
 }
