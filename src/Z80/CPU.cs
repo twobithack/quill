@@ -249,6 +249,20 @@ namespace Quill.Z80
       }
     }
 
+    private void SetFlagsForByte(int result)
+    {
+        _reg.Sign = ((result >> 7) & 1) != 0;
+        _reg.Zero = (result == 0);
+        _reg.Carry = (result > byte.MaxValue);
+    }
+    
+    private void SetFlagsForWord(int result)
+    {
+        _reg.Sign = ((result >> 15) & 1) != 0;
+        _reg.Zero = (result == 0);
+        _reg.Carry = (result > ushort.MaxValue);
+    }
+
     public override String ToString() => _reg.ToString() + $"\r\nInstruction Count: {_instructionCount} "; 
   }
 }

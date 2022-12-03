@@ -5,45 +5,34 @@ namespace Quill.Z80
 {
   public partial class CPU
   {
-    private void SetArithmeticFlags()
-    {
-      
-    }
-
     private void ADC()
     {
       if (_cir.Destination == Operand.HL)
       {
         var a = _reg.HL;
+        if (_reg.Carry) a++;
+
         var b = GetWordOperand(_cir.Source);
         var result = a + b;
 
-        if (_reg.Carry) result++;
-
-        _reg.Sign = ((result >> 15) & 1) != 0;
-        _reg.Zero = (result == 0);
+        SetFlagsForWord(result);
         _reg.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
         _reg.Negative = false;
-        _reg.Carry = (result > ushort.MaxValue);
-        _reg.Overflow = _reg.Carry ^ ((a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue);
-
+        _reg.Overflow = _reg.Carry ^ (a.GetLowByte() + b.GetLowByte() > short.MaxValue);
         _reg.HL = (ushort)(result & ushort.MaxValue);
       }
       else
       {
         var a = _reg.A;
+        if (_reg.Carry) a++;
+
         var b = GetByteOperand(_cir.Source);
         var result = a + b;
 
-        if (_reg.Carry) result++;
-
-        _reg.Sign = ((result >> 7) & 1) != 0;
-        _reg.Zero = (result == 0);
+        SetFlagsForByte(result);
         _reg.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
         _reg.Negative = false;
-        _reg.Carry = (result > byte.MaxValue);
         _reg.Overflow = _reg.Carry ^ ((a & sbyte.MaxValue) + (b & sbyte.MaxValue) > sbyte.MaxValue);
-
         _reg.A = (byte)(result & byte.MaxValue);
       }
     }
@@ -56,13 +45,10 @@ namespace Quill.Z80
         var b = GetWordOperand(_cir.Source);
         var result = a + b;
 
-        _reg.Sign = ((result >> 15) & 1) != 0;
-        _reg.Zero = (result == 0);
+        SetFlagsForWord(result);
         _reg.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
         _reg.Negative = false;
-        _reg.Carry = (result > ushort.MaxValue);
         _reg.Overflow = _reg.Carry ^ ((a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue);
-
         SetWordValue((ushort)(result & ushort.MaxValue));
       }
       else
@@ -71,15 +57,11 @@ namespace Quill.Z80
         var b = GetByteOperand(_cir.Source);
         var result = a + b;
 
-        _reg.Sign = ((result >> 7) & 1) != 0;
-        _reg.Zero = (result == 0);
+        SetFlagsForByte(result);
         _reg.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
         _reg.Negative = false;
-        _reg.Carry = (result > byte.MaxValue);
         _reg.Overflow = _reg.Carry ^ (a & sbyte.MaxValue) + (b & sbyte.MaxValue) > sbyte.MaxValue;
         _reg.A = (byte)(result & byte.MaxValue);
-
-        
       }
     }
 
@@ -216,7 +198,14 @@ namespace Quill.Z80
 
     private void LD()
     {
-      
+      if (_cir.IsWordOperation())
+      {
+        SetWordValue(GetWordOperand(_cir.Source));
+      }
+      else
+      {
+        SetByteValue(GetByteOperand(_cir.Source));
+      }
     }
 
     private void NEG()
