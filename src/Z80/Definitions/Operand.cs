@@ -1,4 +1,4 @@
-namespace Quill.Definitions
+namespace Quill.Z80
 {
   public enum Operand 
   {
