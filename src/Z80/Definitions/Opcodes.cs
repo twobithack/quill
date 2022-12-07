@@ -20,16 +20,6 @@ namespace Quill.Z80
       public override string ToString() => $"{Operation} {Destination},{Source}";
     }
 
-    public static bool IsPrefix(byte op) => Prefixes.Contains(op);
-
-    public static readonly byte[] Prefixes = new byte[]
-    { 
-      0xCB,
-      0xDD, 
-      0xED,
-      0xFD 
-    };
-
     public static readonly Opcode[] Main = new Opcode[]
     {
       // Opcodes 0x00 - 0x0F

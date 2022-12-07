@@ -6,12 +6,12 @@ namespace Quill.Z80
   {
     private void ADC()
     {
-      if (_opcode.Destination == Operand.HL)
+      if (_cir.Destination == Operand.HL)
       {
         var a = HL;
         if (Carry) a++;
 
-        var b = GetWordOperand(_opcode.Source);
+        var b = ReadWord(_cir.Source);
         var result = a + b;
 
         SetArithmeticFlags16(result);
@@ -25,7 +25,7 @@ namespace Quill.Z80
         var a = A;
         if (Carry) a++;
 
-        var b = GetByteOperand(_opcode.Source);
+        var b = ReadByte(_cir.Source);
         var result = a + b;
 
         SetArithmeticFlags(result);
@@ -40,20 +40,20 @@ namespace Quill.Z80
     {
       if (IsWordOperation())
       {
-        var a = GetWordOperand(_opcode.Destination);
-        var b = GetWordOperand(_opcode.Source);
+        var a = ReadWord(_cir.Destination);
+        var b = ReadWord(_cir.Source);
         var result = a + b;
 
         SetArithmeticFlags16(result);
         Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
         Negative = false;
         Overflow = Carry ^ ((a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue);
-        SetWordValue((ushort)(result & ushort.MaxValue));
+        WriteWord((ushort)(result & ushort.MaxValue));
       }
       else
       {
         var a = A;
-        var b = GetByteOperand(_opcode.Source);
+        var b = ReadByte(_cir.Source);
         var result = a + b;
 
         SetArithmeticFlags(result);
@@ -199,13 +199,13 @@ namespace Quill.Z80
     {
       if (IsWordOperation())
       {
-        SetWordValue(GetWordOperand(_opcode.Source));
+        WriteWord(ReadWord(_cir.Source));
       }
       else
       {
-        var value = GetByteOperand(_opcode.Source);
+        var value = ReadByte(_cir.Source);
         Console.WriteLine($"Operand value: {value}");
-        SetByteValue(value);
+        WriteByte(value);
       }
     }
 
