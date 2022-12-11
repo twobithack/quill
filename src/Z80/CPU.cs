@@ -255,6 +255,6 @@ namespace Quill.Z80
     public void DumpMemory() => _memory.DumpPage(0x00);
 
     public override String ToString() => DumpRegisters() +
-      $"Flags: {_flags.ToString()} Instruction Count: {_instructionCount}";
+      $"Instruction Count: {_instructionCount}, Flags: {_flags.ToString()} ";
   }
 }

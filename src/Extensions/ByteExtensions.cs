@@ -6,7 +6,9 @@ namespace Quill.Extensions
 
     public static ushort Prepend(this byte lsb, byte msb) => msb.Append(lsb);
     
-    public static byte Increment(this byte value) => (byte)(value + 1);
+    public static byte Increment(this byte value) => (byte)value++;
+    
+    public static byte Decrement(this byte value) => (byte)value--;
 
     public static bool GetBit(this byte value, int index) => ((value >> index) & 1) != 0;
 

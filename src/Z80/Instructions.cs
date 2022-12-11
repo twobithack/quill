@@ -49,15 +49,15 @@ namespace Quill.Z80
     {
       if (_instruction.IsWordOperation())
       {
-        var a = ReadWord(_instruction.Destination);
-        var b = ReadWord(_instruction.Source);
-        var sum = a + b;
+        var augend = ReadWord(_instruction.Destination);
+        var addend = ReadWord(_instruction.Source);
+        var sum = augend + addend;
 
         _sign = (sum & 0x8000) > 0;
         _zero = (sum == 0);
-        _halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
-        _overflow = (a < 0x8000 && b < 0x8000 && _sign) ||
-                              (a >= 0x8000 && b >= 0x8000 && !_sign);
+        _halfcarry = (augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF;
+        _overflow = (augend < 0x8000 && addend < 0x8000 && _sign) ||
+                    (augend >= 0x8000 && addend >= 0x8000 && !_sign);
         _negative = false;
         _carry = (sum > ushort.MaxValue);
 
@@ -65,15 +65,15 @@ namespace Quill.Z80
       }
       else
       {
-        var a = _a;
-        var b = ReadByte(_instruction.Source);
-        var sum = a + b;
+        var augend = _a;
+        var addend = ReadByte(_instruction.Source);
+        var sum = augend + addend;
 
         _sign = (sum & 0x80) > 0;
         _zero = (sum == 0);
-        _halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
-        _overflow = (a < 0x80 && b < 0x80 && _sign) ||
-                    (a >= 0x80 && b >= 0x80 && !_sign);
+        _halfcarry = (augend & 0x0F) + (addend & 0x0F) > 0x0F;
+        _overflow = (augend < 0x80 && addend < 0x80 && _sign) ||
+                    (augend >= 0x80 && addend >= 0x80 && !_sign);
         _negative = false;
         _carry = (sum > byte.MaxValue);
 
@@ -83,9 +83,7 @@ namespace Quill.Z80
 
     private void AND()
     {
-      var a = _a;
-      var b = ReadByte(_instruction.Source);
-      var result = a & b;
+      var result = _a & ReadByte(_instruction.Source);
 
       _sign = (result & 0x80) > 0;
       _zero = (result == 0);
@@ -94,7 +92,7 @@ namespace Quill.Z80
       _negative = false;
       _carry = false;
 
-      _a = (byte)(result & byte.MaxValue);
+      _a = (byte)result;
     }
     
     private void BIT()
@@ -157,7 +155,26 @@ namespace Quill.Z80
 
     private void DEC()
     {
-      
+      if (_instruction.IsWordOperation())
+      {
+        var minuend = ReadWord(_instruction.Destination);
+        var difference = minuend.Decrement();
+        
+        WriteWord(difference);
+      }
+      else
+      {
+        var minuend = ReadByte(_instruction.Destination);
+        var difference = minuend.Decrement();
+
+        _sign = (difference & 0x80) > 0;
+        _zero = (difference == 0);
+        _halfcarry = (minuend & 0x0F) == 0;
+        _overflow = (minuend >= 0x80 && !_sign);
+        _negative = true;
+
+        WriteByte(difference);
+      }
     }
 
     private void DI()
@@ -288,9 +305,7 @@ namespace Quill.Z80
 
     private void OR()
     {
-      var a = _a;
-      var b = ReadByte(_instruction.Source);
-      var result = a | b;
+      var result = _a | ReadByte(_instruction.Source);
 
       _sign = (result & 0x80) > 0;
       _zero = (result == 0);
@@ -299,7 +314,7 @@ namespace Quill.Z80
       _negative = false;
       _carry = false;
 
-      _a = (byte)(result & byte.MaxValue);
+      _a = (byte)result;
     }
 
     private void OTDR()
@@ -460,9 +475,7 @@ namespace Quill.Z80
 
     private void XOR()
     {
-      var a = _a;
-      var b = ReadByte(_instruction.Source);
-      var result = a ^ b;
+      var result = _a ^ ReadByte(_instruction.Source);
 
       _sign = (result & 0x80) > 0;
       _zero = (result == 0);
@@ -471,7 +484,7 @@ namespace Quill.Z80
       _negative = false;
       _carry = false;
 
-      _a = (byte)(result & byte.MaxValue);
+      _a = (byte)result;
     }
   }
 }
