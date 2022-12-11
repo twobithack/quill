@@ -7,96 +7,94 @@ namespace Quill.Z80
   {
     private void ADC()
     {
-      if (_registers.Instruction.Destination == Operand.HL)
+      if (_instruction.Destination == Operand.HL)
       {
-        var a = _registers.HL;
-        if (_registers.Carry) a++;
+        var augend = _hl;
+        if (_carry) augend++;
 
-        var b = ReadWord(_registers.Instruction.Source);
-        var sum = a + b;
+        var addend = ReadWord(_instruction.Source);
+        var sum = augend + addend;
 
-        _registers.Sign = (sum & 0x8000) > 0;
-        _registers.Zero = (sum == 0);
-        _registers.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
-        _registers.Negative = false;
-        _registers.Overflow = (a < 0x8000 && b < 0x8000 && _registers.Sign) ||
-                              (a >= 0x8000 && b >= 0x8000 && !_registers.Sign);
-        _registers.Carry = (sum > ushort.MaxValue);
+        _sign = (sum & 0x8000) > 0;
+        _zero = (sum == 0);
+        _halfcarry = (augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF;
+        _overflow = (augend < 0x8000 && addend < 0x8000 && _sign) ||
+                    (augend >= 0x8000 && addend >= 0x8000 && !_sign);
+        _negative = false;
+        _carry = (sum > ushort.MaxValue);
 
-        _registers.HL = (ushort)sum;
+        _hl = (ushort)sum;
       }
       else
       {
-        var a = _registers.A;
-        if (_registers.Carry) a++;
+        var augend = _a;
+        if (_carry) augend++;
 
-        var b = ReadByte(_registers.Instruction.Source);
-        var sum = a + b;
+        var addend = ReadByte(_instruction.Source);
+        var sum = augend + addend;
         
-        _registers.Sign = (sum & 0x80) > 0;
-        _registers.Zero = (sum == 0);
-        _registers.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
-        _registers.Negative = false;
-        _registers.Overflow = (a < 0x80 && b < 0x80 && _registers.Sign) ||
-                              (a >= 0x80 && b >= 0x80 && !_registers.Sign);
-        _registers.Carry = (sum > byte.MaxValue);
+        _sign = (sum & 0x80) > 0;
+        _zero = (sum == 0);
+        _halfcarry = (augend & 0x0F) + (addend & 0x0F) > 0x0F;
+        _overflow = (augend < 0x80 && addend < 0x80 && _sign) ||
+                    (augend >= 0x80 && addend >= 0x80 && !_sign);
+        _negative = false;
+        _carry = (sum > byte.MaxValue);
 
-        _registers.A = (byte)sum;
+        _a = (byte)sum;
       }
     }
 
     private void ADD()
     {
-      if (IsWordOperation())
+      if (_instruction.IsWordOperation())
       {
-        var a = ReadWord(_registers.Instruction.Destination);
-        var b = ReadWord(_registers.Instruction.Source);
+        var a = ReadWord(_instruction.Destination);
+        var b = ReadWord(_instruction.Source);
         var sum = a + b;
 
-        _registers.Sign = (sum & 0x8000) > 0;
-        _registers.Zero = (sum == 0);
-        _registers.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
-        _registers.Negative = false;
-        _registers.Overflow = (a < 0x8000 && b < 0x8000 && _registers.Sign) ||
-                              (a >= 0x8000 && b >= 0x8000 && !_registers.Sign);
-        _registers.Carry = (sum > ushort.MaxValue);
+        _sign = (sum & 0x8000) > 0;
+        _zero = (sum == 0);
+        _halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
+        _overflow = (a < 0x8000 && b < 0x8000 && _sign) ||
+                              (a >= 0x8000 && b >= 0x8000 && !_sign);
+        _negative = false;
+        _carry = (sum > ushort.MaxValue);
 
         WriteWord((ushort)sum);
-        Console.WriteLine($"{a.ToHex()} + {b.ToHex()} = {_registers.A.ToHex()}");
       }
       else
       {
-        var a = _registers.A;
-        var b = ReadByte(_registers.Instruction.Source);
+        var a = _a;
+        var b = ReadByte(_instruction.Source);
         var sum = a + b;
 
-        _registers.Sign = (sum & 0x80) > 0;
-        _registers.Zero = (sum == 0);
-        _registers.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
-        _registers.Negative = false;
-        _registers.Overflow = (a < 0x80 && b < 0x80 && _registers.Sign) ||
-                              (a >= 0x80 && b >= 0x80 && !_registers.Sign);
-        _registers.Carry = (sum > byte.MaxValue);
+        _sign = (sum & 0x80) > 0;
+        _zero = (sum == 0);
+        _halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
+        _overflow = (a < 0x80 && b < 0x80 && _sign) ||
+                    (a >= 0x80 && b >= 0x80 && !_sign);
+        _negative = false;
+        _carry = (sum > byte.MaxValue);
 
-        _registers.A = (byte)sum;
-        Console.WriteLine($"{a.ToHex()} + {b.ToHex()} = {_registers.A.ToHex()}");
+        _a = (byte)sum;
       }
     }
 
     private void AND()
     {
-      var a = _registers.A;
-      var b = ReadByte(_registers.Instruction.Source);
+      var a = _a;
+      var b = ReadByte(_instruction.Source);
       var result = a & b;
 
-      _registers.Sign = (result & 0x80) > 0;
-      _registers.Zero = (result == 0);
-      _registers.Halfcarry = true;
-      _registers.Parity = BitOperations.PopCount((byte)result) % 2 == 0;
-      _registers.Negative = false;
-      _registers.Carry = false;
+      _sign = (result & 0x80) > 0;
+      _zero = (result == 0);
+      _halfcarry = true;
+      _parity = BitOperations.PopCount((byte)result) % 2 == 0;
+      _negative = false;
+      _carry = false;
 
-      _registers.A = (byte)(result & byte.MaxValue);
+      _a = (byte)(result & byte.MaxValue);
     }
     
     private void BIT()
@@ -117,7 +115,17 @@ namespace Quill.Z80
 
     private void CP()
     {
-      
+      var minuend = _a;
+      var subtrahend = ReadByte(_instruction.Source);
+      var difference = minuend - subtrahend;
+
+      _sign = (difference & 0x80) > 0;
+      _zero = (minuend == subtrahend);
+      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
+      _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
+                  (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
+      _negative = true;
+      _carry = (subtrahend > minuend);
     }
 
     private void CPD()
@@ -137,7 +145,9 @@ namespace Quill.Z80
 
     private void CPL()
     {
-      
+      _halfcarry = true;
+      _negative = true;
+      _a = (byte)~_a;
     }
 
     private void DAA()
@@ -197,7 +207,26 @@ namespace Quill.Z80
 
     private void INC()
     {
-      
+      if (_instruction.IsWordOperation())
+      {
+        var augend = ReadWord(_instruction.Destination);
+        var sum = augend.Increment();
+
+        WriteWord(sum);
+      }
+      else
+      {
+        var augend = ReadByte(_instruction.Destination);
+        var sum = augend.Increment();
+        
+        _sign = (sum & 0x80) > 0;
+        _zero = (sum == 0);
+        _halfcarry = (augend & 0x0F) == 0x0F;
+        _overflow = (augend < 0x80 && _sign);
+        _negative = false;
+
+        WriteByte(sum);
+      }
     }
 
     private void IND()
@@ -227,19 +256,29 @@ namespace Quill.Z80
 
     private void LD()
     {
-      if (IsWordOperation())
+      if (_instruction.IsWordOperation())
       {
-        WriteWord(ReadWord(_registers.Instruction.Source));
+        WriteWord(ReadWord(_instruction.Source));
       }
       else
       {
-        WriteByte(ReadByte(_registers.Instruction.Source));
+        WriteByte(ReadByte(_instruction.Source));
       }
     }
 
     private void NEG()
     {
-      
+      var subtrahend = ReadByte(_instruction.Source);
+      var difference = 0x00 - subtrahend;
+
+      _sign = (difference & 0x80) > 0;
+      _zero = (subtrahend == 0);
+      _halfcarry = (subtrahend & 0x0F) > 0;
+      _overflow = (subtrahend >= 0x80 && _sign);
+      _negative = true;
+      _carry = (subtrahend > 0);
+
+      _a = (byte)difference;
     }
 
     private void NOP()
@@ -249,7 +288,18 @@ namespace Quill.Z80
 
     private void OR()
     {
-      
+      var a = _a;
+      var b = ReadByte(_instruction.Source);
+      var result = a | b;
+
+      _sign = (result & 0x80) > 0;
+      _zero = (result == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount((byte)result) % 2 == 0;
+      _negative = false;
+      _carry = false;
+
+      _a = (byte)(result & byte.MaxValue);
     }
 
     private void OTDR()
@@ -349,21 +399,21 @@ namespace Quill.Z80
 
     private void SBC()
     {
-      var minuend = _registers.A;
-      var subtrahend = ReadByte(_registers.Instruction.Source);
+      var minuend = _a;
+      var subtrahend = ReadByte(_instruction.Source);
 
-      if (_registers.Carry) subtrahend++;
+      if (_carry) subtrahend++;
       var difference = minuend - subtrahend;
 
-      _registers.Sign = (difference & 0x80) > 0;
-      _registers.Zero = (difference == 0x00);
-      _registers.Halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0x00;
-      _registers.Negative = true;
-      _registers.Overflow = (minuend < 0x80 && subtrahend < 0x80 && _registers.Sign) ||
-                            (minuend >= 0x80 && subtrahend >= 0x80 && !_registers.Sign);
-      _registers.Carry = (subtrahend > minuend);
+      _sign = (difference & 0x80) > 0;
+      _zero = (minuend == subtrahend);
+      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
+      _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
+                  (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
+      _negative = true;
+      _carry = (subtrahend > minuend);
 
-      _registers.A = (byte)difference;
+      _a = (byte)difference;
     }
 
     private void SCF()
@@ -393,24 +443,35 @@ namespace Quill.Z80
 
     private void SUB()
     {
-      var minuend = _registers.A;
-      var subtrahend = ReadByte(_registers.Instruction.Source);
+      var minuend = _a;
+      var subtrahend = ReadByte(_instruction.Source);
       var difference = minuend - subtrahend;
 
-      _registers.Sign = (difference & 0x80) > 0;
-      _registers.Zero = (difference == 0x00);
-      _registers.Halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0x00;
-      _registers.Negative = true;
-      _registers.Overflow = (minuend < 0x80 && subtrahend < 0x80 && _registers.Sign) ||
-                            (minuend >= 0x80 && subtrahend >= 0x80 && !_registers.Sign);
-      _registers.Carry = (subtrahend > minuend);
+      _sign = (difference & 0x80) > 0;
+      _zero = (minuend == subtrahend);
+      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
+      _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
+                  (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
+      _negative = true;
+      _carry = (subtrahend > minuend);
 
-      _registers.A = (byte)difference;
+      _a = (byte)difference;
     }
 
     private void XOR()
     {
+      var a = _a;
+      var b = ReadByte(_instruction.Source);
+      var result = a ^ b;
 
+      _sign = (result & 0x80) > 0;
+      _zero = (result == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount((byte)result) % 2 == 0;
+      _negative = false;
+      _carry = false;
+
+      _a = (byte)(result & byte.MaxValue);
     }
   }
 }
