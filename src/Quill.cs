@@ -23,9 +23,10 @@ namespace Quill
       }
       sw.Stop();
 
-      Console.WriteLine($"Executed {cycles} instructions in {sw.ElapsedMilliseconds} ms ({(cycles / sw.ElapsedMilliseconds) * 1000} instructions/sec)");
+      Console.WriteLine($"Executed {cycles} instructions in {sw.ElapsedMilliseconds} ms ({(cycles / sw.ElapsedMilliseconds) / 1000} MIPS)");
 
       cpu.DumpMemory();
+      Console.Read();
     }
 
     private static byte[] GenerateProgram()
