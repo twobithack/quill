@@ -1,19 +1,19 @@
+using System.Runtime.CompilerServices;
+
 namespace Quill.Extensions
 {
   public static class WordExtensions
   {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ushort Increment(this ushort word) => (ushort)word++;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ushort Decrement(this ushort word) => (ushort)word--;
 
-    public static bool GetBit(this ushort value, int i) => ((value >> i) & 1) != 0;
-
-    public static bool GetLSB(this ushort value) => value.GetBit(0);
-
-    public static bool GetMSB(this ushort value) => value.GetBit(15);
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte GetLowByte(this ushort word) => (byte)word;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte GetHighByte(this ushort word) => (byte)(word >> 8);
 
     public static string ToHex(this ushort word) => $"{word.GetHighByte().ToHex()}-{word.GetLowByte().ToHex()}";

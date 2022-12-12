@@ -30,7 +30,6 @@ namespace Quill.Z80
       HandleInterrupts();
       FetchInstruction();
       ExecuteInstruction();
-
       _instructionCount++;
     }
 
@@ -76,10 +75,8 @@ namespace Quill.Z80
       var op = FetchByte();
 
       if (op != 0xCB)
-      {
         return Opcodes.DD[op];
-      }
-        
+      
       op = FetchByte();
       return Opcodes.DDCB[op];
     }
@@ -96,10 +93,8 @@ namespace Quill.Z80
       var op = FetchByte();
 
       if (op != 0xCB)
-      {
         return Opcodes.FD[op];
-      }
-      
+        
       op = FetchByte();
       return Opcodes.FDCB[op];
     }
@@ -178,7 +173,7 @@ namespace Quill.Z80
     {
       var lowByte = FetchByte();
       var highByte = FetchByte();
-      return highByte.Append(lowByte);
+      return highByte.Concat(lowByte);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
