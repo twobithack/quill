@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Quill.Extensions;
 using static Quill.Z80.Opcodes;
 
@@ -7,41 +8,105 @@ namespace Quill.Z80
   {
     private Memory _memory;
     private ushort _memPtr;
+    private bool _nmiRequested;
+    private bool _intRequested;
     private int _cycleCount;
     private int _instructionCount;
 
     public CPU()
     {
       _memory = new Memory();
+      ResetRegisters();
     }
 
     public void LoadProgram(byte[] rom)
     {
-      for (ushort i = 0x00; i < rom.Count(); i++) 
-        _memory[i] = rom[i];
-    }
-
-    private byte FetchByte() => _memory[_pc++];
-
-    private ushort FetchWord()
-    {
-      var lowByte = FetchByte();
-      var highByte = FetchByte();
-      return highByte.Append(lowByte);
+      for (ushort index = 0x00; index < rom.Count(); index++)
+        _memory.WriteByte(index, rom[index]);
     }
 
     public void Step()
     {
+      HandleInterrupts();
+      FetchInstruction();
+      ExecuteInstruction();
+
+      _instructionCount++;
+    }
+
+    public void RequestINT()
+    {
+      // TODO
+    }
+    
+    public void RequestNMI()
+    {
+      // TODO
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void HandleInterrupts()
+    {
+      // TODO
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void FetchInstruction()
+    {
       var op = FetchByte();
       _instruction = op switch
       {
-        0xCB  =>  Opcodes.CB[FetchByte()],
+        0xCB  =>  DecodeCBInstruction(),
         0xDD  =>  DecodeDDInstruction(),
-        0xED  =>  Opcodes.ED[FetchByte()],
+        0xED  =>  DecodeEDInstruction(),
         0xFD  =>  DecodeFDInstruction(),
         _     =>  Opcodes.Main[op]
       };
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Opcode DecodeCBInstruction()
+    {
+      return Opcodes.CB[FetchByte()];
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Opcode DecodeDDInstruction()
+    {
+      var op = FetchByte();
 
+      if (op != 0xCB)
+      {
+        return Opcodes.DD[op];
+      }
+        
+      op = FetchByte();
+      return Opcodes.DDCB[op];
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Opcode DecodeEDInstruction()
+    {
+      return Opcodes.ED[FetchByte()];
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Opcode DecodeFDInstruction()
+    {
+      var op = FetchByte();
+
+      if (op != 0xCB)
+      {
+        return Opcodes.FD[op];
+      }
+      
+      op = FetchByte();
+      return Opcodes.FDCB[op];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ExecuteInstruction()
+    {
       switch (_instruction.Operation)
       {
         case Operation.ADC:   ADC();  break;
@@ -103,36 +168,20 @@ namespace Quill.Z80
         case Operation.SUB:   SUB();  break;
         case Operation.XOR:   XOR();  break;
       }
-
-      _instructionCount++;
     }
 
-    private Opcode DecodeDDInstruction()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private byte FetchByte() => _memory.ReadByte(_pc++);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ushort FetchWord()
     {
-      var op = FetchByte();
-
-      if (op != 0xCB)
-      {
-        return Opcodes.DD[op];
-      }
-        
-      op = FetchByte();
-      return Opcodes.DDCB[op];
-    }
-    
-    private Opcode DecodeFDInstruction()
-    {
-      var op = FetchByte();
-
-      if (op != 0xCB)
-      {
-        return Opcodes.FD[op];
-      }
-      
-      op = FetchByte();
-      return Opcodes.FDCB[op];
+      var lowByte = FetchByte();
+      var highByte = FetchByte();
+      return highByte.Append(lowByte);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private byte ReadByte(Operand operand)
     {
       switch (operand)
@@ -167,9 +216,10 @@ namespace Quill.Z80
         
         default: throw new InvalidOperationException();
       }
-      return _memory[_memPtr];
+      return _memory.ReadByte(_memPtr);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ushort ReadWord(Operand operand)
     {
       switch (operand)
@@ -194,9 +244,10 @@ namespace Quill.Z80
         default:
           return 0x00;
       }
-      return _memory[_memPtr];
+      return _memory.ReadByte(_memPtr);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteByte(byte value)
     {
       switch (_instruction.Destination)
@@ -228,9 +279,10 @@ namespace Quill.Z80
 
         default: throw new InvalidOperationException();
       }
-      _memory[_memPtr] = value;
+      _memory.WriteByte(_memPtr, value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteWord(ushort value)
     {
       switch (_instruction.Destination)
@@ -252,9 +304,26 @@ namespace Quill.Z80
       }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool EvaluateCondition()
+    {
+      return _instruction.Source switch
+      {
+        Operand.Carry     => _carry,
+        Operand.NonCarry  => !_carry,
+        Operand.Zero      => _zero,
+        Operand.NonZero   => !_zero,
+        Operand.Negative  => _sign,
+        Operand.Positive  => !_sign,
+        Operand.Even      => _parity,
+        Operand.Odd       => !_parity,
+        _                 => true
+      };
+    }
+
     public void DumpMemory() => _memory.DumpPage(0x00);
 
     public override String ToString() => DumpRegisters() +
-      $"Instruction Count: {_instructionCount}, Flags: {_flags.ToString()} ";
+      $"Instruction: {_instructionCount}, Flags: {_flags.ToString()}\r\n ";
   }
 }

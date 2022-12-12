@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Quill.Extensions;
 
 namespace Quill.Z80
@@ -10,26 +11,25 @@ namespace Quill.Z80
 
     public Memory() => _memory = new byte[MaxAddress + 1];
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public byte ReadByte(ushort address) => (byte)_memory[At(address)];
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteByte(ushort address, byte value) => _memory[At(address)] = value;
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort ReadWord(ushort address)
+    {
+      var lowByte = ReadByte(address);
+      var highByte = ReadByte(address.Increment());
+      return highByte.Append(lowByte);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteWord(ushort address, ushort word)
     {
-      _memory[address] = word.GetLowByte();
-      _memory[address.Increment()] = word.GetHighByte();
-    }
-
-    private ushort At(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
-    private byte Read(ushort address) => (byte)_memory[At(address)];
-    private void Write(ushort address, byte value) => _memory[At(address)] = value;
-    
-    public byte this[ushort address]
-    {
-      get => Read(address);
-      set => Write(address, value);
-    }
-
-    public void Dump(byte pages)
-    {
-      for (byte page = 0x00; page <= pages; page++)
-        DumpPage(page);
+      WriteByte(address, word.GetLowByte());
+      WriteByte(address.Increment(), word.GetHighByte());
     }
 
     public void DumpPage(byte page)
@@ -39,5 +39,8 @@ namespace Quill.Z80
         row += _memory[At(page.Append(col))].ToHex() + " ";
       Console.WriteLine(row);
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ushort At(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
   }
 }
