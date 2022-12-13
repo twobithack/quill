@@ -251,7 +251,6 @@ namespace Quill.Z80
         case Operand.C: _c = value; return;
         case Operand.D: _d = value; return;
         case Operand.E: _e = value; return;
-        case Operand.F: _f = value; return;
         case Operand.H: _h = value; return;
         case Operand.L: _l = value; return;
 
