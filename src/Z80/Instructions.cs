@@ -102,7 +102,12 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void BIT()
     {
-      
+      var value = ReadByte(_instruction.Source);
+      var index = GetBitIndex();
+
+      _zero = value.GetBit(index);
+      _halfcarry = true;
+      _negative = false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -163,11 +168,8 @@ namespace Quill.Z80
     private void CPDR()
     {
       CPD();
-
-      if (!_overflow || _zero)
-        return;
-        
-      _pc -= 2;
+      if (_overflow && !_zero)
+        _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -190,7 +192,9 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CPIR()
     {
-      
+      CPI();
+      if (_overflow && !_zero)
+        _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -242,7 +246,11 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DJNZ()
     {
-      
+      var displacement = FetchByte();
+      _b--;
+
+      if (_b != 0)
+        _pc += displacement;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -260,8 +268,8 @@ namespace Quill.Z80
       {
         case Operand.AF: 
           temp = _af;
-          _af = _afS;
-          _afS = temp;
+          _af = _afShadow;
+          _afShadow = temp;
           return;
 
         case Operand.DE: 
@@ -299,22 +307,22 @@ namespace Quill.Z80
       ushort temp;
 
       temp = _bc;
-      _bc = _bcS;
-      _bcS = temp;
+      _bc = _bcShadow;
+      _bcShadow = temp;
 
       temp = _de;
-      _de = _deS;
-      _deS = temp;
+      _de = _deShadow;
+      _deShadow = temp;
 
       temp = _hl;
-      _hl = _hlS;
-      _hlS = temp;
+      _hl = _hlShadow;
+      _hlShadow = temp;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void HALT()
     {
-      
+      _halt = true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -425,7 +433,9 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void LDDR()
     {
-
+      LDD();
+      if (_overflow)
+        _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -446,7 +456,9 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void LDIR()
     {
-      
+      LDI();
+      if (_overflow)
+        _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -535,7 +547,9 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RES()
     {
-      
+      var value = ReadByte(_instruction.Destination);
+      var index = GetBitIndex();
+      WriteByte(value.ResetBit(index));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -567,25 +581,77 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RL()
     {
-      
+      var value = ReadByte(_instruction.Destination);
+      var msb = value.GetMSB();
+      value = (byte)(value << 1);
+
+      if (_carry)
+        value |= 1;
+
+      _sign = value.GetMSB();
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = msb;
+
+      WriteByte(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RLA()
     {
-      
+      var value = (byte)(_a << 1);
+      var msb = _a.GetMSB();
+
+      if (_carry)
+        value |= 1;
+
+      _sign = value.GetMSB();
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = msb;
+
+      _a = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RLC()
     {
-      
+      var value = ReadByte(_instruction.Destination);
+      var msb = value.GetMSB();
+      value = (byte)(value << 1);
+
+      if (msb)
+        value |= 1;
+
+      _sign = value.GetMSB();
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = msb;
+
+      WriteByte(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RLCA()
     {
-      
+      var value = (byte)(_a << 1);
+      var msb = _a.GetMSB();
+
+      if (msb)
+        value |= 1;
+
+      _sign = value.GetMSB();
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = msb;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -603,19 +669,56 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RRA()
     {
-      
+      var value = (byte)(_a >> 1);
+
+      if (_carry)
+        value |= 0b_1000_0000;
+
+      _sign = value.GetMSB();
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = _a.GetLSB();
+
+      _a = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RRC()
     {
+      var value = ReadByte(_instruction.Destination);
+      var lsb = _a.GetLSB();
+      value = (byte)(value >> 1);
       
+      if (lsb)
+        value |= 0b_1000_0000;
+
+      _sign = value.GetMSB();
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = lsb;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RRCA()
     {
-      
+      var value = (byte)(_a >> 1);
+      var lsb = _a.GetLSB();
+
+      if (lsb)
+        value |= 0b_1000_0000;
+
+      _sign = value.GetMSB();
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = lsb;
+
+      _a = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
