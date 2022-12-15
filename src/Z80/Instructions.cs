@@ -625,7 +625,7 @@ namespace Quill.Z80
       value = (byte)(value << 1);
 
       if (msb)
-        value |= 1;
+        value |= 0b_0000_0001;
 
       _sign = value.GetMSB();
       _zero = (value == 0);
@@ -657,19 +657,29 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RLD()
     {
+      _memPtr = _hl;
+      var value = _memory.ReadByte(_memPtr);
+      var lowNibble = _a.GetLowNibble();
+      var highNibble = value.GetLowNibble();
+
+      _a = (byte)((_a & 0b_1111_0000) + value.GetLowNibble());
+      value = (byte)((highNibble << 4) + lowNibble);
+
+      _sign = _a.GetMSB();
+      _zero = (_a == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
       
+      _memory.WriteByte(_memPtr, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RR()
     {
-      
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RRA()
-    {
-      var value = (byte)(_a >> 1);
+      var value = ReadByte(_instruction.Destination);
+      var lsb = value.GetLSB();
+      value = (byte)(value >> 1);
 
       if (_carry)
         value |= 0b_1000_0000;
@@ -679,9 +689,26 @@ namespace Quill.Z80
       _halfcarry = false;
       _parity = BitOperations.PopCount(value) % 2 == 0;
       _negative = false;
-      _carry = _a.GetLSB();
+      _carry = lsb;
 
-      _a = value;
+      WriteByte(value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RRA()
+    {
+      var lsb = _a.GetLSB();
+      _a = (byte)(_a >> 1);
+
+      if (_carry)
+        _a |= 0b_1000_0000;
+
+      _sign = _a.GetMSB();
+      _zero = (_a == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(_a) % 2 == 0;
+      _negative = false;
+      _carry = lsb;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -700,37 +727,65 @@ namespace Quill.Z80
       _parity = BitOperations.PopCount(value) % 2 == 0;
       _negative = false;
       _carry = lsb;
+
+      WriteByte(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RRCA()
     {
-      var value = (byte)(_a >> 1);
       var lsb = _a.GetLSB();
+      _a = (byte)(_a >> 1);
 
       if (lsb)
-        value |= 0b_1000_0000;
+        _a |= 0b_1000_0000;
 
-      _sign = value.GetMSB();
-      _zero = (value == 0);
+      _sign = _a.GetMSB();
+      _zero = (_a == 0x00);
       _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _parity = BitOperations.PopCount(_a) % 2 == 0;
       _negative = false;
       _carry = lsb;
-
-      _a = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RRD()
     {
+      _memPtr = _hl;
+      var value = _memory.ReadByte(_memPtr);
+      var lowNibble = value.GetHighNibble();
+      var highNibble = _a.GetLowNibble();
+
+      _a = (byte)((_a & 0b_1111_0000) + value.GetLowNibble());
+      value = (byte)((highNibble << 4) + lowNibble);
+
+      _sign = _a.GetMSB();
+      _zero = (_a == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
       
+      _memory.WriteByte(_memPtr, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RST()
     {
-      
+      _sp -= 2;
+      _memory.WriteWord(_sp, _pc);
+
+      _pc = _instruction.Destination switch
+      {
+        Operand.RST0 => 0x00,
+        Operand.RST1 => 0x08,
+        Operand.RST2 => 0x10,
+        Operand.RST3 => 0x18,
+        Operand.RST4 => 0x20,
+        Operand.RST5 => 0x28,
+        Operand.RST6 => 0x30,
+        Operand.RST7 => 0x38,
+        _ => throw new InvalidOperationException()
+      };
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -764,25 +819,64 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SET()
     {
-
+      var value = ReadByte(_instruction.Destination);
+      var index = GetBitIndex();
+      WriteByte(value.SetBit(index));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SLA()
     {
+      var value = ReadByte(_instruction.Destination);
+      var msb = value.GetMSB();
+      value = (byte)(value << 1);
 
+      _sign = value.GetMSB();
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = msb;
+
+      WriteByte(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SRA()
     {
+      var value = ReadByte(_instruction.Destination);
+      var lsb = value.GetLSB();
+      var msb = value.GetMSB();
+      value = (byte)(value >> 1);
 
+      if (msb)
+        value |= 0b_1000_0000;
+
+      _sign = msb;
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = lsb;
+
+      WriteByte(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SRL()
     {
+      var value = ReadByte(_instruction.Destination);
+      var lsb = value.GetLSB();
+      value = (byte)(value >> 1);
 
+      _sign = false;
+      _zero = (value == 0);
+      _halfcarry = false;
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _negative = false;
+      _carry = lsb;
+
+      WriteByte(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
