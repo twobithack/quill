@@ -208,7 +208,25 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DAA()
     {
-      
+      var value = _a;
+
+      if (_halfcarry || (_a & 0x0f) > 9)
+        value = _negative
+              ? (byte)(value - 0x06)
+              : (byte)(value + 0x06);
+
+      if (_carry || (_a > 0x99))
+        value = _negative
+              ? (byte)(value - 0x60)
+              : (byte)(value + 0x60);
+
+      _sign = value.GetMSB();
+      _zero = (value == 0x00);
+      _halfcarry = _a.GetBit(4) ^ value.GetBit(4);
+      _parity = BitOperations.PopCount(value) % 2 == 0;
+      _carry |= (_a > 0x99);
+
+      _a = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
