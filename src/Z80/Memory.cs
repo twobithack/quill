@@ -32,12 +32,12 @@ namespace Quill.Z80
       WriteByte(address.Increment(), word.GetHighByte());
     }
 
-    public void DumpPage(byte page)
+    public string DumpPage(byte page)
     {
       var row = string.Empty;
       for (byte index = 0; index < byte.MaxValue; index++)
         row += ReadByte(page.Concat(index)).ToHex() + " ";
-      Console.WriteLine(row);
+      return row;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

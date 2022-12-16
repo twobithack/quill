@@ -15,6 +15,8 @@ namespace Quill.Z80
     F, 
     H, 
     L,
+    I,
+    R,
 
     // 16-bit registers
     AF, 

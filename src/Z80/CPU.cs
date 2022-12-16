@@ -34,6 +34,8 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void HandleInterrupts()
     {
+      if (_halt) 
+        throw new Exception("Halted");
       // check nmi
       // check iff1
       // check irq
@@ -51,6 +53,9 @@ namespace Quill.Z80
         0xFD  =>  DecodeFDInstruction(),
         _     =>  Opcodes.Main[op]
       };
+#if DEBUG
+      Console.WriteLine(_instruction);
+#endif
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -177,11 +182,9 @@ namespace Quill.Z80
           _memPtr = FetchWord();
           break;
 
-        case Operand.BCi:
-        case Operand.DEi:
-        case Operand.HLi:
-          _memPtr = ReadRegisterPair(operand);
-          break;
+        case Operand.BCi: _memPtr = _bc; break;
+        case Operand.DEi: _memPtr = _de; break;
+        case Operand.HLi: _memPtr = _hl; break;
 
         case Operand.IXd:
         case Operand.IYd:
@@ -201,7 +204,7 @@ namespace Quill.Z80
         case Operand.L:
           return ReadRegister(operand);
         
-        default: throw new InvalidOperationException();
+        default: throw new InvalidOperationException($"Invalid source: {operand}");
       }
       return _memory.ReadByte(_memPtr);
     }
@@ -263,7 +266,7 @@ namespace Quill.Z80
         case Operand.DEi: _memPtr = _de; break;
         case Operand.HLi: _memPtr = _hl; break;
 
-        default: throw new InvalidOperationException();
+        default: throw new InvalidOperationException($"Invalid destination: {_instruction.Destination}");
       }
       _memory.WriteByte(_memPtr, value);
     }
@@ -286,7 +289,7 @@ namespace Quill.Z80
         case Operand.PC: _pc = value; return;
         case Operand.SP: _sp = value; return;
 
-        default: throw new InvalidOperationException();
+        default: throw new InvalidOperationException($"Invalid destination: {_instruction.Destination}");
       }
     }
 
@@ -320,11 +323,11 @@ namespace Quill.Z80
         Operand.Bit5  => 5,
         Operand.Bit6  => 6,
         Operand.Bit7  => 7,
-        _ => throw new InvalidOperationException()
+        _ => throw new InvalidOperationException($"Invalid bit index: {_instruction.Destination}")
       };
     }
 
-    public void DumpMemory() => _memory.DumpPage(0x00);
+    public string DumpMemory(string path) => _memory.DumpPage(0x00);
 
     public override String ToString() => DumpRegisters() +
       $"Instruction: {_instructionCount}, Flags: {_flags.ToString()}\r\n ";
