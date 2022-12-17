@@ -14,7 +14,7 @@ namespace Quill.Z80
         var augend = _hl;
         if (_carry) augend++;
 
-        var addend = ReadWord(_instruction.Source);
+        var addend = ReadWordOperand(_instruction.Source);
         var sum = augend + addend;
 
         _sign = (sum & 0x8000) > 0;
@@ -32,7 +32,7 @@ namespace Quill.Z80
         var augend = _a;
         if (_carry) augend++;
 
-        var addend = ReadByte(_instruction.Source);
+        var addend = ReadByteOperand(_instruction.Source);
         var sum = augend + addend;
         
         _sign = (sum & 0x80) > 0;
@@ -52,8 +52,8 @@ namespace Quill.Z80
     {
       if (_instruction.IsWordOperation())
       {
-        var augend = ReadWord(_instruction.Destination);
-        var addend = ReadWord(_instruction.Source);
+        var augend = ReadWordOperand(_instruction.Destination);
+        var addend = ReadWordOperand(_instruction.Source);
         var sum = augend + addend;
 
         _sign = (sum & 0x8000) > 0;
@@ -64,12 +64,12 @@ namespace Quill.Z80
         _negative = false;
         _carry = (sum > ushort.MaxValue);
 
-        WriteWord((ushort)sum);
+        WriteWordResult((ushort)sum);
       }
       else
       {
         var augend = _a;
-        var addend = ReadByte(_instruction.Source);
+        var addend = ReadByteOperand(_instruction.Source);
         var sum = augend + addend;
 
         _sign = (sum & 0x80) > 0;
@@ -87,7 +87,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AND()
     {
-      var result = _a & ReadByte(_instruction.Source);
+      var result = _a & ReadByteOperand(_instruction.Source);
 
       _sign = (result & 0x80) > 0;
       _zero = (result == 0);
@@ -102,7 +102,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void BIT()
     {
-      var value = ReadByte(_instruction.Source);
+      var value = ReadByteOperand(_instruction.Source);
       var index = GetBitIndex();
 
       _zero = value.GetBit(index);
@@ -115,7 +115,7 @@ namespace Quill.Z80
     {
       _memPtr = FetchWord();
 
-      if (!EvaluateCondition())
+      if (!EvaluationCondition())
         return;
 
       _sp -= 2;
@@ -135,7 +135,7 @@ namespace Quill.Z80
     private void CP()
     {
       var minuend = _a;
-      var subtrahend = ReadByte(_instruction.Source);
+      var subtrahend = ReadByteOperand(_instruction.Source);
       var difference = minuend - subtrahend;
 
       _sign = (difference & 0x80) > 0;
@@ -234,14 +234,14 @@ namespace Quill.Z80
     {
       if (_instruction.IsWordOperation())
       {
-        var minuend = ReadWord(_instruction.Destination);
+        var minuend = ReadWordOperand(_instruction.Destination);
         var difference = minuend.Decrement();
         
-        WriteWord(difference);
+        WriteWordResult(difference);
       }
       else
       {
-        var minuend = ReadByte(_instruction.Destination);
+        var minuend = ReadByteOperand(_instruction.Destination);
         var difference = minuend.Decrement();
 
         _sign = (difference & 0x80) > 0;
@@ -250,7 +250,7 @@ namespace Quill.Z80
         _overflow = (minuend >= 0x80 && !_sign);
         _negative = true;
 
-        WriteByte(difference);
+        WriteByteResult(difference);
       }
     }
 
@@ -360,14 +360,14 @@ namespace Quill.Z80
     {
       if (_instruction.IsWordOperation())
       {
-        var augend = ReadWord(_instruction.Destination);
+        var augend = ReadWordOperand(_instruction.Destination);
         var sum = augend.Increment();
 
-        WriteWord(sum);
+        WriteWordResult(sum);
       }
       else
       {
-        var augend = ReadByte(_instruction.Destination);
+        var augend = ReadByteOperand(_instruction.Destination);
         var sum = augend.Increment();
         
         _sign = (sum & 0x80) > 0;
@@ -376,7 +376,7 @@ namespace Quill.Z80
         _overflow = (augend < 0x80 && _sign);
         _negative = false;
 
-        WriteByte(sum);
+        WriteByteResult(sum);
       }
     }
 
@@ -401,9 +401,9 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void JP()
     {
-      _memPtr = ReadWord(_instruction.Source);
+      _memPtr = ReadWordOperand(_instruction.Source);
 
-      if (!EvaluateCondition())
+      if (!EvaluationCondition())
         return;
 
       _pc = _memPtr;
@@ -414,7 +414,7 @@ namespace Quill.Z80
     {
       var displacement = FetchByte();
 
-      if (!EvaluateCondition())
+      if (!EvaluationCondition())
         return;
 
       _pc += displacement;
@@ -425,11 +425,11 @@ namespace Quill.Z80
     {
       if (_instruction.IsWordOperation())
       {
-        WriteWord(ReadWord(_instruction.Source));
+        WriteWordResult(ReadWordOperand(_instruction.Source));
       }
       else
       {
-        WriteByte(ReadByte(_instruction.Source));
+        WriteByteResult(ReadByteOperand(_instruction.Source));
       }
     }
     
@@ -482,7 +482,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void NEG()
     {
-      var subtrahend = ReadByte(_instruction.Source);
+      var subtrahend = ReadByteOperand(_instruction.Source);
       var difference = 0x00 - subtrahend;
 
       _sign = (difference & 0x80) > 0;
@@ -504,7 +504,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OR()
     {
-      var result = _a | ReadByte(_instruction.Source);
+      var result = _a | ReadByteOperand(_instruction.Source);
 
       _sign = (result & 0x80) > 0;
       _zero = (result == 0);
@@ -551,13 +551,13 @@ namespace Quill.Z80
     {
       _sp -= 2;
       var word = _memory.ReadWord(_sp);
-      WriteWord(word);
+      WriteWordResult(word);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PUSH()
     {
-      var word = ReadWord(_instruction.Destination);
+      var word = ReadWordOperand(_instruction.Destination);
       _memory.WriteWord(_sp, word);
       _sp += 2;
     }
@@ -565,15 +565,15 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RES()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var index = GetBitIndex();
-      WriteByte(value.ResetBit(index));
+      WriteByteResult(value.ResetBit(index));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RET()
     {
-      if (!EvaluateCondition())
+      if (!EvaluationCondition())
         return;
 
       _pc = _memory.ReadWord(_sp);
@@ -599,7 +599,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RL()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var msb = value.GetMSB();
       value = (byte)(value << 1);
 
@@ -613,7 +613,7 @@ namespace Quill.Z80
       _negative = false;
       _carry = msb;
 
-      WriteByte(value);
+      WriteByteResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -638,7 +638,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RLC()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var msb = value.GetMSB();
       value = (byte)(value << 1);
 
@@ -652,7 +652,7 @@ namespace Quill.Z80
       _negative = false;
       _carry = msb;
 
-      WriteByte(value);
+      WriteByteResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -695,7 +695,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RR()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var lsb = value.GetLSB();
       value = (byte)(value >> 1);
 
@@ -709,7 +709,7 @@ namespace Quill.Z80
       _negative = false;
       _carry = lsb;
 
-      WriteByte(value);
+      WriteByteResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -732,7 +732,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RRC()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var lsb = _a.GetLSB();
       value = (byte)(value >> 1);
       
@@ -746,7 +746,7 @@ namespace Quill.Z80
       _negative = false;
       _carry = lsb;
 
-      WriteByte(value);
+      WriteByteResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -814,7 +814,7 @@ namespace Quill.Z80
       if (_instruction.Destination == Operand.HL)
       {
         var minuend = _hl;
-        var subtrahend = ReadWord(_instruction.Source);
+        var subtrahend = ReadWordOperand(_instruction.Source);
 
         if (_carry) subtrahend++;
         var difference = minuend - subtrahend;
@@ -832,7 +832,7 @@ namespace Quill.Z80
       else
       {
         var minuend = _a;
-        var subtrahend = ReadByte(_instruction.Source);
+        var subtrahend = ReadByteOperand(_instruction.Source);
 
         if (_carry) subtrahend++;
         var difference = minuend - subtrahend;
@@ -860,15 +860,15 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SET()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var index = GetBitIndex();
-      WriteByte(value.SetBit(index));
+      WriteByteResult(value.SetBit(index));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SLA()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var msb = value.GetMSB();
       value = (byte)(value << 1);
 
@@ -879,13 +879,13 @@ namespace Quill.Z80
       _negative = false;
       _carry = msb;
 
-      WriteByte(value);
+      WriteByteResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SRA()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var lsb = value.GetLSB();
       var msb = value.GetMSB();
       value = (byte)(value >> 1);
@@ -900,13 +900,13 @@ namespace Quill.Z80
       _negative = false;
       _carry = lsb;
 
-      WriteByte(value);
+      WriteByteResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SRL()
     {
-      var value = ReadByte(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Destination);
       var lsb = value.GetLSB();
       value = (byte)(value >> 1);
 
@@ -917,14 +917,14 @@ namespace Quill.Z80
       _negative = false;
       _carry = lsb;
 
-      WriteByte(value);
+      WriteByteResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SUB()
     {
       var minuend = _a;
-      var subtrahend = ReadByte(_instruction.Source);
+      var subtrahend = ReadByteOperand(_instruction.Source);
       var difference = minuend - subtrahend;
 
       _sign = (difference & 0x80) > 0;
@@ -941,7 +941,7 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void XOR()
     {
-      var result = _a ^ ReadByte(_instruction.Source);
+      var result = _a ^ ReadByteOperand(_instruction.Source);
 
       _sign = (result & 0x80) > 0;
       _zero = (result == 0);

@@ -12,7 +12,7 @@ namespace Quill.Z80
     public Memory() => _memory = new byte[MaxAddress + 1];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public byte ReadByte(ushort address) => (byte)_memory[Resolve(address)];
+    public byte ReadByte(ushort address) => (byte)_memory[Map(address)];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort ReadWord(ushort address)
@@ -23,7 +23,7 @@ namespace Quill.Z80
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteByte(ushort address, byte value) => _memory[Resolve(address)] = value;
+    public void WriteByte(ushort address, byte value) => _memory[Map(address)] = value;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteWord(ushort address, ushort word)
@@ -32,15 +32,24 @@ namespace Quill.Z80
       WriteByte(address.Increment(), word.GetHighByte());
     }
 
+    public void Dump(string path)
+    {
+      var dump = new List<string>();
+      for (byte row = 0; row < byte.MaxValue; row++)
+        dump.Add(DumpPage(row));
+        
+      File.AppendAllLines(path, dump);
+    }
+
     public string DumpPage(byte page)
     {
       var row = string.Empty;
-      for (byte index = 0; index < byte.MaxValue; index++)
-        row += ReadByte(page.Concat(index)).ToHex() + " ";
+      for (byte col = 0; col < byte.MaxValue; col++)
+        row += ReadByte(page.Concat(col)).ToHex() + " ";
       return row;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort Resolve(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
+    private ushort Map(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
   }
 }

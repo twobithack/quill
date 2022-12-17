@@ -36,7 +36,6 @@ namespace Quill.Z80
       Operand.HL, 
       Operand.IX,  
       Operand.IY, 
-      Operand.PC,
       Operand.SP
     };
 
