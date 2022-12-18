@@ -21,7 +21,7 @@ namespace Quill
       }
       sw.Stop();
 
-      cpu.DumpMemory("dump.txt");
+      cpu.DumpMemory("mem.txt");
 
       Console.WriteLine(cpu);
       Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(cycles * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");

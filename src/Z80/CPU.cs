@@ -8,18 +8,14 @@ namespace Quill.Z80
   {
     private Memory _memory;
     private bool _halt;
-    private int _instructionCount;
+    private ulong _instructionCount;
 
     public CPU()
     {
       _memory = new Memory();
     }
 
-    public void LoadROM(byte[] rom)
-    {
-      for (ushort i = 0x00; i < rom.Count(); i++)
-        _memory.WriteByte(i, rom[i]);
-    }
+    public void LoadROM(byte[] rom) => _memory.LoadROM(rom);
 
     public void Step()
     {
@@ -312,7 +308,6 @@ namespace Quill.Z80
 
     public void DumpMemory(string path) => _memory.Dump(path);
 
-    public override String ToString() => DumpRegisters() +
-                                         $"Flags: {_flags.ToString()}";
+    public override String ToString() => DumpRegisters() + $"Flags: {_flags} | CIR: {_instruction}";
   }
 }
