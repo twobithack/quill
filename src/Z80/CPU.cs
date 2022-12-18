@@ -4,15 +4,17 @@ using static Quill.Z80.Opcodes;
 
 namespace Quill.Z80
 {
-  public partial class CPU
+  public unsafe sealed partial class CPU
   {
     private Memory _memory;
+    private Ports _ports;
     private bool _halt;
     private ulong _instructionCount;
 
-    public CPU()
+    public CPU(Ports ports)
     {
       _memory = new Memory();
+      _ports = ports;
     }
 
     public void LoadROM(byte[] rom) => _memory.LoadROM(rom);
@@ -192,7 +194,7 @@ namespace Quill.Z80
         case Operand.H: return _h;
         case Operand.L: return _l;
         
-        default: throw new InvalidOperationException($"Invalid source: {operand}");
+        default: throw new InvalidOperationException($"Invalid source: {operand}.\r\n{this}");
       }
       return _memory.ReadByte(_memPtr);
     }
@@ -252,7 +254,7 @@ namespace Quill.Z80
         case Operand.DEi: _memPtr = _de; break;
         case Operand.HLi: _memPtr = _hl; break;
 
-        default: throw new InvalidOperationException($"Invalid destination: {_instruction.Destination}");
+        default: throw new InvalidOperationException($"Invalid destination: {_instruction.Destination}.\r\n{this}");
       }
       _memory.WriteByte(_memPtr, value);
     }
@@ -274,7 +276,7 @@ namespace Quill.Z80
         case Operand.IY: _iy = value; return;
         case Operand.SP: _sp = value; return;
 
-        default: throw new InvalidOperationException($"Invalid destination: {_instruction.Destination}");
+        default: throw new InvalidOperationException($"Invalid destination: {_instruction.Destination}.\r\n{this}");
       }
     }
 
@@ -303,11 +305,11 @@ namespace Quill.Z80
       Operand.Bit5  => 5,
       Operand.Bit6  => 6,
       Operand.Bit7  => 7,
-      _ => throw new InvalidOperationException($"Invalid bit index: {_instruction.Destination}")
+      _ => throw new InvalidOperationException($"Invalid bit index: {_instruction.Destination}.\r\n{this}")
     };
 
     public void DumpMemory(string path) => _memory.Dump(path);
 
-    public override String ToString() => DumpRegisters() + $"Flags: {_flags} | CIR: {_instruction}";
+    public override String ToString() => DumpRegisters() + $"Flags: {_flags} | CIR: {_instruction} | Cycle: {_instructionCount}";
   }
 }

@@ -3,11 +3,12 @@ using System.Diagnostics;
 
 namespace Quill
 {
-  public class Quill
+  public unsafe sealed class Quill
   {
     public static void Main(string[] args)
     {
-      var cpu = new CPU();
+      var io = new Ports();
+      var cpu = new CPU(io);
       var cycles = 0ul;
       var program = ReadROM(@"test/zexdoc.sms");
       cpu.LoadROM(program);

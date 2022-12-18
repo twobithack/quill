@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Quill.Extensions
 {
-  public static class WordExtensions
+  public unsafe static class WordExtensions
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ushort Increment(this ushort word) => (ushort)word++;

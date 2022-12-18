@@ -3,9 +3,10 @@ using Quill.Extensions;
 
 namespace Quill.Z80
 {
-  public class Memory
+  public unsafe sealed class Memory
   {
-    private byte[,] _memory;
+    private const ushort PageSize = 0x4000;
+    private byte[,] _ram;
     private byte[,] _rom;
     private byte _page0;
     private byte _page1;
@@ -15,67 +16,65 @@ namespace Quill.Z80
 
     public Memory()
     {
-      _memory = new byte[0x03, 0x4000];
-      _rom = new byte[0x40, 0x4000];
+      _ram = new byte[0x03, PageSize];
+      _rom = new byte[0x40, PageSize];
     }
 
     public void LoadROM(byte[] rom)
     {
       for (int i = 0; i < rom.Count(); i++)
-        _rom[i / 0x4000, i % 0x4000] = rom[i];
+        _rom[i / PageSize, i % PageSize] = rom[i];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte ReadByte(ushort address)
     {
+      var index = address % PageSize;
+
       if (address < 0x400)
-        return _rom[0x00, address];
+        return _rom[0x00, index];
 
-      if (address < 0x4000)
-        return _rom[_page0, address];
+      if (address < PageSize)
+        return _rom[_page0, index];
 
-      if (address < 0x8000)
-        return _rom[_page1, address - 0x4000];
+      if (address < PageSize * 2)
+        return _rom[_page1, index];
         
-      if (address < 0xC000)
+      if (address < PageSize * 3)
       {
         if (!_ramEnable)
-          return _rom[_page2, address - 0x8000];
+          return _rom[_page2, index];
 
-        return _memory[_ramPage, address - 0x8000];
+        return _ram[_ramPage, index];
       }
 
-      if (address < 0xE000)
-        return _memory[0x00, address - 0xC000];
-
-      return _memory[0x00, address - 0xE000];
+      return _ram[0x00, index];
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteByte(ushort address, byte value)
     {
-      if (address < 0x8000)
+      var index = address % PageSize;
+
+      if (address < PageSize * 2)
         return;
 
-      if (address < 0xC000)
+      if (address > 0xDFFB && address < 0xF000)
+        return;
+
+      if (address < PageSize * 3)
       {
         if (!_ramEnable)
           return;
 
-        _memory[_ramPage, address - 0x8000] = value;
-        return;
-      }
-
-      if (address < 0xE000)
-      {
-        _memory[0x00, address - 0xC000] = value;
+        _ram[_ramPage, index] = value;
         return;
       }
 
       if (address == 0xFFFC)
       {
-        _ramEnable = value.GetBit(3);
-        _ramPage = value.GetBit(2)
+        _ramEnable = value.TestBit(3);
+        _ramPage = value.TestBit(2)
                  ? 0x02
                  : 0x01;
       }
@@ -83,7 +82,7 @@ namespace Quill.Z80
       else if (address == 0xFFFE) _page1 = value;
       else if (address == 0xFFFF) _page2 = value;
 
-      _memory[0x00, address - 0xE000] = value;
+      _ram[0x00, index] = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -110,11 +109,11 @@ namespace Quill.Z80
         {
           var row = string.Empty;
           for (byte lo = 0; lo < byte.MaxValue; lo++)
-            row += _memory[bank, hi.Concat(lo)];
+            row += _ram[bank, hi.Concat(lo)].ToHex() + " ";
           dump.Add(row);
         }
           
-      File.AppendAllLines(path, dump);
+      File.WriteAllLines(path, dump);
     }
   }
 }

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Quill.Z80
 {
-  public partial class CPU
+  public unsafe sealed partial class CPU
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ADC()
@@ -105,7 +105,7 @@ namespace Quill.Z80
       var value = ReadByteOperand(_instruction.Source);
       var index = GetBitIndex();
 
-      _zero = value.GetBit(index);
+      _zero = value.TestBit(index);
       _halfcarry = true;
       _negative = false;
     }
@@ -222,7 +222,7 @@ namespace Quill.Z80
 
       _sign = value.GetMSB();
       _zero = (value == 0x00);
-      _halfcarry = _a.GetBit(4) ^ value.GetBit(4);
+      _halfcarry = _a.TestBit(4) ^ value.TestBit(4);
       _parity = BitOperations.PopCount(value) % 2 == 0;
       _carry |= (_a > 0x99);
 
