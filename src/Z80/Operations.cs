@@ -2,7 +2,7 @@ using Quill.Extensions;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace Quill.Z80
+namespace Quill
 {
   public unsafe sealed partial class CPU
   {
@@ -801,11 +801,8 @@ namespace Quill.Z80
         Operand.RST4 => 0x20,
         Operand.RST5 => 0x28,
         Operand.RST6 => 0x30,
-        Operand.RST7 => 0x38,
-        _ => throw new InvalidOperationException($"Invalid RST address: {_instruction.Destination}")
+        Operand.RST7 => 0x38
       };
-      
-      Console.WriteLine(_a);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
 using Quill.Extensions;
-using static Quill.Z80.Opcodes;
+using static Quill.Opcodes;
 
-namespace Quill.Z80
+namespace Quill
 {
   public unsafe sealed partial class CPU
   {

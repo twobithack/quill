@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Quill.Z80
+namespace Quill
 {
   public unsafe static class Opcodes
   {
