@@ -1,4 +1,4 @@
-namespace Quill
+namespace Quill.Definitions
 {
   [Flags]
   public enum Flags : byte

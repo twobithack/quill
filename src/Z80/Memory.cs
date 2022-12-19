@@ -17,9 +17,6 @@ namespace Quill
     private bool _bankEnable;
     private bool _bankSelect;
 
-    private int _reads;
-    private int _writes;
-
     public Memory() => Array.Fill(_rom, new byte[PageSize]);
 
     public void LoadROM(byte[] rom)
@@ -31,7 +28,6 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte ReadByte(ushort address)
     {
-      _reads++;
       var index = address % PageSize;
 
       if (address < 0x400)
@@ -68,7 +64,6 @@ namespace Quill
           address < 0xF000)
         return;
 
-      _writes++;
       if (address < PageSize * 3)
       {
         if (!_bankEnable)
@@ -130,7 +125,7 @@ namespace Quill
       var banking = (_bankEnable 
                   ? $"enabled (Bank {_bankSelect.ToBit()})"
                   : "disabled");
-      return $"Memory | {_reads} reads, {_writes} writes | RAM banking {banking}";
+      return $"Memory: RAM banking {banking}";
     }
   }
 }

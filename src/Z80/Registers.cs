@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
+using Quill.Definitions;
+using static Quill.Definitions.Opcodes;
 using Quill.Extensions;
-using static Quill.Opcodes;
 
 namespace Quill
 {
