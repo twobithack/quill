@@ -8,81 +8,79 @@ namespace Quill
   public unsafe sealed partial class CPU
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ADC()
+    private void ADC8()
     {
-      if (_instruction.Destination == Operand.HL)
-      {
-        var augend = _hl;
-        if (_carry) augend++;
+      var augend = _a;
+      if (_carry) augend++;
 
-        var addend = ReadWordOperand(_instruction.Source);
-        var sum = augend + addend;
+      var addend = ReadByteOperand(_instruction.Source);
+      var sum = augend + addend;
+      
+      _sign = (sum & 0x80) > 0;
+      _zero = (sum == 0);
+      _halfcarry = (augend & 0x0F) + (addend & 0x0F) > 0x0F;
+      _overflow = (augend < 0x80 && addend < 0x80 && _sign) ||
+                  (augend >= 0x80 && addend >= 0x80 && !_sign);
+      _negative = false;
+      _carry = (sum > byte.MaxValue);
 
-        _sign = (sum & 0x8000) > 0;
-        _zero = (sum == 0);
-        _halfcarry = (augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF;
-        _overflow = (augend < 0x8000 && addend < 0x8000 && _sign) ||
-                    (augend >= 0x8000 && addend >= 0x8000 && !_sign);
-        _negative = false;
-        _carry = (sum > ushort.MaxValue);
-
-        _hl = (ushort)sum;
-      }
-      else
-      {
-        var augend = _a;
-        if (_carry) augend++;
-
-        var addend = ReadByteOperand(_instruction.Source);
-        var sum = augend + addend;
-        
-        _sign = (sum & 0x80) > 0;
-        _zero = (sum == 0);
-        _halfcarry = (augend & 0x0F) + (addend & 0x0F) > 0x0F;
-        _overflow = (augend < 0x80 && addend < 0x80 && _sign) ||
-                    (augend >= 0x80 && addend >= 0x80 && !_sign);
-        _negative = false;
-        _carry = (sum > byte.MaxValue);
-
-        _a = (byte)sum;
-      }
+      _a = (byte)sum;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ADD()
+    private void ADC16()
     {
-      if (_instruction.IsWordOperation())
-      {
-        var augend = ReadWordOperand(_instruction.Destination);
-        var addend = ReadWordOperand(_instruction.Source);
-        var sum = augend + addend;
+      var augend = _hl;
+      if (_carry) augend++;
 
-        _sign = (sum & 0x8000) > 0;
-        _zero = (sum == 0);
-        _halfcarry = (augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF;
-        _overflow = (augend < 0x8000 && addend < 0x8000 && _sign) ||
-                    (augend >= 0x8000 && addend >= 0x8000 && !_sign);
-        _negative = false;
-        _carry = (sum > ushort.MaxValue);
+      var addend = ReadWordOperand(_instruction.Source);
+      var sum = augend + addend;
 
-        WriteWordResult((ushort)sum);
-      }
-      else
-      {
-        var augend = _a;
-        var addend = ReadByteOperand(_instruction.Source);
-        var sum = augend + addend;
+      _sign = (sum & 0x8000) > 0;
+      _zero = (sum == 0);
+      _halfcarry = (augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF;
+      _overflow = (augend < 0x8000 && addend < 0x8000 && _sign) ||
+                  (augend >= 0x8000 && addend >= 0x8000 && !_sign);
+      _negative = false;
+      _carry = (sum > ushort.MaxValue);
 
-        _sign = (sum & 0x80) > 0;
-        _zero = (sum == 0);
-        _halfcarry = (augend & 0x0F) + (addend & 0x0F) > 0x0F;
-        _overflow = (augend < 0x80 && addend < 0x80 && _sign) ||
-                    (augend >= 0x80 && addend >= 0x80 && !_sign);
-        _negative = false;
-        _carry = (sum > byte.MaxValue);
+      _hl = (ushort)sum;
+    }
 
-        _a = (byte)sum;
-      }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ADD8()
+    {
+      var augend = _a;
+      var addend = ReadByteOperand(_instruction.Source);
+      var sum = augend + addend;
+
+      _sign = (sum & 0x80) > 0;
+      _zero = (sum == 0);
+      _halfcarry = (augend & 0x0F) + (addend & 0x0F) > 0x0F;
+      _overflow = (augend < 0x80 && addend < 0x80 && _sign) ||
+                  (augend >= 0x80 && addend >= 0x80 && !_sign);
+      _negative = false;
+      _carry = (sum > byte.MaxValue);
+
+      _a = (byte)sum;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ADD16()
+    {
+      var augend = ReadWordOperand(_instruction.Destination);
+      var addend = ReadWordOperand(_instruction.Source);
+      var sum = augend + addend;
+
+      _sign = (sum & 0x8000) > 0;
+      _zero = (sum == 0);
+      _halfcarry = (augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF;
+      _overflow = (augend < 0x8000 && addend < 0x8000 && _sign) ||
+                  (augend >= 0x8000 && addend >= 0x8000 && !_sign);
+      _negative = false;
+      _carry = (sum > ushort.MaxValue);
+
+      WriteWordResult((ushort)sum);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,8 +101,8 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void BIT()
     {
-      var value = ReadByteOperand(_instruction.Source);
-      var index = GetBitIndex();
+      var value = ReadByteOperand(_instruction.Destination);
+      var index = (byte)_instruction.Source;
 
       _zero = value.TestBit(index);
       _halfcarry = true;
@@ -116,7 +114,7 @@ namespace Quill
     {
       _memPtr = FetchWord();
 
-      if (!EvaluationCondition())
+      if (!EvaluateCondition())
         return;
 
       _sp -= 2;
@@ -231,28 +229,25 @@ namespace Quill
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DEC()
+    private void DEC8()
     {
-      if (_instruction.IsWordOperation())
-      {
-        var minuend = ReadWordOperand(_instruction.Destination);
-        var difference = minuend.Decrement();
-        
-        WriteWordResult(difference);
-      }
-      else
-      {
-        var minuend = ReadByteOperand(_instruction.Destination);
-        var difference = minuend.Decrement();
+      var minuend = ReadByteOperand(_instruction.Destination);
+      var difference = minuend.Decrement();
 
-        _sign = (difference & 0x80) > 0;
-        _zero = (difference == 0);
-        _halfcarry = (minuend & 0x0F) == 0;
-        _overflow = (minuend >= 0x80 && !_sign);
-        _negative = true;
+      _sign = (difference & 0x80) > 0;
+      _zero = (difference == 0);
+      _halfcarry = (minuend & 0x0F) == 0;
+      _overflow = (minuend >= 0x80 && !_sign);
+      _negative = true;
 
-        WriteByteResult(difference);
-      }
+      WriteByteResult(difference);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void DEC16()
+    {
+      var value = ReadWordOperand(_instruction.Destination).Decrement();
+      WriteWordResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -357,54 +352,51 @@ namespace Quill
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void INC()
+    private void INC8()
     {
-      if (_instruction.IsWordOperation())
-      {
-        var augend = ReadWordOperand(_instruction.Destination);
-        var sum = augend.Increment();
+      var augend = ReadByteOperand(_instruction.Destination);
+      var sum = augend.Increment();
+      
+      _sign = (sum & 0x80) > 0;
+      _zero = (sum == 0);
+      _halfcarry = (augend & 0x0F) == 0x0F;
+      _overflow = (augend < 0x80 && _sign);
+      _negative = false;
 
-        WriteWordResult(sum);
-      }
-      else
-      {
-        var augend = ReadByteOperand(_instruction.Destination);
-        var sum = augend.Increment();
-        
-        _sign = (sum & 0x80) > 0;
-        _zero = (sum == 0);
-        _halfcarry = (augend & 0x0F) == 0x0F;
-        _overflow = (augend < 0x80 && _sign);
-        _negative = false;
+      WriteByteResult(sum);
+    }
 
-        WriteByteResult(sum);
-      }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void INC16()
+    {
+      var value = ReadWordOperand(_instruction.Destination).Increment();
+      WriteWordResult(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void IND()
     {
-      
+      // TODO
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void INI()
     {
-      
+      // TODO
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void INIR()
     {
-      
+      // TODO
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void JP()
     {
-      _memPtr = ReadWordOperand(_instruction.Source);
+      _memPtr = ReadWordOperand(_instruction.Destination);
 
-      if (!EvaluationCondition())
+      if (!EvaluateCondition())
         return;
 
       _pc = _memPtr;
@@ -415,30 +407,31 @@ namespace Quill
     {
       var displacement = FetchByte();
 
-      if (!EvaluationCondition())
+      if (!EvaluateCondition())
         return;
 
       _pc += displacement;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void LD()
+    private void LD8()
     {
-      if (_instruction.IsWordOperation())
-      {
-        WriteWordResult(ReadWordOperand(_instruction.Source));
-      }
-      else
-      {
-        WriteByteResult(ReadByteOperand(_instruction.Source));
-      }
+      var value = ReadByteOperand(_instruction.Source);
+      WriteByteResult(value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void LD16()
+    {
+      var value = ReadWordOperand(_instruction.Source);
+      WriteWordResult(value);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void LDD()
     {
-      var word = _memory.ReadByte(_hl);
-      _memory.WriteByte(_de, word);
+      var value = _memory.ReadByte(_hl);
+      _memory.WriteByte(_de, value);
       
       _de--;
       _hl--;
@@ -520,31 +513,31 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OTDR()
     {
-      
+      // TODO
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OTIR()
     {
-      
+      // TODO
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OUT()
     {
-      
+      // TODO
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OUTD()
     {
-      
+      // TODO
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OUTI()
     {
-      
+      // TODO
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -558,23 +551,25 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PUSH()
     {
-      var word = ReadWordOperand(_instruction.Destination);
+      var word = ReadWordOperand(_instruction.Source);
       _memory.WriteWord(_sp, word);
       _sp += 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RES()
+    private void RES(byte index)
     {
-      var value = ReadByteOperand(_instruction.Destination);
-      var index = GetBitIndex();
-      WriteByteResult(value.ResetBit(index));
+      var value = ReadByteOperand(_instruction.Destination).ResetBit(index);
+      WriteByteResult(value, _instruction.Source);
+
+      if (_instruction.Destination != Operand.Implied)
+        WriteByteResult(value, _instruction.Destination);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RET()
     {
-      if (!EvaluationCondition())
+      if (!EvaluateCondition())
         return;
 
       _pc = _memory.ReadWord(_sp);
@@ -792,59 +787,47 @@ namespace Quill
     {
       _sp -= 2;
       _memory.WriteWord(_sp, _pc);
-
-      _pc = _instruction.Destination switch
-      {
-        Operand.RST0 => 0x00,
-        Operand.RST1 => 0x08,
-        Operand.RST2 => 0x10,
-        Operand.RST3 => 0x18,
-        Operand.RST4 => 0x20,
-        Operand.RST5 => 0x28,
-        Operand.RST6 => 0x30,
-        Operand.RST7 => 0x38
-      };
+      _pc = (ushort)_instruction.Destination;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SBC()
+    private void SBC8()
     {
-      if (_instruction.Destination == Operand.HL)
-      {
-        var minuend = _hl;
-        var subtrahend = ReadWordOperand(_instruction.Source);
+      var minuend = _a;
+      var subtrahend = ReadByteOperand(_instruction.Source);
 
-        if (_carry) subtrahend++;
-        var difference = minuend - subtrahend;
+      if (_carry) subtrahend++;
+      var difference = minuend - subtrahend;
 
-        _sign = (difference & 0x8000) > 0;
-        _zero = (minuend == subtrahend);
-        _halfcarry = (minuend & 0x0FFF) - (subtrahend & 0x0FFF) < 0;
-        _overflow = (minuend < 0x8000 && subtrahend >= 0x8000 && _sign) ||
-                    (minuend >= 0x8000 && subtrahend < 0x8000 && !_sign);
-        _negative = true;
-        _carry = (subtrahend > minuend);
+      _sign = (difference & 0x80) > 0;
+      _zero = (minuend == subtrahend);
+      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
+      _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
+                  (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
+      _negative = true;
+      _carry = (subtrahend > minuend);
 
-        _hl = (ushort)difference;
-      }
-      else
-      {
-        var minuend = _a;
-        var subtrahend = ReadByteOperand(_instruction.Source);
+      _a = (byte)difference;
+    }
 
-        if (_carry) subtrahend++;
-        var difference = minuend - subtrahend;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SBC16()
+    {
+      var minuend = _hl;
+      var subtrahend = ReadWordOperand(_instruction.Source);
 
-        _sign = (difference & 0x80) > 0;
-        _zero = (minuend == subtrahend);
-        _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
-        _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
-                    (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
-        _negative = true;
-        _carry = (subtrahend > minuend);
+      if (_carry) subtrahend++;
+      var difference = minuend - subtrahend;
 
-        _a = (byte)difference;
-      }
+      _sign = (difference & 0x8000) > 0;
+      _zero = (minuend == subtrahend);
+      _halfcarry = (minuend & 0x0FFF) - (subtrahend & 0x0FFF) < 0;
+      _overflow = (minuend < 0x8000 && subtrahend >= 0x8000 && _sign) ||
+                  (minuend >= 0x8000 && subtrahend < 0x8000 && !_sign);
+      _negative = true;
+      _carry = (subtrahend > minuend);
+
+      _hl = (ushort)difference;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -856,11 +839,13 @@ namespace Quill
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SET()
+    private void SET(byte index)
     {
-      var value = ReadByteOperand(_instruction.Destination);
-      var index = GetBitIndex();
-      WriteByteResult(value.SetBit(index));
+      var value = ReadByteOperand(_instruction.Source).SetBit(index);
+      WriteByteResult(value, _instruction.Source);
+
+      if (_instruction.Destination != Operand.Implied)
+        WriteByteResult(value, _instruction.Destination);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

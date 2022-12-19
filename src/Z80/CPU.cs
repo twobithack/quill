@@ -14,6 +14,7 @@ namespace Quill
 
     public CPU(VDP vdp)
     {
+      _instruction = new Opcode();
       _memory = new Memory();
       _vdp = vdp;
     }
@@ -50,9 +51,9 @@ namespace Quill
       _instruction = op switch
       {
         0xCB  =>  DecodeCBInstruction(),
-        //0xDD  =>  DecodeDDInstruction(),
+        0xDD  =>  DecodeDDInstruction(),
         0xED  =>  DecodeEDInstruction(),
-        //0xFD  =>  DecodeFDInstruction(),
+        0xFD  =>  DecodeFDInstruction(),
         _     =>  Opcodes.Main[op]
       };
     }
@@ -100,64 +101,84 @@ namespace Quill
     {
       switch (_instruction.Operation)
       {
-        case Operation.ADC:   ADC();  break;
-        case Operation.ADD:   ADD();  break;
-        case Operation.AND:   AND();  break;
-        case Operation.BIT:   BIT();  break;
-        case Operation.CALL:  CALL(); break;
-        case Operation.CCF:   CCF();  break;
-        case Operation.CP:    CP();   break;
-        case Operation.CPD:   CPD();  break;
-        case Operation.CPI:   CPI();  break;
-        case Operation.CPIR:  CPIR(); break;
-        case Operation.CPL:   CPL();  break;
-        case Operation.DAA:   DAA();  break;
-        case Operation.DEC:   DEC();  break;
-        case Operation.DI:    DI();   break;
-        case Operation.DJNZ:  DJNZ(); break;
-        case Operation.EI:    EI();   break;
-        case Operation.EX:    EX();   break;
-        case Operation.EXX:   EXX();  break;
-        case Operation.HALT:  HALT(); break;
-        case Operation.IM:    IM();   break;
-        case Operation.IN:    IN();   break;
-        case Operation.INC:   INC();  break;
-        case Operation.IND:   IND();  break;
-        case Operation.INI:   INI();  break;
-        case Operation.INIR:  INIR(); break;
-        case Operation.JP:    JP();   break;
-        case Operation.JR:    JR();   break;
-        case Operation.LD:    LD();   break;
-        case Operation.NEG:   NEG();  break;
-        case Operation.NOP:   NOP();  break;
-        case Operation.OR:    OR();   break;
-        case Operation.OTDR:  OTDR(); break;
-        case Operation.OTIR:  OTIR(); break;
-        case Operation.OUT:   OUT();  break;
-        case Operation.OUTD:  OUTD(); break;
-        case Operation.OUTI:  OUTI(); break;
-        case Operation.POP:   POP();  break;
-        case Operation.PUSH:  PUSH(); break;
-        case Operation.RES:   RES();  break;
-        case Operation.RL:    RL();   break;
-        case Operation.RLA:   RLA();  break;
-        case Operation.RLC:   RLC();  break;
-        case Operation.RLCA:  RLCA(); break;
-        case Operation.RLD:   RLD();  break;
-        case Operation.RR:    RR();   break;
-        case Operation.RRA:   RRA();  break;
-        case Operation.RRC:   RRC();  break;
-        case Operation.RRCA:  RRCA(); break;
-        case Operation.RRD:   RRD();  break;
-        case Operation.RST:   RST();  break;
-        case Operation.SBC:   SBC();  break;
-        case Operation.SCF:   SCF();  break;
-        case Operation.SET:   SET();  break;
-        case Operation.SLA:   SLA();  break;
-        case Operation.SRA:   SRA();  break;
-        case Operation.SRL:   SRL();  break;
-        case Operation.SUB:   SUB();  break;
-        case Operation.XOR:   XOR();  break;
+        case Operation.ADC8:  ADC8();   return;
+        case Operation.ADC16: ADC16();  return;
+        case Operation.ADD8:  ADD8();   return;
+        case Operation.ADD16: ADD16();  return;
+        case Operation.AND:   AND();    return;
+        case Operation.BIT:   BIT();    return;
+        case Operation.CALL:  CALL();   return;
+        case Operation.CCF:   CCF();    return;
+        case Operation.CP:    CP();     return;
+        case Operation.CPD:   CPD();    return;
+        case Operation.CPI:   CPI();    return;
+        case Operation.CPIR:  CPIR();   return;
+        case Operation.CPL:   CPL();    return;
+        case Operation.DAA:   DAA();    return;
+        case Operation.DEC8:  DEC8();   return;
+        case Operation.DEC16: DEC16();  return;
+        case Operation.DI:    DI();     return;
+        case Operation.DJNZ:  DJNZ();   return;
+        case Operation.EI:    EI();     return;
+        case Operation.EX:    EX();     return;
+        case Operation.EXX:   EXX();    return;
+        case Operation.HALT:  HALT();   return;
+        case Operation.IM:    IM();     return;
+        case Operation.IN:    IN();     return;
+        case Operation.INC8:  INC8();   return;
+        case Operation.INC16: INC16();  return;
+        case Operation.IND:   IND();    return;
+        case Operation.INI:   INI();    return;
+        case Operation.INIR:  INIR();   return;
+        case Operation.JP:    JP();     return;
+        case Operation.JR:    JR();     return;
+        case Operation.LD8:   LD8();    return;
+        case Operation.LD16:  LD16();   return;
+        case Operation.NEG:   NEG();    return;
+        case Operation.NOP:   NOP();    return;
+        case Operation.OR:    OR();     return;
+        case Operation.OTDR:  OTDR();   return;
+        case Operation.OTIR:  OTIR();   return;
+        case Operation.OUT:   OUT();    return;
+        case Operation.OUTD:  OUTD();   return;
+        case Operation.OUTI:  OUTI();   return;
+        case Operation.POP:   POP();    return;
+        case Operation.PUSH:  PUSH();   return;
+        case Operation.RES0:  RES(0);   return;
+        case Operation.RES1:  RES(1);   return;
+        case Operation.RES2:  RES(2);   return;
+        case Operation.RES3:  RES(3);   return;
+        case Operation.RES4:  RES(4);   return;
+        case Operation.RES5:  RES(5);   return;
+        case Operation.RES6:  RES(6);   return;
+        case Operation.RES7:  RES(7);   return;
+        case Operation.RL:    RL();     return;
+        case Operation.RLA:   RLA();    return;
+        case Operation.RLC:   RLC();    return;
+        case Operation.RLCA:  RLCA();   return;
+        case Operation.RLD:   RLD();    return;
+        case Operation.RR:    RR();     return;
+        case Operation.RRA:   RRA();    return;
+        case Operation.RRC:   RRC();    return;
+        case Operation.RRCA:  RRCA();   return;
+        case Operation.RRD:   RRD();    return;
+        case Operation.RST:   RST();    return;
+        case Operation.SBC8:  SBC8();   return;
+        case Operation.SBC16: SBC16();  return;
+        case Operation.SCF:   SCF();    return;
+        case Operation.SET0:  SET(0);   return;
+        case Operation.SET1:  SET(1);   return;
+        case Operation.SET2:  SET(2);   return;
+        case Operation.SET3:  SET(3);   return;
+        case Operation.SET4:  SET(4);   return;
+        case Operation.SET5:  SET(5);   return;
+        case Operation.SET6:  SET(6);   return;
+        case Operation.SET7:  SET(7);   return;
+        case Operation.SLA:   SLA();    return;
+        case Operation.SRA:   SRA();    return;
+        case Operation.SRL:   SRL();    return;
+        case Operation.SUB:   SUB();    return;
+        case Operation.XOR:   XOR();    return;
       }
     }
 
@@ -199,6 +220,7 @@ namespace Quill
         case Operand.F: return (byte)_flags;
         case Operand.H: return _h;
         case Operand.L: return _l;
+        default: throw new Exception($"Invalid byte operand: {_instruction.Destination}");
       }
       return _memory.ReadByte(_memPtr);
     }
@@ -222,14 +244,18 @@ namespace Quill
         case Operand.IX: return _ix;
         case Operand.IY: return _iy;
         case Operand.SP: return _sp;
+        default: throw new Exception($"Invalid word operand: {_instruction.Destination}");
       }
       return _memory.ReadByte(_memPtr);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WriteByteResult(byte value)
+    private void WriteByteResult(byte value) => WriteByteResult(value, _instruction.Destination);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WriteByteResult(byte value, Operand destination)
     {
-      switch (_instruction.Destination)
+      switch (destination)
       {
         case Operand.A: _a = value; return;
         case Operand.B: _b = value; return;
@@ -254,6 +280,7 @@ namespace Quill
         case Operand.BCi: _memPtr = _bc; break;
         case Operand.DEi: _memPtr = _de; break;
         case Operand.HLi: _memPtr = _hl; break;
+        default: throw new Exception($"Invalid byte destination: {destination}");
       }
       _memory.WriteByte(_memPtr, value);
     }
@@ -274,11 +301,12 @@ namespace Quill
         case Operand.IX: _ix = value; return;
         case Operand.IY: _iy = value; return;
         case Operand.SP: _sp = value; return;
+        default: throw new Exception($"Invalid word destination: {_instruction.Destination}");
       }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool EvaluationCondition() => _instruction.Source switch
+    private bool EvaluateCondition() => _instruction.Source switch
     {
       Operand.Carry     => _carry,
       Operand.Zero      => _zero,
@@ -288,23 +316,11 @@ namespace Quill
       Operand.NonZero   => !_zero,
       Operand.Positive  => !_sign,
       Operand.Odd       => !_parity,
-      _                 => true
+      Operand.Implied   => true,
+      _ => throw new Exception($"Invalid condition: {_instruction.Source}")
     };
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort GetBitIndex() => _instruction.Destination switch
-    {
-      Operand.Bit0  => 0,
-      Operand.Bit1  => 1,
-      Operand.Bit2  => 2,
-      Operand.Bit3  => 3,
-      Operand.Bit4  => 4,
-      Operand.Bit5  => 5,
-      Operand.Bit6  => 6,
-      Operand.Bit7  => 7
-    };
-
-    public void DumpMemory(string path) => _memory.Dump(path);
+    public void DumpMemory(string path) => _memory.DumpRAM(path);
     public void DumpROM(string path) => _memory.DumpROM(path);
 
     public override String ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction} | Cycle: {_instructionCount}\r\n{_memory}";

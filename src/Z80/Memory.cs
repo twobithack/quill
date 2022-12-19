@@ -17,6 +17,9 @@ namespace Quill
     private bool _bankEnable;
     private bool _bankSelect;
 
+    private int _reads;
+    private int _writes;
+
     public Memory() => Array.Fill(_rom, new byte[PageSize]);
 
     public void LoadROM(byte[] rom)
@@ -29,6 +32,7 @@ namespace Quill
     public byte ReadByte(ushort address)
     {
       var index = address % PageSize;
+      _reads++;
 
       if (address < 0x400)
         return _rom[0x00][index];
@@ -64,6 +68,7 @@ namespace Quill
           address < 0xF000)
         return;
 
+      _writes++;
       if (address < PageSize * 3)
       {
         if (!_bankEnable)
@@ -104,17 +109,30 @@ namespace Quill
       WriteByte(address.Increment(), word.GetHighByte());
     }
 
-    public void Dump(string path)
+    public void DumpRAM(string path)
     {
-      var dump = new List<string>();
+      var memory = new List<string>();
+      var bank0 = new List<string>();
+      var bank1 = new List<string>();
       for (byte hi = 0; hi < 0x40; hi++)
       {
-        var row = string.Empty;
+        var temp0 = string.Empty;
+        var temp1 = string.Empty;
+        var temp2 = string.Empty;
         for (byte lo = 0; lo < byte.MaxValue; lo++)
-          row += _ram[hi.Concat(lo)].ToHex();
-        dump.Add(row);
+        {
+          temp0 += _ram[hi.Concat(lo)].ToHex();
+          temp1 += _ramBank0[hi.Concat(lo)].ToHex();
+          temp2 += _ramBank1[hi.Concat(lo)].ToHex();
+        }
+        memory.Add(temp0);
+        bank0.Add(temp1);
+        bank1.Add(temp2);
       }
-      File.WriteAllLines(path, dump);
+      memory.AddRange(bank0);
+      memory.AddRange(bank1);
+      
+      File.WriteAllLines(path, memory);
     }
 
     public void DumpROM(string path)

@@ -16,13 +16,19 @@ namespace Quill
       sw.Start();
       while (cycles < 100000000ul)
       {
+#if DEBUG
+        Console.WriteLine(cpu);
+        Console.Read();
+#endif
         cpu.Step();
         cycles++;
       }
       sw.Stop();
 
+#if DEBUG
       cpu.DumpMemory("mem.txt");
-      // cpu.DumpROM("rom.txt");
+      cpu.DumpROM("rom.txt");
+#endif
 
       Console.WriteLine(cpu);
       Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(cycles * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");

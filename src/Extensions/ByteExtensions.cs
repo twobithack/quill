@@ -1,3 +1,4 @@
+using Quill.Definitions;
 using System.Runtime.CompilerServices;
 
 namespace Quill.Extensions
@@ -20,19 +21,19 @@ namespace Quill.Extensions
     public static byte GetHighNibble(this byte value) => (byte)(value >> 4);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TestBit(this byte value, ushort index) => ((value >> index) & 1) > 0;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool GetLSB(this byte value) => (value & 1) > 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool GetMSB(this byte value) => value.TestBit(7);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte SetBit(this byte value, ushort index) => (byte)(value | (1 << index));
+    public static bool TestBit(this byte value, byte index) => ((value >> index) & 1) > 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte ResetBit(this byte value, ushort index) => (byte)(value & ~(1 << index));
+    public static byte SetBit(this byte value, byte index) => (byte)(value | (1 << index));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static byte ResetBit(this byte value, byte index) => (byte)(value & ~(1 << index));
     
     public static string ToHex(this byte value) => value.ToString("X2");
   }
