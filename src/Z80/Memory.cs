@@ -111,7 +111,7 @@ namespace Quill
       {
         var row = string.Empty;
         for (byte lo = 0; lo < byte.MaxValue; lo++)
-          row += _ram[hi.Concat(lo)].ToHex() + " ";
+          row += _ram[hi.Concat(lo)].ToHex();
         dump.Add(row);
       }
       File.WriteAllLines(path, dump);

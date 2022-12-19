@@ -50,9 +50,9 @@ namespace Quill
       _instruction = op switch
       {
         0xCB  =>  DecodeCBInstruction(),
-        0xDD  =>  DecodeDDInstruction(),
+        //0xDD  =>  DecodeDDInstruction(),
         0xED  =>  DecodeEDInstruction(),
-        0xFD  =>  DecodeFDInstruction(),
+        //0xFD  =>  DecodeFDInstruction(),
         _     =>  Opcodes.Main[op]
       };
     }
