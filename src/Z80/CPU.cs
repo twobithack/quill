@@ -1,7 +1,7 @@
-using System.Runtime.CompilerServices;
 using Quill.Definitions;
 using Quill.Extensions;
 using static Quill.Definitions.Opcodes;
+using System.Runtime.CompilerServices;
 
 namespace Quill
 {
@@ -305,6 +305,7 @@ namespace Quill
     };
 
     public void DumpMemory(string path) => _memory.Dump(path);
+    public void DumpROM(string path) => _memory.DumpROM(path);
 
     public override String ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction} | Cycle: {_instructionCount}\r\n{_memory}";
   }

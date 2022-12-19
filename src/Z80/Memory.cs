@@ -107,16 +107,27 @@ namespace Quill
     public void Dump(string path)
     {
       var dump = new List<string>();
+      for (byte hi = 0; hi < 0x40; hi++)
+      {
+        var row = string.Empty;
+        for (byte lo = 0; lo < byte.MaxValue; lo++)
+          row += _ram[hi.Concat(lo)].ToHex() + " ";
+        dump.Add(row);
+      }
+      File.WriteAllLines(path, dump);
+    }
 
-      //for (int bank = 0; bank < 0x03; bank++)
+    public void DumpROM(string path)
+    {
+      var dump = new List<string>();
+      for (byte page = 0; page < 0x40; page++)
         for (byte hi = 0; hi < 0x40; hi++)
         {
           var row = string.Empty;
           for (byte lo = 0; lo < byte.MaxValue; lo++)
-            row += _ram[hi.Concat(lo)].ToHex() + " ";
+            row += _rom[page][hi.Concat(lo)].ToHex();
           dump.Add(row);
         }
-          
       File.WriteAllLines(path, dump);
     }
 
