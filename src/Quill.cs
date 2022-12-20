@@ -16,10 +16,6 @@ namespace Quill
       sw.Start();
       while (cycles < 100000000ul)
       {
-#if DEBUG
-        Console.WriteLine(cpu);
-        Console.Read();
-#endif
         cpu.Step();
         cycles++;
       }

@@ -66,7 +66,7 @@ namespace Quill.Definitions
       // Opcodes 0x20 - 0x2F
       new Opcode(Operation.JR,    Operand.Immediate,  Operand.NonZero,     7),
       new Opcode(Operation.LD16,  Operand.HL,         Operand.Immediate,  10),
-      new Opcode(Operation.LD8,   Operand.Indirect,   Operand.HL,         16),
+      new Opcode(Operation.LD16,  Operand.Indirect,   Operand.HL,         16),
       new Opcode(Operation.INC16, Operand.HL,         Operand.Implied,     6),
       new Opcode(Operation.INC8,  Operand.H,          Operand.Implied,     4),
       new Opcode(Operation.DEC8,  Operand.H,          Operand.Implied,     4),
@@ -1293,7 +1293,7 @@ namespace Quill.Definitions
       new Opcode(Operation.IN,    Operand.E,          Operand.C,          12),
       new Opcode(Operation.OUT,   Operand.C,          Operand.E,          12),
       new Opcode(Operation.ADC16, Operand.Implied,    Operand.DE,         15),
-      new Opcode(Operation.LD8,   Operand.DE,         Operand.Indirect,   20),
+      new Opcode(Operation.LD16,  Operand.DE,         Operand.Indirect,   20),
       new Opcode(),    
       new Opcode(),    
       new Opcode(Operation.IM,    (Operand) 2,        Operand.Implied,     8),

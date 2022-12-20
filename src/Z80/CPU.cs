@@ -25,6 +25,10 @@ namespace Quill
     {
       HandleInterrupts();
       DecodeInstruction();
+      #if DEBUG
+        Console.WriteLine(this);
+        Console.Read();
+      #endif
       ExecuteInstruction();
       _instructionCount++;
     }
@@ -32,6 +36,8 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void HandleInterrupts()
     {
+      if (_halt) throw new Exception("Halted");
+
       if (_vdp.IRQ && _iff1)
       {
         _halt = false;
@@ -152,6 +158,8 @@ namespace Quill
         case Operation.RES5:  RES(5);   return;
         case Operation.RES6:  RES(6);   return;
         case Operation.RES7:  RES(7);   return;
+        case Operation.RET:   RET();    return;
+        case Operation.RETI:  RET();    return;
         case Operation.RL:    RL();     return;
         case Operation.RLA:   RLA();    return;
         case Operation.RLC:   RLC();    return;
@@ -179,6 +187,7 @@ namespace Quill
         case Operation.SRL:   SRL();    return;
         case Operation.SUB:   SUB();    return;
         case Operation.XOR:   XOR();    return;
+        default: throw new Exception($"Not found: {_instruction}");
       }
     }
 
@@ -220,7 +229,7 @@ namespace Quill
         case Operand.F: return (byte)_flags;
         case Operand.H: return _h;
         case Operand.L: return _l;
-        default: throw new Exception($"Invalid byte operand: {_instruction.Destination}");
+        default: throw new Exception($"Invalid byte operand: {_instruction}");
       }
       return _memory.ReadByte(_memPtr);
     }
@@ -244,7 +253,7 @@ namespace Quill
         case Operand.IX: return _ix;
         case Operand.IY: return _iy;
         case Operand.SP: return _sp;
-        default: throw new Exception($"Invalid word operand: {_instruction.Destination}");
+        default: throw new Exception($"Invalid word operand: {_instruction}");
       }
       return _memory.ReadByte(_memPtr);
     }
@@ -301,7 +310,7 @@ namespace Quill
         case Operand.IX: _ix = value; return;
         case Operand.IY: _iy = value; return;
         case Operand.SP: _sp = value; return;
-        default: throw new Exception($"Invalid word destination: {_instruction.Destination}");
+        default: throw new Exception($"Invalid word destination: {_instruction}");
       }
     }
 
@@ -317,7 +326,7 @@ namespace Quill
       Operand.Positive  => !_sign,
       Operand.Odd       => !_parity,
       Operand.Implied   => true,
-      _ => throw new Exception($"Invalid condition: {_instruction.Source}")
+      _ => throw new Exception($"Invalid condition: {_instruction}")
     };
 
     public void DumpMemory(string path) => _memory.DumpRAM(path);
