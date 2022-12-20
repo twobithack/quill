@@ -9,28 +9,31 @@ namespace Quill
     private readonly byte[] _ram = new byte[PageSize];
     private readonly byte[] _ramBank0 = new byte[PageSize];
     private readonly byte[] _ramBank1 = new byte[PageSize];
-    private readonly byte[][] _rom = new byte[0x40][];
+    private byte[][] _rom = new byte[0x40][];
 
-    private byte _page0 = 0x00;
-    private byte _page1 = 0x01;
-    private byte _page2 = 0x02;
+    private byte _page0;
+    private byte _page1;
+    private byte _page2;
     private bool _bankEnable;
     private bool _bankSelect;
 
     private int _reads;
     private int _writes;
 
-    public Memory() => Array.Fill(_rom, new byte[PageSize]);
-
-    public void LoadROM(byte[] rom)
+    public Memory()
     {
-      var includesHeader = (rom.Length % PageSize == 0x200);
-      var rom_start = includesHeader 
-                    ? 0x200 
-                    : 0x00;
-      Console.WriteLine(rom.Length % 512);
-      for (int i = rom_start; i < rom.Count(); i++)
-        _rom[i / PageSize][i % PageSize] = rom[i];
+      for (int i = 0; i < 0x40; i++)
+        _rom[i] = new byte[PageSize];
+    }
+    public void LoadROM(byte[] program)
+    {
+      var headerOffset = program.Length % PageSize;
+      for (int i = 0; i < program.Length; i++)
+      {
+        var page = (i / PageSize) + headerOffset;
+        var index = (i % PageSize) + headerOffset;
+        _rom[page][index] = program[i];
+      }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -65,7 +68,7 @@ namespace Quill
     public void WriteByte(ushort address, byte value)
     {
       var index = address % PageSize;
-      Console.WriteLine($"Writing {value.ToHex()} to {address.ToHex()}");
+      // Console.WriteLine($"Writing {value.ToHex()} to {address.ToHex()}");
 
       if (address < PageSize * 2)
       {
@@ -145,8 +148,10 @@ namespace Quill
 
     public void DumpROM(string path)
     {
+      Console.Write("Dumping...");
       var dump = new List<string>();
       for (byte page = 0; page < 0x40; page++)
+      {
         for (byte hi = 0; hi < 0x40; hi++)
         {
           var row = string.Empty;
@@ -154,7 +159,9 @@ namespace Quill
             row += _rom[page][hi.Concat(lo)].ToHex();
           dump.Add(row);
         }
+      }
       File.WriteAllLines(path, dump);
+      Console.WriteLine(" Done.");
     }
 
     public override string ToString()
