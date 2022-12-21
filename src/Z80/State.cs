@@ -5,9 +5,10 @@ using Quill.Extensions;
 
 namespace Quill
 {
-  public unsafe sealed partial class CPU
+  public unsafe ref partial struct CPU
   {
     private Memory _memory;
+    private VDP _vdp;
     private Flags _flags;
 
     private bool _halt;
@@ -35,7 +36,7 @@ namespace Quill
     private ushort _addressBus;
 
     private Opcode _instruction;
-    private int _instructionCount;
+    private int _cycleCount;
 
     private byte _ixh
     {

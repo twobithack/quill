@@ -1,8 +1,6 @@
-using System.Runtime.CompilerServices;
-
 namespace Quill.Definitions
 {
-  public unsafe struct Opcodes
+  unsafe public struct Opcodes
   {
     public readonly struct Opcode
     {

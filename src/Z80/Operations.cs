@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Quill
 {
-  public unsafe sealed partial class CPU
+  public unsafe ref partial struct CPU
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ADC8()
