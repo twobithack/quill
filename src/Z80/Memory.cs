@@ -1,29 +1,34 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Quill.Extensions;
 
 namespace Quill
 {
-  public unsafe sealed class Memory
+  public unsafe struct Memory
   {
+    private const ushort PageCount = 0x40;
     private const ushort PageSize = 0x4000;
-    private readonly byte[] _ram = new byte[PageSize];
-    private readonly byte[] _ramBank0 = new byte[PageSize];
-    private readonly byte[] _ramBank1 = new byte[PageSize];
-    private byte[][] _rom = new byte[0x40][];
+    private readonly byte[] _ram;
+    private readonly byte[] _bank0;
+    private readonly byte[] _bank1;
+    private readonly byte[][] _rom;
 
-    private byte _page0;
-    private byte _page1;
-    private byte _page2;
+    private byte _page0 = 0x00;
+    private byte _page1 = 0x01;
+    private byte _page2 = 0x02;
     private bool _bankEnable;
     private bool _bankSelect;
 
-    private int _reads;
-    private int _writes;
-
     public Memory()
     {
+      _bankEnable = _bankSelect = false;
+      _ram = new byte[PageSize]; //GC.AllocateArray<byte>(PageSize, pinned: true);
+      _bank0 = new byte[PageSize]; //GC.AllocateArray<byte>(PageSize, pinned: true);
+      _bank1 = new byte[PageSize]; //GC.AllocateArray<byte>(PageSize, pinned: true);
+
+      _rom = new byte[PageCount][];
       for (int i = 0; i < 0x40; i++)
-        _rom[i] = new byte[PageSize];
+        _rom[i] = new byte[PageSize]; //GC.AllocateArray<byte>(PageSize, pinned: true);
     }
     public void LoadROM(byte[] program)
     {
@@ -40,7 +45,6 @@ namespace Quill
     public byte ReadByte(ushort address)
     {
       var index = address % PageSize;
-      _reads++;
 
       if (address < 0x400)
         return _rom[0x00][index];
@@ -55,8 +59,8 @@ namespace Quill
       {
         if (_bankEnable)
           return _bankSelect
-               ? _ramBank0[index]
-               : _ramBank1[index];
+               ? _bank0[index]
+               : _bank1[index];
 
         return _rom[_page2][index];
       }
@@ -68,27 +72,23 @@ namespace Quill
     public void WriteByte(ushort address, byte value)
     {
       var index = address % PageSize;
-      // Console.WriteLine($"Writing {value.ToHex()} to {address.ToHex()}");
 
       if (address < PageSize * 2)
-      {
         return;
-      }
-
+    
       if (address > 0xDFFB && 
           address < 0xF000)
         return;
 
-      _writes++;
       if (address < PageSize * 3)
       {
         if (!_bankEnable)
           return;
 
         if (_bankSelect)
-          _ramBank0[index] = value;
+          _bank0[index] = value;
         else
-          _ramBank1[index] = value;
+          _bank1[index] = value;
 
         return;
       }
@@ -133,8 +133,8 @@ namespace Quill
         for (byte lo = 0; lo < byte.MaxValue; lo++)
         {
           temp0 += _ram[hi.Concat(lo)].ToHex();
-          temp1 += _ramBank0[hi.Concat(lo)].ToHex();
-          temp2 += _ramBank1[hi.Concat(lo)].ToHex();
+          temp1 += this._bank0[hi.Concat(lo)].ToHex();
+          temp2 += _bank1[hi.Concat(lo)].ToHex();
         }
         memory.Add(temp0);
         bank0.Add(temp1);
@@ -170,7 +170,6 @@ namespace Quill
                   ? $"enabled (Bank {_bankSelect.ToBit()})"
                   : "disabled");
       return $"Memory: RAM banking {banking} | " + 
-             $"{_reads} reads, {_writes} writes | " +
              $"P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
     }
   }

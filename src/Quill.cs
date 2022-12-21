@@ -9,8 +9,9 @@ namespace Quill
       var vdp = new VDP();
       var cpu = new CPU(vdp);
       var cycles = 0ul;
-      var program = ReadROM(@"test/sonic.sms");
+      var program = ReadROM(@"test/zexdoc.sms");
       cpu.LoadROM(program);
+      //cpu.DumpROM("rom.txt");
 
       var sw = new Stopwatch();
       sw.Start();
@@ -23,9 +24,7 @@ namespace Quill
 
 #if DEBUG
       cpu.DumpMemory("mem.txt");
-      cpu.DumpROM("rom.txt");
 #endif
-
       Console.WriteLine(cpu);
       Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(cycles * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");
       // Console.Read();
