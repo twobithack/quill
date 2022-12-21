@@ -211,6 +211,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte ReadByteOperand(Operand operand)
   {
+    ushort address;
     switch (operand)
     {
       case Operand.Immediate:
@@ -230,24 +231,25 @@ unsafe public ref partial struct CPU
       case Operand.IYl: return _iyl;
 
       case Operand.Indirect:
-        _addressBus = FetchWord();
+        address = FetchWord();
         break;
 
-      case Operand.BCi: _addressBus = _bc; break;
-      case Operand.DEi: _addressBus = _de; break;
-      case Operand.HLi: _addressBus = _hl; break;
+      case Operand.BCi: address = _bc; break;
+      case Operand.DEi: address = _de; break;
+      case Operand.HLi: address = _hl; break;
 
-      case Operand.IXd: _addressBus = (ushort)(_ix + FetchByte()); break;
-      case Operand.IYd: _addressBus = (ushort)(_iy + FetchByte()); break;
+      case Operand.IXd: address = (ushort)(_ix + FetchByte()); break;
+      case Operand.IYd: address = (ushort)(_iy + FetchByte()); break;
 
-      //default: throw new Exception($"Invalid byte operand: {_instruction}");
+      default: throw new Exception($"Invalid byte operand: {_instruction}");
     }
-    return _memory.ReadByte(_addressBus);
+    return _memory.ReadByte(address);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort ReadWordOperand(Operand operand)
   {
+    ushort address;
     switch (operand)
     {
       case Operand.Immediate:
@@ -262,8 +264,8 @@ unsafe public ref partial struct CPU
       case Operand.SP: return _sp;
 
       case Operand.Indirect: 
-        _addressBus = FetchWord();
-        return _memory.ReadByte(_addressBus);
+        address = FetchWord();
+        return _memory.ReadByte(address);
 
       default: throw new Exception($"Invalid word operand: {_instruction}");
     }
@@ -287,6 +289,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteResult(byte value, Operand destination)
   {
+    ushort address = 0x0000;
     switch (destination)
     { 
       case Operand.A: _a = value; return;
@@ -301,16 +304,16 @@ unsafe public ref partial struct CPU
       case Operand.IYh: _iyh = value; return;
       case Operand.IYl: _iyl = value; return;
 
-      case Operand.BCi: _addressBus = _bc; break;
-      case Operand.DEi: _addressBus = _de; break;
-      case Operand.HLi: _addressBus = _hl; break;
-      case Operand.IXd: _addressBus = (byte)(_ix + FetchByte()); break;
-      case Operand.IYd: _addressBus = (byte)(_iy + FetchByte()); break;
-      case Operand.Indirect: _addressBus = FetchWord(); break;
+      case Operand.BCi: address = _bc; break;
+      case Operand.DEi: address = _de; break;
+      case Operand.HLi: address = _hl; break;
+      case Operand.IXd: address = (byte)(_ix + FetchByte()); break;
+      case Operand.IYd: address = (byte)(_iy + FetchByte()); break;
+      case Operand.Indirect: address = FetchWord(); break;
 
-      //default: throw new Exception($"Invalid byte destination: {destination}");
+      default: throw new Exception($"Invalid byte destination: {destination}");
     }
-    _memory.WriteByte(_addressBus, value);
+    _memory.WriteByte(address, value);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -319,7 +322,8 @@ unsafe public ref partial struct CPU
     switch (_instruction.Destination)
     {
       case Operand.Indirect:
-        _memory.WriteWord(_addressBus, value);
+        var address = FetchWord();
+        _memory.WriteWord(address, value);
         return;
 
       case Operand.AF: _af = value; return;
@@ -341,7 +345,7 @@ unsafe public ref partial struct CPU
       case 0x7E:
       case 0x7F: 
         // TODO: write to sound chip
-          return;
+        return;
 
       case 0xBE:
         _vdp.Data = value;
@@ -369,7 +373,7 @@ unsafe public ref partial struct CPU
     Operand.Positive  => !_sign,
     Operand.Odd       => !_parity,
     Operand.Implied   => true,
-    //_ => throw new Exception($"Invalid condition: {_instruction}")
+    _ => throw new Exception($"Invalid condition: {_instruction}")
   };
 
   public void DumpMemory(string path) => _memory.DumpRAM(path);
