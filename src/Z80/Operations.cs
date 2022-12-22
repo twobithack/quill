@@ -677,9 +677,9 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RES(byte index)
   {
-    var value = ReadByteOperand(_instruction.Destination).ResetBit(index);
-    WriteByteResult(value, _instruction.Source);
+    var value = ReadByteOperand(_instruction.Source).ResetBit(index);
 
+    WriteByteResult(value, _instruction.Source);
     if (_instruction.Destination != Operand.Implied)
       WriteByteResult(value, _instruction.Destination);
   }
@@ -867,7 +867,7 @@ unsafe public ref partial struct CPU
     if (lsb)
       flags |= Flags.Carry;
     
-    WriteByteResult(value, _instruction.Destination);
+    WriteByteResult(value, _instruction.Source);
     if (_instruction.Destination != Operand.Implied)
       WriteByteResult(value, _instruction.Destination);
     _flags = flags;
@@ -975,8 +975,8 @@ unsafe public ref partial struct CPU
   private void SET(byte index)
   {
     var value = ReadByteOperand(_instruction.Source).SetBit(index);
-    WriteByteResult(value, _instruction.Source);
 
+    WriteByteResult(value, _instruction.Source);
     if (_instruction.Destination != Operand.Implied)
       WriteByteResult(value, _instruction.Destination);
   }
