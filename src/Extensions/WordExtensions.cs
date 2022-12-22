@@ -5,10 +5,10 @@ namespace Quill.Extensions;
 unsafe static class WordExtensions
 {
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static ushort Increment(this ushort word) => (ushort)word++;
+  public static ushort Increment(this ushort word) => (ushort)(word + 1);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static ushort Decrement(this ushort word) => (ushort)word--;
+  public static ushort Decrement(this ushort word) => (ushort)(word - 1);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static byte LowByte(this ushort word) => (byte)word;
