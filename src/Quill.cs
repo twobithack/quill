@@ -9,15 +9,15 @@ public unsafe sealed class Quill
     var rom = ReadROM(@"test/sonic.sms");
     var vdp = new VDP();
     var cpu = new CPU(rom, vdp);
-    var cycles = 0ul;
+    var instructions = 0ul;
     //cpu.DumpROM("rom.txt");
 
     var sw = new Stopwatch();
     sw.Start();
-    while (cycles < 1000000000ul)
+    while (instructions < 1000000000ul)
     {
       cpu.Step();
-      cycles++;
+      instructions++;
     }
     sw.Stop();
 
@@ -25,7 +25,7 @@ public unsafe sealed class Quill
     cpu.DumpMemory("mem.txt");
 #endif
     Console.WriteLine(cpu.ToString());
-    Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(cycles * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");
+    Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(instructions * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");
     // Console.Read();
   }
 

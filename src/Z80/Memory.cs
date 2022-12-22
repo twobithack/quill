@@ -114,8 +114,8 @@ unsafe public ref struct Memory
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteWord(ushort address, ushort word)
   {
-    WriteByte(address, word.GetLowByte());
-    WriteByte(address.Increment(), word.GetHighByte());
+    WriteByte(address, word.LowByte());
+    WriteByte(address.Increment(), word.HighByte());
   }
 
   public void DumpRAM(string path)
