@@ -17,7 +17,7 @@ unsafe public ref struct VDP
   public byte HCounter = 0x00;
   public byte Control = 0x00;
   public byte Data = 0x00;
-  public byte Status = 0x00;
+  public byte Status = 0xFF;
 
   public VDP() {}
 

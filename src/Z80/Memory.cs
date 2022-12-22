@@ -31,8 +31,8 @@ unsafe public ref struct Memory
       var index = (i % PageSize) + headerOffset;
       rom[page, index] = program[i];
     }
-    _rom = new ReadOnlySpan2D<byte>(rom);
 
+    _rom = new ReadOnlySpan2D<byte>(rom);
     _ram = new Span<byte>(new byte[PageSize]);
     _bank0 = new Span<byte>(new byte[PageSize]);
     _bank1 = new Span<byte>(new byte[PageSize]);
@@ -83,6 +83,7 @@ unsafe public ref struct Memory
       if (!_bankEnable)
         return;
 
+      // Console.WriteLine($"Writing to {value.ToHex()} to {address.ToHex()}");
       if (_bankSelect)
         _bank0[index] = value;
       else
@@ -90,7 +91,8 @@ unsafe public ref struct Memory
 
       return;
     }
-
+    
+    // Console.WriteLine($"Writing {value.ToHex()} to {address.ToHex()}");
     if (address == 0xFFFC)
     {
       _bankEnable = value.TestBit(3);
@@ -121,25 +123,17 @@ unsafe public ref struct Memory
   public void DumpRAM(string path)
   {
     var memory = new List<string>();
-    var bank0 = new List<string>();
-    var bank1 = new List<string>();
-    for (byte hi = 0; hi < 0x40; hi++)
+    var row = string.Empty;
+
+    for (ushort address = 0; address < PageSize; address++)
     {
-      var temp0 = string.Empty;
-      var temp1 = string.Empty;
-      var temp2 = string.Empty;
-      for (byte lo = 0; lo < byte.MaxValue; lo++)
+      if (address % PageCount == 0)
       {
-        temp0 += _ram[hi.Concat(lo)].ToHex();
-        temp1 += _bank0[hi.Concat(lo)].ToHex();
-        temp2 += _bank1[hi.Concat(lo)].ToHex();
+        memory.Add(row);
+        row = string.Empty;
       }
-      memory.Add(temp0);
-      bank0.Add(temp1);
-      bank1.Add(temp2);
+      row += _ram[address].ToHex();
     }
-    memory.AddRange(bank0);
-    memory.AddRange(bank1);
     
     File.WriteAllLines(path, memory);
   }

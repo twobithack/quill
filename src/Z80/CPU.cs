@@ -19,6 +19,12 @@ unsafe public ref partial struct CPU
   {
     HandleInterrupts();
     DecodeInstruction();
+
+    #if DEBUG
+    Console.WriteLine(this.ToString());
+    Console.Read();
+    #endif
+
     ExecuteInstruction();
     _cycleCount += _instruction.Cycles;
   }
@@ -280,8 +286,8 @@ unsafe public ref partial struct CPU
     0x7F => _vdp.HCounter,
     0xBE => _vdp.Data,
     0xBF or 0xBD => _vdp.Status,
-    0xDC or 0xC0 => 0xDC, // joypad 1
-    0xDD or 0xC1 => 0xDD, // joypad 2
+    0xDC or 0xC0 => 0xFF, // joypad 1
+    0xDD or 0xC1 => 0xFF, // joypad 2
     _ => throw new Exception($"Unable to read port: {port}\r\n{this.ToString()}")
   };
 
