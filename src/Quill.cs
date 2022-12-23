@@ -6,14 +6,14 @@ public unsafe sealed class Quill
 {
   public static void Main(string[] args)
   {
-    var rom = ReadROM(@"C:/Source/quill/test/zexall.sms");
+    var rom = ReadROM(@"test/zexdoc.sms");
     var vdp = new VDP();
     var cpu = new CPU(rom, vdp);
     var instructions = 0ul;
 
     var sw = new Stopwatch();
     sw.Start();
-    while (instructions < 1000000000ul)
+    while (instructions < 100000000ul)
     {
       cpu.Step();
       instructions++;

@@ -22,7 +22,9 @@ unsafe public ref partial struct CPU
   }
 
   private Text[][] _sdsc;
-  private int _row, _col;
+  private int _row = 0;
+  private int _col = 0;
+  private int _scrollPosition = 0;
   private byte _attribute = 15;
   private char[] _dataFormats = { 'd', 'u', 'x', 'X', 'b', 'a', 's' };
 
@@ -71,11 +73,11 @@ unsafe public ref partial struct CPU
 
   private void PrintSDSC()
   {
-    for (int row = 0; row < 25; row++)
+    for (int row = _scrollPosition; row < 25 + _scrollPosition; row++)
     {
       var output = string.Empty;
       for (int col = 0; col < 80; col++)
-        output += _sdsc[row][col].ToString() + " ";
+        output += _sdsc[row % 25][col].ToString();
       Console.WriteLine(output);
     }
   }
@@ -122,7 +124,7 @@ unsafe public ref partial struct CPU
       }
       else if (value == 37)
       {
-        _sdsc[_row][_col] = new Text(value, _attribute);
+        _sdsc[_row % 25][_col] = new Text(value, _attribute);
         return;
       }
       
@@ -205,8 +207,11 @@ unsafe public ref partial struct CPU
     else if (value == 10)
     {
       _col = 0;
-      if (_row != 24)
+      if (_row == 24)
+        _scrollPosition++;
+      else
         _row++;
+        
       PrintSDSC();
     }
     else if (value == 13)
@@ -232,13 +237,15 @@ unsafe public ref partial struct CPU
   private void WriteCharacter(byte value) => WriteCharacter(Encoding.ASCII.GetString(new byte[]{value})[0]);
   private void WriteCharacter(char value)
   {
-    _sdsc[_row][_col].Character = value;
+    _sdsc[_row % 25][_col].Character = value;
     _col++;
 
     if (_col == 80) 
     {
       _col = 0;
-      if (_row != 24)
+      if (_row == 24)
+        _scrollPosition++;
+      else
         _row++;
         
       PrintSDSC();
