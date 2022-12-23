@@ -19,5 +19,5 @@ unsafe static class WordExtensions
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static bool Sign(this ushort value) => (value & 0b_1000_0000_0000_0000) > 0;
 
-  public static string ToHex(this ushort word) => $"{word.HighByte().ToHex()}-{word.LowByte().ToHex()}";
+  public static string ToHex(this ushort word) => $"{word.HighByte().ToHex()}{word.LowByte().ToHex()}";
 }
