@@ -292,7 +292,7 @@ unsafe public struct Opcodes
     new Opcode(Operation.EX,    Operand.DE,         Operand.HL,          4),
     new Opcode(Operation.CALL,  Operand.Immediate,  Operand.Even,       10),
     new Opcode(),   
-    new Opcode(Operation.XOR,   Operand.A,          Operand.Immediate,   7),
+    new Opcode(Operation.XOR,   Operand.Implied,    Operand.Immediate,   7),
     new Opcode(Operation.RST,   (Operand) 0x28,     Operand.Implied,    11),
 
     // Opcodes 0xF0 - 0xFF    
@@ -655,7 +655,7 @@ unsafe public struct Opcodes
     new Opcode(),  
     new Opcode(Operation.ADD16, Operand.IX,         Operand.IX,         15),  
     new Opcode(Operation.LD16,  Operand.IX,         Operand.Indirect,   20),  
-    new Opcode(Operation.DEC16, Operand.IX,         Operand.Immediate,  10),  
+    new Opcode(Operation.DEC16, Operand.IX,         Operand.Implied,    10),  
     new Opcode(Operation.INC8,  Operand.IXl,        Operand.Implied,     8),  
     new Opcode(Operation.DEC8,  Operand.IXl,        Operand.Implied,     8),  
     new Opcode(Operation.LD8,   Operand.IXl,        Operand.Immediate,  11), 
@@ -766,7 +766,7 @@ unsafe public struct Opcodes
     new Opcode(Operation.ADC8,  Operand.Implied,    Operand.E,           8),
     new Opcode(Operation.ADC8,  Operand.Implied,    Operand.IXh,         8),
     new Opcode(Operation.ADC8,  Operand.Implied,    Operand.IXl,         8),
-    new Opcode(Operation.ADC8,  Operand.Implied,    Operand.IXd,         8),
+    new Opcode(Operation.ADC8,  Operand.Implied,    Operand.IXd,        19),
     new Opcode(Operation.ADC8,  Operand.Implied,    Operand.A,           8),
 
     // Opcodes 0x90 - 0x9F

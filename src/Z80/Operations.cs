@@ -235,7 +235,6 @@ unsafe public ref partial struct CPU
   private void CPL()
   {
     _a = (byte)~_a;
-    
     _flags = (Flags)(0b_1100_0101 & (byte)_flags) | 
              (Flags)(0b_0010_1000 & _a) | 
               Flags.Halfcarry | 
@@ -308,10 +307,8 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void DJNZ()
   {
-    var displacement = FetchSignedByte();
-    _b--;
-
-    if (_b != 0)
+    var displacement = FetchDisplacement();
+    if (--_b != 0)
       _pc = (ushort)(_pc + displacement);
   }
 
@@ -326,39 +323,39 @@ unsafe public ref partial struct CPU
   private void EX()
   {
     ushort temp;
-    switch (_instruction.Destination)
-    {
-      case Operand.AF: 
-        temp = _af;
-        _af = _afShadow;
-        _afShadow = temp;
-        return;
 
-      case Operand.DE: 
-        temp = _de;
-        _de = _hl;
+    if (_instruction.Destination == Operand.AF)
+    {
+      temp = _af;
+      _af = _afShadow;
+      _afShadow = temp;
+      return;
+    }
+    
+    if (_instruction.Destination == Operand.DE)
+    {
+      temp = _de;
+      _de = _hl;
+      _hl = temp;
+      return;
+    }
+
+    temp = _memory.ReadWord(_sp);
+    switch (_instruction.Source)
+    {
+      case Operand.HL:
+        _memory.WriteWord(_sp, _hl);
         _hl = temp;
         return;
 
-      case Operand.SP:
-        temp = _memory.ReadWord(_sp);
-        switch (_instruction.Source)
-        {
-          case Operand.HL:
-            _memory.WriteWord(_sp, _hl);
-            _hl = temp;
-            return;
+      case Operand.IX:
+        _memory.WriteWord(_sp, _ix);
+        _ix = temp;
+        return;
 
-          case Operand.IX:
-            _memory.WriteWord(_sp, _ix);
-            _ix = temp;
-            return;
-
-          case Operand.IY:
-            _memory.WriteWord(_sp, _iy);
-            _iy = temp;
-            return;
-        }
+      case Operand.IY:
+        _memory.WriteWord(_sp, _iy);
+        _iy = temp;
         return;
     }
   }
@@ -491,20 +488,16 @@ unsafe public ref partial struct CPU
   private void JP()
   {
     var address = ReadWordOperand(_instruction.Destination);
-    if (!EvaluateCondition())
-      return;
-
-    _pc = address;
+    if (EvaluateCondition())
+      _pc = address;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void JR()
   {
-    var displacement = FetchSignedByte();
-    if (!EvaluateCondition()) 
-      return;
-    
-    _pc = (ushort)(_pc + displacement);
+    var displacement = FetchDisplacement();
+    if (EvaluateCondition()) 
+      _pc = (ushort)(_pc + displacement);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -536,6 +529,8 @@ unsafe public ref partial struct CPU
     LDD();
     if (!_parity)
       _pc -= 2;
+    else
+      _parity = false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -803,7 +798,7 @@ unsafe public ref partial struct CPU
       flags |= Flags.Parity;
     if (_carry)
       flags |= Flags.Carry;
-    
+
     _memory.WriteByte(address, value);
     _flags = flags;
   }
@@ -866,7 +861,7 @@ unsafe public ref partial struct CPU
       flags |= Flags.Parity;
     if (lsb)
       flags |= Flags.Carry;
-    
+
     WriteByteResult(value, _instruction.Source);
     if (_instruction.Destination != Operand.Implied)
       WriteByteResult(value, _instruction.Destination);
@@ -1063,7 +1058,7 @@ unsafe public ref partial struct CPU
       flags |= Flags.Parity;
     if (lsb)
       flags |= Flags.Carry;
-      
+
     WriteByteResult(value, _instruction.Source);
     if (_instruction.Destination != Operand.Implied)
       WriteByteResult(value, _instruction.Destination);

@@ -47,7 +47,10 @@ unsafe public ref partial struct CPU
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte FetchByte() => _memory.ReadByte(_pc++);
-  private sbyte FetchSignedByte() => unchecked((sbyte)_memory.ReadByte(_pc++));
+  
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private sbyte FetchDisplacement() => (sbyte)FetchByte();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort FetchWord()
@@ -217,6 +220,10 @@ unsafe public ref partial struct CPU
     switch (operand)
     {
       case Operand.Immediate:
+        if (_instruction.Destination == Operand.IXd)
+          _memPtr = (ushort)(_ix + FetchDisplacement());
+        if (_instruction.Destination == Operand.IYd)
+          _memPtr = (ushort)(_iy + FetchDisplacement());
         return FetchByte();
 
       case Operand.A: return _a;
@@ -240,8 +247,17 @@ unsafe public ref partial struct CPU
       case Operand.DEi: address = _de; break;
       case Operand.HLi: address = _hl; break;
 
-      case Operand.IXd: address = (ushort)(_ix + FetchSignedByte()); break;
-      case Operand.IYd: address = (ushort)(_iy + FetchSignedByte()); break;
+      case Operand.IXd: 
+        address = (ushort)(_ix + FetchDisplacement());
+        if (_instruction.Destination == Operand.IXd)
+          _pc--;
+        break;
+
+      case Operand.IYd:
+        address = (ushort)(_iy + FetchDisplacement());
+        if (_instruction.Destination == Operand.IYd)
+          _pc--;
+        break;
 
       default: throw new Exception($"Invalid byte operand: {_instruction}");
     }
@@ -257,6 +273,10 @@ unsafe public ref partial struct CPU
       case Operand.Immediate:
         return FetchWord();
 
+      case Operand.Indirect: 
+        address = FetchWord();
+        return _memory.ReadWord(address);
+
       case Operand.AF: return _af;
       case Operand.BC: return _bc;
       case Operand.DE: return _de;
@@ -264,10 +284,6 @@ unsafe public ref partial struct CPU
       case Operand.IX: return _ix;
       case Operand.IY: return _iy;
       case Operand.SP: return _sp;
-
-      case Operand.Indirect: 
-        address = FetchWord();
-        return _memory.ReadWord(address);
 
       default: throw new Exception($"Invalid word operand: {_instruction}");
     }
@@ -291,7 +307,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteResult(byte value, Operand destination)
   {
-    ushort address = 0x0000;
+    ushort address;
     switch (destination)
     { 
       case Operand.A: _a = value; return;
@@ -309,9 +325,19 @@ unsafe public ref partial struct CPU
       case Operand.BCi: address = _bc; break;
       case Operand.DEi: address = _de; break;
       case Operand.HLi: address = _hl; break;
-      case Operand.IXd: address = (byte)(_ix + FetchSignedByte()); break;
-      case Operand.IYd: address = (byte)(_iy + FetchSignedByte()); break;
       case Operand.Indirect: address = FetchWord(); break;
+
+      case Operand.IXd: 
+        address = _instruction.Source != Operand.Immediate
+                ? (ushort)(_ix + FetchDisplacement())
+                : _memPtr; 
+                break;
+
+      case Operand.IYd:
+        address = _instruction.Source != Operand.Immediate
+                ? (ushort)(_iy + FetchDisplacement())
+                : _memPtr; 
+                break;
 
       default: throw new Exception($"Invalid byte destination: {destination}");
     }

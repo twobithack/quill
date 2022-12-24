@@ -10,7 +10,6 @@ unsafe public ref partial struct CPU
   private char[][] _sdsc = new char[25][];
   private int _row = 0;
   private int _col = 0;
-  private byte _attribute = 15;
   private char[] _dataFormats = { 'd', 'u', 'x', 'X', 'b', 'a', 's' };
 
   // control port state 
@@ -60,20 +59,16 @@ unsafe public ref partial struct CPU
 
   private void PrintSDSC()
   {
-    for (int row = 0; row < 25; row++)
-    {
-      var output = string.Empty;
-      for (int col = 0; col < 80; col++)
-        output += _sdsc[row][col].ToString();
-      Console.WriteLine(output);
-    }
-    Console.Read();
+    var output = string.Empty;
+    for (int col = 0; col < 80; col++)
+      output += _sdsc[_row-1][col].ToString();
+    Console.WriteLine(output);
   }
 
   private void ScrollSDSC()
   {
-    for (int i = 1; i < 25; i++)
-      _sdsc[i] = _sdsc[i+1];
+    for (int i = 0; i < 24; i++)
+      Array.Copy(_sdsc[i+1], _sdsc[i], 25);
     _sdsc[24] = new char[80];
   }
 
@@ -91,6 +86,7 @@ unsafe public ref partial struct CPU
     {
       _col = value % 80;
       _expectCol = false;
+      PrintSDSC();
     }
     else if (value == 0x01)
       throw new Exception("Emulation suspended.");
