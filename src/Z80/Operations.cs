@@ -307,7 +307,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void DJNZ()
   {
-    var displacement = FetchDisplacement();
+    var displacement = FetchSignedByte();
     if (--_b != 0)
       _pc = (ushort)(_pc + displacement);
   }
@@ -495,7 +495,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void JR()
   {
-    var displacement = FetchDisplacement();
+    var displacement = FetchSignedByte();
     if (EvaluateCondition()) 
       _pc = (ushort)(_pc + displacement);
   }
@@ -527,9 +527,9 @@ unsafe public ref partial struct CPU
   private void LDDR()
   {
     LDD();
-    if (!_parity)
+    if (_parity)
       _pc -= 2;
-    else
+    else 
       _parity = false;
   }
 
@@ -556,6 +556,8 @@ unsafe public ref partial struct CPU
     LDI();
     if (_parity)
       _pc -= 2;
+    else 
+      _parity = false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -672,11 +674,11 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RES(byte index)
   {
-    var value = ReadByteOperand(_instruction.Source).ResetBit(index);
+    var value = ReadByteOperand(_instruction.Destination).ResetBit(index);
+    WriteByteResult(value);
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -709,7 +711,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RL()
   {
-    var value = ReadByteOperand(_instruction.Source);
+    var value = ReadByteOperand(_instruction.Destination);
     var msb = value.MSB();
     value = (byte)(value << 1);
     if (_carry) value++;
@@ -722,10 +724,11 @@ unsafe public ref partial struct CPU
     if (msb)
       flags |= Flags.Carry;
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
+    WriteByteResult(value);
     _flags = flags;  
+
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -746,7 +749,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RLC()
   {
-    var value = ReadByteOperand(_instruction.Source);
+    var value = ReadByteOperand(_instruction.Destination);
     var msb = value.MSB();
     value = (byte)(value << 1);
     if (msb) value++;
@@ -759,10 +762,11 @@ unsafe public ref partial struct CPU
     if (msb)
       flags |= Flags.Carry;
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
+    WriteByteResult(value);
     _flags = flags;  
+
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -806,7 +810,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RR()
   {
-    var value = ReadByteOperand(_instruction.Source);
+    var value = ReadByteOperand(_instruction.Destination);
     var lsb = value.LSB();
     value = (byte)(value >> 1);
 
@@ -821,10 +825,11 @@ unsafe public ref partial struct CPU
     if (lsb)
       flags |= Flags.Carry;
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
-    _flags = flags;
+    WriteByteResult(value);
+    _flags = flags;  
+    
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -847,7 +852,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RRC()
   {
-    var value = ReadByteOperand(_instruction.Source);
+    var value = ReadByteOperand(_instruction.Destination);
     var lsb = value.LSB();
     value = (byte)(value >> 1);
 
@@ -862,10 +867,11 @@ unsafe public ref partial struct CPU
     if (lsb)
       flags |= Flags.Carry;
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
-    _flags = flags;
+    WriteByteResult(value);
+    _flags = flags;  
+    
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -969,17 +975,17 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SET(byte index)
   {
-    var value = ReadByteOperand(_instruction.Source).SetBit(index);
-
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
+    var value = ReadByteOperand(_instruction.Destination).SetBit(index);
+    WriteByteResult(value);
+    
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SLA()
   {
-    var value = ReadByteOperand(_instruction.Source);
+    var value = ReadByteOperand(_instruction.Destination);
     var msb = value.MSB();
     value = (byte)(value << 1);
 
@@ -991,16 +997,17 @@ unsafe public ref partial struct CPU
     if (msb)
       flags |= Flags.Carry;
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
-    _flags = flags; 
+    WriteByteResult(value);
+    _flags = flags;
+    
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SLL()
   {
-    var value = ReadByteOperand(_instruction.Source);
+    var value = ReadByteOperand(_instruction.Destination);
     var msb = value.MSB();
     value = (byte)(value << 1);
     value++;
@@ -1013,16 +1020,17 @@ unsafe public ref partial struct CPU
     if (msb)
       flags |= Flags.Carry;
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
-    _flags = flags; 
+    WriteByteResult(value);
+    _flags = flags;
+    
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SRA()
   {
-    var value = ReadByteOperand(_instruction.Source);
+    var value = ReadByteOperand(_instruction.Destination);
     var lsb = value.LSB();
     var msb = value.MSB();
     value = (byte)(value >> 1);
@@ -1038,16 +1046,17 @@ unsafe public ref partial struct CPU
     if (lsb)
       flags |= Flags.Carry;
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
+    WriteByteResult(value);
     _flags = flags;
+    
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SRL()
   {
-    var value = ReadByteOperand(_instruction.Source);
+    var value = ReadByteOperand(_instruction.Destination);
     var lsb = value.LSB();
     value = (byte)(value >> 1);
 
@@ -1059,10 +1068,11 @@ unsafe public ref partial struct CPU
     if (lsb)
       flags |= Flags.Carry;
 
-    WriteByteResult(value, _instruction.Source);
-    if (_instruction.Destination != Operand.Implied)
-      WriteByteResult(value, _instruction.Destination);
+    WriteByteResult(value);
     _flags = flags;
+    
+    if (_instruction.Source != Operand.Implied)
+      WriteByteResult(value, _instruction.Source);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
