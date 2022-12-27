@@ -7,6 +7,7 @@ namespace Quill;
 // https://www.smspower.org/Development/SDSCDebugConsoleSpecification
 unsafe public ref partial struct CPU
 {
+  #if DEBUG
   private char[][] _sdsc = new char[25][];
   private int _row = 0;
   private int _col = 0;
@@ -29,8 +30,7 @@ unsafe public ref partial struct CPU
   private byte _dataWidth = 0;
   private char _dataFormat = ' ';
   private string _dataType = string.Empty;
-  private byte _byteParameter = 0;
-  private ushort _wordParameter = 0;
+  private ushort _parameter = 0;
   
   public void InitializeSDSC()
   {
@@ -178,19 +178,19 @@ unsafe public ref partial struct CPU
     else if (_expectByte)
     {
       _expectByte = false;
-      _byteParameter = value;
+      _parameter = value;
       PrintData();
     }
     else if (_expectWord0)
     {
       _expectWord0 = false;
       _expectWord1 = true;
-      _byteParameter = value;
+      _parameter = value;
     }
     else if (_expectWord1)
     {
       _expectWord1 = false;
-      _wordParameter = value.Concat(_byteParameter);
+      _parameter += (ushort)(value << 8);
       PrintData();
     }
     else if (value == 10)
@@ -272,7 +272,7 @@ unsafe public ref partial struct CPU
 
   private string FormatMemoryByte()
   {
-    var value = _memory.ReadByte(_wordParameter++);
+    var value = _memory.ReadByte(_parameter++);
     var display = string.Empty;
     var bytes = new byte[]{value};
 
@@ -287,7 +287,7 @@ unsafe public ref partial struct CPU
         if (_autoWidth) 
           _dataWidth = 1;
         for (int i = 1; i < _dataWidth; i++)
-          bytes[i] = _memory.ReadByte(_wordParameter++);
+          bytes[i] = _memory.ReadByte(_parameter++);
         return Encoding.ASCII.GetString(bytes);
 
       case 's':
@@ -295,7 +295,7 @@ unsafe public ref partial struct CPU
           _dataWidth = byte.MaxValue;
         for (int i = 1; i < _dataWidth; i++)
         {
-          value = _memory.ReadByte(_wordParameter++);
+          value = _memory.ReadByte(_parameter++);
           if (value == 0)
             break;
           bytes[i] = value;
@@ -309,7 +309,7 @@ unsafe public ref partial struct CPU
 
   private string FormatMemoryWord()
   {
-    var value = _memory.ReadWord(_wordParameter);
+    var value = _memory.ReadWord(_parameter);
     var display = string.Empty;
 
     switch (_dataFormat)
@@ -327,7 +327,7 @@ unsafe public ref partial struct CPU
   private string FormatRegister()
   {
     // TODO: formatting
-    return _wordParameter switch
+    return _parameter switch
     {
       0x00 or 0x62 => _b.ToHex(),
       0x01 or 0x63 => _c.ToHex(),
@@ -368,4 +368,5 @@ unsafe public ref partial struct CPU
   {
     throw new Exception("VDP not implemented");
   }
+  #endif
 }
