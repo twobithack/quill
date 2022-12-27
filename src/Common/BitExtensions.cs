@@ -1,4 +1,4 @@
-namespace Quill.Extensions;
+namespace Quill.Common;
 
 unsafe public static class BitExtensions
 {

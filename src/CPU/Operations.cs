@@ -1,11 +1,11 @@
-using Quill.Definitions;
-using Quill.Extensions;
+using Quill.Common;
+using Quill.CPU.Definitions;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace Quill;
+namespace Quill.CPU;
 
-unsafe public ref partial struct CPU
+unsafe public ref partial struct Z80
 {
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ADC8()

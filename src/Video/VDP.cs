@@ -1,6 +1,6 @@
-using Quill.Extensions;
+using Quill.Common;
 
-namespace Quill;
+namespace Quill.Video;
 
 unsafe public ref struct VDP
 {

@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿global using Quill.CPU;
+global using Quill.Video;
+using System.Diagnostics;
 
 namespace Quill;
 
@@ -8,29 +10,29 @@ public unsafe sealed class Quill
   {
     var rom = ReadROM(@"test/sdsc.sms");
     var vdp = new VDP();
-    var cpu = new CPU(rom, vdp);
+    var z80 = new Z80(rom, vdp);
 
     #if DEBUG
-    cpu.InitializeSDSC();
+    z80.InitializeSDSC();
     #endif
 
     var instructionCount = 0ul;
     var sw = new Stopwatch();
     sw.Start();
 
-    while (instructionCount < 10000000ul)
+    while (instructionCount < 100000000ul)
     {
-      cpu.Step();
+      z80.Step();
       instructionCount++;
     }
 
     sw.Stop();
 
-    Console.WriteLine(cpu.ToString());
+    Console.WriteLine(z80.ToString());
     Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(instructionCount * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");
 
     #if DEBUG
-    cpu.DumpMemory("mem.txt");
+    z80.DumpMemory("mem.txt");
     #endif 
   }
 
