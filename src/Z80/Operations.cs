@@ -501,10 +501,18 @@ unsafe public ref partial struct CPU
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void LD8() => WriteByteResult(ReadByteOperand(_instruction.Source));
+  private void LD8()
+  {
+    var value = ReadByteOperand(_instruction.Source);
+    WriteByteResult(value);
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void LD16() => WriteWordResult(ReadWordOperand(_instruction.Source));
+  private void LD16()
+  {
+    var value = ReadWordOperand(_instruction.Source);
+    WriteWordResult(value);
+  }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void LDD()
