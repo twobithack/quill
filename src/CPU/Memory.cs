@@ -6,8 +6,8 @@ namespace Quill.CPU;
 
 unsafe public ref struct Memory
 {
-  private const ushort PageCount = 0x40;
-  private const ushort PageSize = 0x4000;
+  private const ushort PAGE_COUNT = 0x40;
+  private const ushort PAGE_SIZE = 0x4000;
 
   private readonly Span<byte> _ram;
   private readonly Span<byte> _bank0;
@@ -22,38 +22,38 @@ unsafe public ref struct Memory
 
   public Memory(byte[] program)
   {
-    var headerOffset = (program.Length % PageSize == 512) ? 512 : 0;
-    var rom = new byte[PageCount, PageSize];
+    var headerOffset = (program.Length % PAGE_SIZE == 512) ? 512 : 0;
+    var rom = new byte[PAGE_COUNT, PAGE_SIZE];
 
     for (int i = 0; i < program.Length; i++)
     {
-      var page = (i / PageSize) + headerOffset;
-      var index = (i % PageSize) + headerOffset;
+      var page = (i / PAGE_SIZE) + headerOffset;
+      var index = (i % PAGE_SIZE) + headerOffset;
       rom[page, index] = program[i];
     }
 
     _rom = new ReadOnlySpan2D<byte>(rom);
-    _ram = new Span<byte>(new byte[PageSize]);
-    _bank0 = new Span<byte>(new byte[PageSize]);
-    _bank1 = new Span<byte>(new byte[PageSize]);
+    _ram = new Span<byte>(new byte[PAGE_SIZE]);
+    _bank0 = new Span<byte>(new byte[PAGE_SIZE]);
+    _bank1 = new Span<byte>(new byte[PAGE_SIZE]);
     _bankEnable = _bankSelect = false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadByte(ushort address)
   {
-    var index = address % PageSize;
+    var index = address % PAGE_SIZE;
 
     if (address < 0x400)
       return _rom[0x00, index];
 
-    if (address < PageSize)
+    if (address < PAGE_SIZE)
       return _rom[_page0, index];
 
-    if (address < PageSize * 2)
+    if (address < PAGE_SIZE * 2)
       return _rom[_page1, index];
       
-    if (address < PageSize * 3)
+    if (address < PAGE_SIZE * 3)
     {
       if (_bankEnable)
         return _bankSelect
@@ -69,16 +69,16 @@ unsafe public ref struct Memory
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByte(ushort address, byte value)
   {
-    var index = address % PageSize;
+    var index = address % PAGE_SIZE;
 
-    if (address < PageSize * 2)
+    if (address < PAGE_SIZE * 2)
       return;
   
     if (address > 0xDFFB && 
         address < 0xF000)
       return;
 
-    if (address < PageSize * 3)
+    if (address < PAGE_SIZE * 3)
     {
       if (!_bankEnable)
         return;
@@ -123,9 +123,9 @@ unsafe public ref struct Memory
     var memory = new List<string>();
     var row = string.Empty;
 
-    for (ushort address = 0; address < PageSize; address++)
+    for (ushort address = 0; address < PAGE_SIZE; address++)
     {
-      if (address % PageCount == 0)
+      if (address % PAGE_COUNT == 0)
       {
         memory.Add(row);
         row = string.Empty;

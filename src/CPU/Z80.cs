@@ -245,14 +245,12 @@ unsafe public ref partial struct Z80
       case Operand.HLi: address = _hl; break;
 
       case Operand.IXd:
-        if (!_memPtr.HasValue)
-          _memPtr = (ushort)(_ix + FetchDisplacement());
+        _memPtr ??= (ushort)(_ix + FetchDisplacement());
         address = _memPtr.Value;
         break;
 
       case Operand.IYd:
-        if (!_memPtr.HasValue)
-          _memPtr = (ushort)(_iy + FetchDisplacement());
+        _memPtr ??= (ushort)(_iy + FetchDisplacement());
         address = _memPtr.Value;
         break;
 
@@ -296,8 +294,8 @@ unsafe public ref partial struct Z80
   {
     0x7E => _vdp.VCounter,
     0x7F => _vdp.HCounter,
-    0xBE => _vdp.Data,
-    0xBF or 0xBD => _vdp.Status,
+    0xBE => _vdp.ReadData(),
+    0xBF or 0xBD => _vdp.ReadStatus(),
     0xDC or 0xC0 => 0xFF, // joypad 1
     0xDD or 0xC1 => 0xFF, // joypad 2
 
@@ -383,11 +381,11 @@ unsafe public ref partial struct Z80
 
       case 0xBD:
       case 0xBF:
-        _vdp.Control = value;
+        _vdp.WriteControl(value);
         return;
 
       case 0xBE:
-        _vdp.Data = value;
+        _vdp.WriteData(value);
         return;
 
       case 0x3E:
@@ -429,5 +427,6 @@ unsafe public ref partial struct Z80
   public void DumpMemory(string path) => _memory.DumpRAM(path);
   public void DumpROM(string path) => _memory.DumpROM(path);
 
-  public override String ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction} | Cycle: {_cycleCount}\r\n{_memory.ToString()}";
+  public override String ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction} | Cycle: {_cycleCount}\r\n" +
+                                       $"{_memory.ToString()}\r\n{_vdp.ToString()}";
 }
