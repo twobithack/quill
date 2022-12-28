@@ -7,8 +7,8 @@ namespace Quill.CPU;
 
 public unsafe ref partial struct Z80
 {
-  private Flags _flags = Flags.None;
-  private Opcode _instruction = new Opcode();
+  private Flags _flags;
+  private Opcode _instruction;
   private Memory _memory;
   private VDP _vdp;
 
@@ -162,15 +162,6 @@ public unsafe ref partial struct Z80
     set => SetFlag(Flags.Parity, value);
   }
 
-  private bool _overflow
-  {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Parity);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => SetFlag(Flags.Parity, value);
-  }
-
   private bool _negative
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -187,19 +178,5 @@ public unsafe ref partial struct Z80
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Carry, value);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetFlag(Flags flag, bool value) => _flags = value
-                                                          ? _flags | flag 
-                                                          : _flags & ~flag;
-
-  public string DumpRegisters()
-  {
-    return $"╒══════════╤══════════╤══════════╤══════════╤═══════════╕\r\n" +
-            $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {_ix.ToHex()} │ IY: {_iy.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
-            $"│ AF: {_af.ToHex()} │ BC: {_bc.ToHex()} │ DE: {_de.ToHex()} │ HL: {_hl.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
-            $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
-            $"╘══════════╧══════════╧══════════╧══════════╧═══════════╛\r\n";
   }
 }

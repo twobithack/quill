@@ -1,16 +1,14 @@
-using System.Runtime.CompilerServices;
 using Quill.Common;
+using Quill.Video.Definitions;
+using System.Runtime.CompilerServices;
 
 namespace Quill.Video;
 
 unsafe public ref struct VDP
 {
-  private const byte VRAM_READ = 0x0;
-  private const byte VRAM_WRITE = 0x1;
-  private const byte REGISTER_WRITE = 0x2;
-  private const byte CRAM_WRITE = 0x3;
-  private const byte CRAM_SIZE = 0x20;
   private const ushort VRAM_SIZE = 0x4000;
+  private const byte CRAM_SIZE = 0x20;
+  private const byte REGISTER_COUNT = 11;
 
   public bool IRQ = false;
   public byte VCounter = 0x00;
@@ -18,7 +16,7 @@ unsafe public ref struct VDP
 
   private readonly byte[] _vram = new byte[VRAM_SIZE];
   private readonly byte[] _cram = new byte[CRAM_SIZE];
-  private readonly byte[] _registers = new byte[11];
+  private readonly byte[] _registers = new byte[REGISTER_COUNT];
   private ushort _controlWord = 0x0000;
   private byte _dataBuffer = 0x00;
   private byte _status = 0x00;
@@ -27,7 +25,7 @@ unsafe public ref struct VDP
   public VDP() {}
 
   private ushort _address => (ushort)(_controlWord & 0b_0011_1111_1111_1111);
-  private byte _controlCode => (byte)(_controlWord >> 14);
+  private ControlCode _controlCode => (ControlCode)(_controlWord >> 14);
   private bool _vsyncEnabled => _registers[1].TestBit(5);
   private bool _vsyncPending => _status.MSB();
 
@@ -55,12 +53,12 @@ unsafe public ref struct VDP
     _controlWord |= (ushort)(value << 8);
     _writePending = false;
 
-    if (_controlCode == VRAM_WRITE)
+    if (_controlCode == ControlCode.WriteVRAM)
     {
       _dataBuffer = _vram[_address];
       IncrementAddress();
     }
-    else if (_controlCode == REGISTER_WRITE)
+    else if (_controlCode == ControlCode.WriteRegister)
     {
       var register = _controlWord.HighByte().LowNibble();
       if (register > 10)
@@ -91,7 +89,7 @@ unsafe public ref struct VDP
     _writePending = false;
     _dataBuffer = value;
 
-    if (_controlCode == CRAM_WRITE)
+    if (_controlCode == ControlCode.WriteCRAM)
     {
       var index = _controlWord & 0b_0001_1111;
       _cram[index] = value;
@@ -119,13 +117,7 @@ unsafe public ref struct VDP
 
   public override string ToString()
   {
-    var state = "VDP: " + _controlCode switch
-    {
-      VRAM_READ => "VRAM Read",
-      VRAM_WRITE => "VRAM Write",
-      REGISTER_WRITE => "Register Write",
-      CRAM_WRITE => "CRAM Write"
-    };
+    var state = $"VDP: {_controlCode.ToString()}\r\n"; 
 
     for (var register = 0; register < 11; register++)
       state += $"R{register}:{_registers[register].ToHex()} ";

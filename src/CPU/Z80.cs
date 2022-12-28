@@ -10,6 +10,7 @@ unsafe public ref partial struct Z80
 {
   public Z80(byte[] rom, VDP vdp)
   {
+    _flags = Flags.None;
     _instruction = new Opcode();
     _memory = new Memory(rom);
     _vdp = vdp;
@@ -423,6 +424,20 @@ unsafe public ref partial struct Z80
     _ => throw new Exception($"Invalid condition: {_instruction}")
     #endif
   };
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetFlag(Flags flag, bool value) => _flags = value
+                                                          ? _flags | flag 
+                                                          : _flags & ~flag;
+
+  public string DumpRegisters()
+  {
+    return "╒══════════╤══════════╤══════════╤══════════╤═══════════╕\r\n" +
+           $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {_ix.ToHex()} │ IY: {_iy.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
+           $"│ AF: {_af.ToHex()} │ BC: {_bc.ToHex()} │ DE: {_de.ToHex()} │ HL: {_hl.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
+           $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
+           "╘══════════╧══════════╧══════════╧══════════╧═══════════╛\r\n";
+  }
 
   public void DumpMemory(string path) => _memory.DumpRAM(path);
   public void DumpROM(string path) => _memory.DumpROM(path);
