@@ -202,9 +202,15 @@ unsafe public ref struct VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte[] ReadFramebuffer()
   {
-    var random = new Random();
-    random.NextBytes(_framebuffer);
+    GenerateNoise();
     return _framebuffer;
+  }
+
+  private void GenerateNoise()
+  {
+    var random = new Random();
+    for (int index = 0; index < _framebuffer.Length; index = index + 4)
+      _framebuffer[index] = _framebuffer[index+1] = _framebuffer[index+2] = (byte)(byte.MaxValue * random.NextSingle());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
