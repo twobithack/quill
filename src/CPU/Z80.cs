@@ -1,6 +1,7 @@
 using Quill.Common;
 using Quill.CPU.Definitions;
 using Quill.Video;
+using System;
 using System.Runtime.CompilerServices;
 using static Quill.CPU.Definitions.Opcodes;
 

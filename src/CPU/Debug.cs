@@ -1,4 +1,7 @@
 using Quill.Common;
+using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace Quill.CPU;
@@ -62,7 +65,7 @@ unsafe public ref partial struct Z80
     var output = string.Empty;
     for (int col = 0; col < 80; col++)
       output += _sdsc[_row-1][col].ToString();
-    Console.WriteLine(output);
+    Debug.WriteLine(output);
   }
 
   private void ScrollSDSC()
@@ -97,7 +100,7 @@ unsafe public ref partial struct Z80
     else if (value == 4)
       _expectRow = true;
     else
-      Console.WriteLine($"[ERROR] Invalid command: {value.ToHex()}.");
+      Debug.WriteLine($"[ERROR] Invalid command: {value.ToHex()}.");
   }
 
   private void WriteSDSC(byte value)
@@ -108,7 +111,7 @@ unsafe public ref partial struct Z80
       _expectWidth = false;
       if (value == 0)
       {
-        Console.WriteLine($"[ERROR] Data cannot have a width of 0.");
+        Debug.WriteLine($"[ERROR] Data cannot have a width of 0.");
         return;
       }
       else if (value == 37)
@@ -136,7 +139,7 @@ unsafe public ref partial struct Z80
       if (_dataFormats.Contains(_dataFormat))
         _expectType0 = true;
       else
-        Console.WriteLine("[ERROR] Invalid data format: " + _dataFormat);
+        Debug.WriteLine("[ERROR] Invalid data format: " + _dataFormat);
     }
     else if (_expectType0)
     {
@@ -152,7 +155,7 @@ unsafe public ref partial struct Z80
       if (!_dataType.EndsWith('b') && 
           (_dataFormat == 'a' || _dataFormat == 's'))
       {
-        Console.WriteLine($"[ERROR] Invalid data format/type combination: {_dataFormat}/{_dataType}");
+        Debug.WriteLine($"[ERROR] Invalid data format/type combination: {_dataFormat}/{_dataType}");
         return;
       }
       
@@ -171,7 +174,7 @@ unsafe public ref partial struct Z80
           return;
 
         default:
-          Console.WriteLine("[ERROR] Invalid data type: " + _dataType);
+          Debug.WriteLine("[ERROR] Invalid data type: " + _dataType);
           return;
       }
     }
@@ -214,7 +217,7 @@ unsafe public ref partial struct Z80
     }
     else if (value < 32 || value > 127)
     {
-      Console.WriteLine($"[ERROR] Undefined character: {value.ToHex()} at instruction {_instruction}");
+      Debug.WriteLine($"[ERROR] Undefined character: {value.ToHex()} at instruction {_instruction}");
     }
     else 
     {

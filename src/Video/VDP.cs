@@ -1,5 +1,7 @@
 using Quill.Common;
 using Quill.Video.Definitions;
+using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Quill.Video;
@@ -28,8 +30,12 @@ unsafe public ref struct VDP
   private byte _lineInterrupt = 0x00;
   private byte _hScroll = 0x00;
   private byte _vScroll = 0x00;
+  private byte[] _framebuffer;
 
-  public VDP() {}
+  public VDP()
+  {
+    _framebuffer = new byte[256 * 192 * 4];
+  }
 
   public byte HCounter => (byte)(_hCounter >> 1);
 
@@ -191,6 +197,14 @@ unsafe public ref struct VDP
   public void AcknowledgeIRQ()
   {
     IRQ = false;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public byte[] ReadFramebuffer()
+  {
+    var random = new Random();
+    random.NextBytes(_framebuffer);
+    return _framebuffer;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

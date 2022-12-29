@@ -1,5 +1,8 @@
 using CommunityToolkit.HighPerformance;
 using Quill.Common;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Quill.CPU;
@@ -138,7 +141,6 @@ unsafe public ref struct Memory
 
   public void DumpROM(string path)
   {
-    Console.Write("Dumping ROM");
     var dump = new List<string>();
     for (byte page = 0; page < 0x40; page++)
     {
@@ -148,11 +150,9 @@ unsafe public ref struct Memory
         for (byte lo = 0; lo < byte.MaxValue; lo++)
           row += _rom[page,hi.Concat(lo)].ToHex();
         dump.Add(row);
-        Console.Write('.');
       }
     }
     File.WriteAllLines(path, dump);
-    Console.WriteLine(" Done.");
   }
 
   public override string ToString()
