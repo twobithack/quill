@@ -8,32 +8,118 @@ unsafe public ref struct VDP
 {
   private const ushort VRAM_SIZE = 0x4000;
   private const byte CRAM_SIZE = 0x20;
-  private const byte REGISTER_COUNT = 11;
+  private const byte REGISTER_COUNT = 0xB;
+  private const ushort HCOUNTER_MAX = 685;
 
   public bool IRQ = false;
   public byte VCounter = 0x00;
-  public byte HCounter = 0x00;
 
   private readonly byte[] _vram = new byte[VRAM_SIZE];
   private readonly byte[] _cram = new byte[CRAM_SIZE];
   private readonly byte[] _registers = new byte[REGISTER_COUNT];
   private ushort _controlWord = 0x0000;
   private byte _dataBuffer = 0x00;
-  private byte _status = 0x00;
+  private Status _status = 0x00;
   private bool _writePending = false;
+  private double _cycleCount = 0d;
+  private ushort _hCounter = 0x0000;
+  private byte _vCounter = 0x00;
+  private bool _vCounterJumped = false;
+  private byte _lineInterrupt = 0x00;
+  private byte _hScroll = 0x00;
+  private byte _vScroll = 0x00;
 
   public VDP() {}
 
+  public byte HCounter => (byte)(_hCounter >> 1);
+
   private ushort _address => (ushort)(_controlWord & 0b_0011_1111_1111_1111);
   private ControlCode _controlCode => (ControlCode)(_controlWord >> 14);
-  private bool _vsyncEnabled => _registers[1].TestBit(5);
-  private bool _vsyncPending => _status.MSB();
+
+  // TODO: derive from display mode
+  private byte _vCountActive = 191;
+  private byte _vJumpFrom = 0xDA; 
+  private byte _vJumpTo = 0xD5;
+  
+  private bool _lineInterruptEnabled => _registers[0].TestBit(4);
+  private bool _vSyncEnabled => _registers[1].TestBit(5);
+  private bool _vSyncPending
+  {
+    get => _status.HasFlag(Status.VSync);
+    set
+    {
+      if (value)
+        _status |= Status.VSync;
+      else
+        _status &= ~Status.VSync;
+    } 
+  } 
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Update(double systemCyclesElapsed)
+  {
+    IRQ = _vSyncEnabled && _vSyncPending;
+
+    _cycleCount += (systemCyclesElapsed / 2d);
+    var cyclesThisUpdate = (int)_cycleCount;
+    var hCount = _hCounter + (cyclesThisUpdate * 2);
+    _hCounter = (ushort)(hCount % HCOUNTER_MAX);
+
+    if (hCount >= HCOUNTER_MAX)
+    {
+      _vCounter++;
+      if (_vCounter == byte.MinValue)
+      {
+        _vCounterJumped = false;
+      }
+      else if (!_vCounterJumped && _vCounter == _vJumpFrom)
+      {
+        _vCounter = _vJumpTo;
+        _vCounterJumped = true;
+      }
+      else if (_vCounter == _vCountActive)
+      {
+        _vSyncPending = true;
+      }
+
+      if (_vCounter > _vCountActive)
+        _lineInterrupt = _registers[0xA];
+
+      if (_vCounter >= _vCountActive)
+      {
+        _vScroll = _registers[0x9];
+        // TODO: check mode, update resolution
+      }
+      else
+      {
+        // TODO: check screen disabled
+        RenderFrame();
+      }
+
+      if (_vCounter <= _vCountActive)
+      {
+        if (_lineInterrupt == 0x00)
+        {
+          _lineInterrupt = _registers[0xA];
+          if (_lineInterruptEnabled)
+            IRQ = true;
+        }
+        else
+          _lineInterrupt--;
+      }
+    }
+
+    if (_vSyncEnabled && _vSyncPending)
+      IRQ = true;
+
+    _cycleCount -= cyclesThisUpdate;
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadStatus()
   {
-    var status = _status;
-    _status = 0x00;
+    var status = (byte)_status;
+    _status = Status.None;
     _writePending = false;
     IRQ = false;
     return status;
@@ -46,6 +132,7 @@ unsafe public ref struct VDP
     {
       _controlWord &= 0b_1111_1111_0000_0000;
       _controlWord |= value;
+      _writePending = true;
       return;
     }
     
@@ -61,14 +148,14 @@ unsafe public ref struct VDP
     else if (_controlCode == ControlCode.WriteRegister)
     {
       var register = _controlWord.HighByte().LowNibble();
-      if (register > 10)
+      if (register >= REGISTER_COUNT)
         return;
 
       _registers[register] = _controlWord.LowByte();
 
       if (register == 0 &&
-          _vsyncEnabled && 
-          _vsyncPending)
+          _vSyncEnabled && 
+          _vSyncPending)
         IRQ = true;
     }
   }
@@ -115,11 +202,16 @@ unsafe public ref struct VDP
       _controlWord++;
   }
 
+  private void RenderFrame()
+  {
+    // TODO
+  }
+
   public override string ToString()
   {
     var state = $"VDP: {_controlCode.ToString()}\r\n"; 
 
-    for (var register = 0; register < 11; register++)
+    for (var register = 0; register < REGISTER_COUNT; register++)
       state += $"R{register}:{_registers[register].ToHex()} ";
 
     return state;

@@ -4,4 +4,3 @@
 
 # Performance
 * pre-decode all instructions in ROM
- * attach function pointer to each instruction
