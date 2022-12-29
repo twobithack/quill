@@ -12,7 +12,7 @@ unsafe public static class Program
     {
       // Debug.WriteLine("No ROM file has been specified as a parameter.");
       // return;
-      romPath = @"C:\Source\quill\test\sdsc.sms";
+      romPath = "test/sdsc.sms";
     }
     else
       romPath = args[0];
