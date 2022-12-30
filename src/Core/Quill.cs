@@ -18,6 +18,7 @@ public class Quill : Game
     _emulator = new Emulator(filepath);
     _graphics = new GraphicsDeviceManager(this);
     Content.RootDirectory = "content";
+    IsMouseVisible = true;
   }
 
   protected override void Initialize()
@@ -29,7 +30,6 @@ public class Quill : Game
     _graphics.PreferredBackBufferWidth = 1024;
     _graphics.PreferredBackBufferHeight = 768;
     _graphics.ApplyChanges();
-
     base.Initialize();
   }
 
@@ -43,9 +43,8 @@ public class Quill : Game
       Exit();
 
     var buffer = _emulator.GetFramebuffer();
-    if (buffer != null)
-      _display.SetData<byte>(buffer);
-
+    _display.SetData<byte>(buffer);
+    
     base.Update(gameTime);
   }
 
