@@ -1,5 +1,6 @@
-global using Quill.CPU;
-global using Quill.Video;
+using Quill.CPU;
+using Quill.Input;
+using Quill.Video;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -11,6 +12,7 @@ unsafe public class Emulator
   private const double FRAME_TIME_MS = 1000d / 60d;
   private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d; 
 
+  public Joypads Input;
   private byte[] _framebuffer;
   private byte[] _rom; 
 
@@ -18,12 +20,13 @@ unsafe public class Emulator
   {
     _framebuffer = new byte[0x30000];
     _rom = ReadROM(romPath);
+    Input = new Joypads();
   }
 
   public void Run()
   {
     var vdp = new VDP();
-    var cpu = new Z80(_rom, vdp);
+    var cpu = new Z80(_rom, vdp, Input);
     var clock = new Stopwatch();
     var lastFrameTime = 0d;
 

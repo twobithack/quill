@@ -1,5 +1,6 @@
 using Quill.Common;
 using Quill.CPU.Definitions;
+using Quill.Input;
 using Quill.Video;
 using System;
 using System.Diagnostics;
@@ -14,6 +15,7 @@ unsafe public ref partial struct Z80
   private const byte NOP_CYCLES = 0x04;
   private Memory _memory;
   private VDP _vdp;
+  private Joypads _input;
   private Flags _flags;
   private bool _halt = false;
   private bool _iff1 = true;
@@ -38,12 +40,13 @@ unsafe public ref partial struct Z80
   private Opcode _instruction;
   #endregion
 
-  public Z80(byte[] rom, VDP vdp)
+  public Z80(byte[] rom, VDP vdp, Joypads input)
   {
     _flags = Flags.None;
     _instruction = new Opcode();
     _memory = new Memory(rom);
     _vdp = vdp;
+    _input = input;
   }
 
   #region Properties
@@ -471,8 +474,8 @@ unsafe public ref partial struct Z80
     0x7F => _vdp.HCounter,
     0xBE => _vdp.ReadData(),
     0xBF or 0xBD => _vdp.ReadStatus(),
-    0xDC or 0xC0 => 0xFF, // joypad 1
-    0xDD or 0xC1 => 0xFF, // joypad 2
+    0xDC or 0xC0 => _input.ReadPortA(),
+    0xDD or 0xC1 => _input.ReadPortB(),
 
     #if DEBUG
     _ => throw new Exception($"Unable to read port: {port}\r\n{this.ToString()}")
