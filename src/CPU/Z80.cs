@@ -28,6 +28,7 @@ unsafe public ref partial struct Z80
   private byte _h = 0x00;
   private byte _l = 0x00;
   private byte _r = 0x00;
+  private byte _io = 0x00;
   private ushort _pc = 0x0000;
   private ushort _sp = 0x0000;
   private ushort _ix = 0x0000;
@@ -202,7 +203,7 @@ unsafe public ref partial struct Z80
       _r++;
       return NOP_CYCLES;
     }
-
+    
     DecodeInstruction();
     ExecuteInstruction();
     return _instruction.Cycles;
@@ -213,14 +214,13 @@ unsafe public ref partial struct Z80
   {
     if (_iff1 && _vdp.IRQ)
     {
+      _sp -= 2;
+      _memory.WriteWord(_sp, _pc);
+      _pc = 0x38;
       _halt = false;
       _iff1 = false;
       _iff2 = false;
       _r++;
-
-      _sp -= 2;
-      _memory.WriteWord(_sp, _pc);
-      _pc = 0x38;
     }
   }
 
@@ -320,7 +320,7 @@ unsafe public ref partial struct Z80
       case Operation.EX:    EX();     return;
       case Operation.EXX:   EXX();    return;
       case Operation.HALT:  HALT();   return;
-      case Operation.IM:              return;
+      case Operation.IM:    IM();     return;
       case Operation.IN:    IN();     return;
       case Operation.INC8:  INC8();   return;
       case Operation.INC16: INC16();  return;
@@ -470,12 +470,20 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte ReadPort(byte port) => port switch
   {
+    0x3F => _io,
     0x7E => _vdp.VCounter,
     0x7F => _vdp.HCounter,
     0xBE => _vdp.ReadData(),
     0xBF or 0xBD => _vdp.ReadStatus(),
     0xDC or 0xC0 => _input.ReadPortA(),
     0xDD or 0xC1 => _input.ReadPortB(),
+    byte mirror when mirror < 0x3F && 
+                     mirror % 2 != 0 => _io,
+    byte mirror when mirror > 0xC0 && 
+                     mirror <= 0xFE && 
+                     mirror % 2 == 0 => _input.ReadPortA(),
+    byte mirror when mirror > 0xC1 && 
+                     mirror % 2 != 0 => _input.ReadPortB(),
 
     #if DEBUG
     _ => throw new Exception($"Unable to read port: {port}\r\n{this.ToString()}")
@@ -567,7 +575,10 @@ unsafe public ref partial struct Z80
         return;
 
       case 0x3E:
-        // IO controller
+      case 0x3F:
+      case byte mirror when (mirror < 0x3F && 
+                             mirror % 2 != 0):
+        _io = value;
         return;
 
       #if DEBUG

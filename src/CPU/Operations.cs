@@ -1,5 +1,6 @@
 using Quill.Common;
 using Quill.CPU.Definitions;
+using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -383,7 +384,14 @@ unsafe public ref partial struct Z80
   {
     _halt = true;
   }
-  
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void IM()
+  {
+    if (_instruction.Destination != (Operand)0x1)
+      throw new Exception("Only interrupt mode 1 is supported.");
+  }
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IN()
   {

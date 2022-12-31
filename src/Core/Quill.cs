@@ -9,7 +9,7 @@ public class Quill : Game
 {
   private GraphicsDeviceManager _graphics;
   private SpriteBatch _spriteBatch;
-  private Texture2D _display;
+  private Texture2D _framebuffer;
   private Emulator _emulator;
   private Thread _emulationThread;
 
@@ -23,7 +23,7 @@ public class Quill : Game
 
   protected override void Initialize()
   {
-    _display = new Texture2D(GraphicsDevice, 256, 192);
+    _framebuffer = new Texture2D(GraphicsDevice, 256, 192);
     _emulationThread = new Thread(_emulator.Run);
     _emulationThread.Start();
 
@@ -35,7 +35,9 @@ public class Quill : Game
 
   protected override void LoadContent() => _spriteBatch = new SpriteBatch(GraphicsDevice);
 
+  #pragma warning disable SYSLIB0006
   protected override void UnloadContent() => _emulationThread.Abort();
+  #pragma warning restore SYSLIB0006
 
   protected override void Update(GameTime gameTime)
   {
@@ -52,8 +54,8 @@ public class Quill : Game
 
     // TODO: Joypad 2
 
-    var buffer = _emulator.GetFramebuffer();
-    _display.SetData<byte>(buffer);
+    _framebuffer
+      .SetData<byte>(_emulator.ReadFramebuffer());
     
     base.Update(gameTime);
   }
@@ -62,7 +64,7 @@ public class Quill : Game
   {
     GraphicsDevice.Clear(Color.Black);
     _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-    _spriteBatch.Draw(_display, GraphicsDevice.Viewport.Bounds, Color.White);
+    _spriteBatch.Draw(_framebuffer, GraphicsDevice.Viewport.Bounds, Color.White);
     _spriteBatch.End();
     base.Draw(gameTime);
   }
