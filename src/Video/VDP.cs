@@ -2,7 +2,6 @@ using Quill.Common;
 using Quill.Video.Definitions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 
@@ -101,10 +100,7 @@ unsafe public class VDP
     _controlWritePending = false;
 
     if (_controlCode == ControlCode.WriteVRAM)
-    {
       _dataBuffer = _vram[_address];
-      IncrementAddress();
-    }
     else if (_controlCode == ControlCode.WriteRegister)
     {
       var register = _controlWord.HighByte().LowNibble();
@@ -148,10 +144,7 @@ unsafe public class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void AcknowledgeIRQ()
-  {
-    IRQ = false;
-  }
+  public void AcknowledgeIRQ() => IRQ = false;
 
   public void Update(double cyclesElapsed)
   {
@@ -178,8 +171,6 @@ unsafe public class VDP
       else if (VCounter == _vCountActive)
       {
         _vSyncPending = true;
-        if (!_screenEnabled)
-         GenerateNoise();
         RenderFrame();
       }
 
@@ -223,20 +214,11 @@ unsafe public class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void GenerateNoise()
+  private void RenderFrame()
   {
-    var random = new Random();
-    for (int index = 0; index < _framebuffer.Length; index = index + 4)
-      _framebuffer[index] = _framebuffer[index+1] = _framebuffer[index+2] = (byte)(byte.MaxValue * random.NextSingle());
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void IncrementAddress()
-  {
-    if (_address == VRAM_SIZE - 1)
-      _controlWord &= 0b_1100_0000_0000_0000;
-    else
-      _controlWord++;
+    lock (_lastFrame)
+      Array.Copy(_framebuffer, _lastFrame, FRAMEBUFFER_SIZE);
+    Array.Fill<byte>(_framebuffer, 0x00);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -256,10 +238,10 @@ unsafe public class VDP
         y -= 0x100;
 
       y++;
-      if (y > VCounter || 
+      if (y > VCounter ||
           y + spriteHeight <= VCounter)
         continue;
-      
+
       spriteCount++;
       if (spriteCount > 8)
       {
@@ -294,14 +276,12 @@ unsafe public class VDP
           return;
 
         var index = GetFramebufferIndex(x + i, VCounter);
-        if (_framebuffer[index + 3] == 0x00)
-          _framebuffer[index + 3] = 0xFF;
-        else
+        if (_framebuffer[index + 3] != 0x00)
         {
           _status |= Status.Collision;
           continue;
         }
-          
+
         byte palette = 0x00;
         if (pattern0.TestBit(col))
           palette++;
@@ -318,19 +298,29 @@ unsafe public class VDP
         var color = _cram[palette + 16];
         _framebuffer[index] = (byte)((color & 0b_0011) * 85);
         color >>= 2;
-        _framebuffer[index+1] = (byte)((color & 0b_0011) * 85);
+        _framebuffer[index + 1] = (byte)((color & 0b_0011) * 85);
         color >>= 2;
-        _framebuffer[index+2] = (byte)((color & 0b_0011) * 85);
+        _framebuffer[index + 2] = (byte)((color & 0b_0011) * 85);
+        _framebuffer[index + 3] = 0xFF;
       }
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RenderFrame()
+  private void GenerateNoise()
   {
-    lock (_lastFrame)
-      Array.Copy(_framebuffer, _lastFrame, FRAMEBUFFER_SIZE);
-    Array.Fill<byte>(_framebuffer, 0x00);
+    var random = new Random();
+    for (int index = 0; index < _framebuffer.Length; index = index + 4)
+      _framebuffer[index] = _framebuffer[index+1] = _framebuffer[index+2] = (byte)(byte.MaxValue * random.NextSingle());
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void IncrementAddress()
+  {
+    if (_address == VRAM_SIZE - 1)
+      _controlWord &= 0b_1100_0000_0000_0000;
+    else
+      _controlWord++;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -359,22 +349,6 @@ unsafe public class VDP
   {
     var address = _registers[0x5] & 0b_0111_1110;
     return (ushort)(address << 7);
-  }
-
-  private void DumpSAT()
-  {
-    var sat = GetSpriteAttributeTableAddress();
-
-    for (int sprite = 0; sprite < 64; sprite++)
-    {
-      var addr = sat + sprite;
-      var y = _vram[addr];
-      var addr_2 = sat + 128 + (sprite * 2);
-      var x = _vram[addr_2];
-      var t = _vram[addr_2 + 1];
-
-      Debug.WriteLine($"Sprite {sprite}: x:{x}, y:{y}, t:{t}");
-    }
   }
 
   private void DumpVRAM(string path)

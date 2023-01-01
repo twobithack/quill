@@ -45,12 +45,12 @@ public class Quill : Game
     if (input.IsKeyDown(Keys.Escape))
       Exit();
     
-    _emulator.Input.Joy1Up    = input.IsKeyDown(Keys.Up);
-    _emulator.Input.Joy1Down  = input.IsKeyDown(Keys.Down);
-    _emulator.Input.Joy1Left  = input.IsKeyDown(Keys.Left);
-    _emulator.Input.Joy1Right = input.IsKeyDown(Keys.Right);
-    _emulator.Input.Joy1FireA = input.IsKeyDown(Keys.Z);
-    _emulator.Input.Joy1FireB = input.IsKeyDown(Keys.X);
+    _emulator.Input.Joy1Up    = input.IsKeyDown(Keys.Up) || input.IsKeyDown(Keys.W);
+    _emulator.Input.Joy1Left = input.IsKeyDown(Keys.Left) || input.IsKeyDown(Keys.A);
+    _emulator.Input.Joy1Down  = input.IsKeyDown(Keys.Down) || input.IsKeyDown(Keys.S);
+    _emulator.Input.Joy1Right = input.IsKeyDown(Keys.Right) || input.IsKeyDown(Keys.D);
+    _emulator.Input.Joy1FireA = input.IsKeyDown(Keys.Z) || input.IsKeyDown(Keys.OemComma);
+    _emulator.Input.Joy1FireB = input.IsKeyDown(Keys.X) || input.IsKeyDown(Keys.OemPeriod);
 
     // TODO: Joypad 2
 
