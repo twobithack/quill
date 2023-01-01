@@ -41,28 +41,39 @@ public class Quill : Game
 
   protected override void Update(GameTime gameTime)
   {
-    var input = Keyboard.GetState();
-    if (input.IsKeyDown(Keys.Escape))
-      Exit();
-    
-    _emulator.Input.Joy1Up    = input.IsKeyDown(Keys.Up) || input.IsKeyDown(Keys.W);
-    _emulator.Input.Joy1Left = input.IsKeyDown(Keys.Left) || input.IsKeyDown(Keys.A);
-    _emulator.Input.Joy1Down  = input.IsKeyDown(Keys.Down) || input.IsKeyDown(Keys.S);
-    _emulator.Input.Joy1Right = input.IsKeyDown(Keys.Right) || input.IsKeyDown(Keys.D);
-    _emulator.Input.Joy1FireA = input.IsKeyDown(Keys.Z) || input.IsKeyDown(Keys.OemComma);
-    _emulator.Input.Joy1FireB = input.IsKeyDown(Keys.X) || input.IsKeyDown(Keys.OemPeriod);
+    var joy1 = GamePad.GetState(0);
+    if (joy1.IsConnected)
+    {
+      _emulator.Input.Joy1Up = joy1.IsButtonDown(Buttons.DPadUp);
+      _emulator.Input.Joy1Left = joy1.IsButtonDown(Buttons.DPadLeft);
+      _emulator.Input.Joy1Down = joy1.IsButtonDown(Buttons.DPadDown);
+      _emulator.Input.Joy1Right = joy1.IsButtonDown(Buttons.DPadRight);
+      _emulator.Input.Joy1FireA = joy1.IsButtonDown(Buttons.A) || 
+                                  joy1.IsButtonDown(Buttons.B);
+      _emulator.Input.Joy1FireB = joy1.IsButtonDown(Buttons.X) || 
+                                  joy1.IsButtonDown(Buttons.Y);
+    }
+    else
+    {
+      var kb = Keyboard.GetState();
+      if (kb.IsKeyDown(Keys.Escape))
+        Exit();
 
-    // TODO: Joypad 2
+      _emulator.Input.Joy1Up = kb.IsKeyDown(Keys.Up) || kb.IsKeyDown(Keys.W);
+      _emulator.Input.Joy1Left = kb.IsKeyDown(Keys.Left) || kb.IsKeyDown(Keys.A);
+      _emulator.Input.Joy1Down = kb.IsKeyDown(Keys.Down) || kb.IsKeyDown(Keys.S);
+      _emulator.Input.Joy1Right = kb.IsKeyDown(Keys.Right) || kb.IsKeyDown(Keys.D);
+      _emulator.Input.Joy1FireA = kb.IsKeyDown(Keys.Z) || kb.IsKeyDown(Keys.OemComma);
+      _emulator.Input.Joy1FireB = kb.IsKeyDown(Keys.X) || kb.IsKeyDown(Keys.OemPeriod);
+    }
 
-    _framebuffer
-      .SetData<byte>(_emulator.ReadFramebuffer());
-    
     base.Update(gameTime);
   }
 
   protected override void Draw(GameTime gameTime)
   {
     GraphicsDevice.Clear(Color.Black);
+    _framebuffer.SetData<byte>(_emulator.ReadFramebuffer());
     _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
     _spriteBatch.Draw(_framebuffer, GraphicsDevice.Viewport.Bounds, Color.White);
     _spriteBatch.End();
