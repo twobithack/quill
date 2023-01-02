@@ -7,25 +7,26 @@ namespace Quill;
 
 public class Quill : Game
 {
-  private const int BORDER_MASK_WIDTH = 8;
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 192;
+  private const int BORDER_MASK_WIDTH = 8;
 
   private readonly Emulator _emulator;
-  private Thread _emulationThread;
+  private readonly Thread _emulationThread;
 
   private GraphicsDeviceManager _graphics;
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
   private Rectangle _viewport;
-  private bool _maskBorder;
+  private bool _maskBorders;
   private int _scale;
   
   public Quill(string romPath, bool maskBorder, int scale = 4)
   {
     _emulator = new Emulator(romPath);
+    _emulationThread = new Thread(_emulator.Run);
     _graphics = new GraphicsDeviceManager(this);
-    _maskBorder = maskBorder;
+    _maskBorders = maskBorder;
     _scale = scale;
 
     Content.RootDirectory = "content";
@@ -34,16 +35,13 @@ public class Quill : Game
 
   protected override void Initialize()
   {
-    _emulationThread = new Thread(_emulator.Run);
-    _emulationThread.Start();
-
     _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
     _graphics.PreferredBackBufferHeight = _scale * FRAMEBUFFER_HEIGHT;
     _graphics.PreferredBackBufferWidth = _scale * FRAMEBUFFER_WIDTH;
     _graphics.ApplyChanges();    
-    _viewport = GraphicsDevice.Viewport.Bounds;
 
-    if (_maskBorder)
+    _viewport = GraphicsDevice.Viewport.Bounds;
+    if (_maskBorders)
     {
       var offset = _scale * BORDER_MASK_WIDTH;
       _viewport.X -= offset;
@@ -51,6 +49,7 @@ public class Quill : Game
       _graphics.ApplyChanges();    
     }
 
+    _emulationThread.Start();
     base.Initialize();
   }
 
@@ -71,16 +70,15 @@ public class Quill : Game
   protected override void Draw(GameTime gameTime)
   {
     var frame = _emulator.ReadFramebuffer();
-    if (frame != null)
-    {
-      GraphicsDevice.Clear(Color.Black);
-      _framebuffer.SetData(frame);
-
-      _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-      _spriteBatch.Draw(_framebuffer, _viewport, Color.White);
-      _spriteBatch.End();
-    }
-
+    if (frame == null) 
+      return;
+   
+    GraphicsDevice.Clear(Color.Black);
+    _framebuffer.SetData(frame);
+    _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+    _spriteBatch.Draw(_framebuffer, _viewport, Color.White);
+    _spriteBatch.End();
+    
     base.Draw(gameTime);
   }
 
