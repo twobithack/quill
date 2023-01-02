@@ -32,13 +32,14 @@ unsafe public class VDP
   private byte _lineInterrupt = 0x00;
   private byte _hScroll = 0x00;
   private byte _vScroll = 0x00;
+  private bool _frameQueued = false;
+  private byte[] _frame;
   private byte[] _framebuffer;
-  private byte[] _lastFrame;
 
   public VDP()
   {
     _framebuffer = new byte[FRAMEBUFFER_SIZE];
-    _lastFrame = new byte[FRAMEBUFFER_SIZE];
+    _frame = new byte[FRAMEBUFFER_SIZE];
   }
 
   public byte HCounter => (byte)(_hCounter >> 1);
@@ -47,7 +48,7 @@ unsafe public class VDP
   private ControlCode _controlCode => (ControlCode)(_controlWord >> 14);
 
   // TODO: derive from display mode
-  private byte _vCountActive = 191;
+  private byte _vCountActive = 192;
   private byte _xResolution = 255;
   private byte _vJumpFrom = 0xDA; 
   private byte _vJumpTo = 0xD5;
@@ -209,15 +210,24 @@ unsafe public class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte[] ReadFramebuffer()
   {
-    lock (_lastFrame)
-      return _lastFrame;
+    lock (_frame)
+    {
+      if (!_frameQueued)
+        return null;
+
+      _frameQueued = false;
+      return _frame;
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RenderFrame()
   {
-    lock (_lastFrame)
-      Array.Copy(_framebuffer, _lastFrame, FRAMEBUFFER_SIZE);
+    lock (_frame)
+    {
+      Array.Copy(_framebuffer, _frame, FRAMEBUFFER_SIZE);
+      _frameQueued = true;
+    }
     Array.Fill<byte>(_framebuffer, 0x00);
   }
 
@@ -244,10 +254,7 @@ unsafe public class VDP
 
       spriteCount++;
       if (spriteCount > 8)
-      {
         _status |= Status.Overflow;
-        return;
-      }
 
       var offset = 0x80 + (sprite * 2);
       var x = _vram[baseAddress + offset];
@@ -279,8 +286,8 @@ unsafe public class VDP
         if (x < 8 && _maskLeftBorder)
           continue;
 
-        var index = GetFramebufferIndex(x, VCounter);
-        if (_framebuffer[index + 3] != 0x00)
+        var pixelIndex = GetPixelIndex(x, VCounter);
+        if (_framebuffer[pixelIndex + 3] != 0x00)
         {
           _status |= Status.Collision;
           continue;
@@ -296,18 +303,70 @@ unsafe public class VDP
           continue;
 
         var color = _cram[palette + 16];
-        _framebuffer[index] = (byte)((color & 0b_0011) * 85);
+        _framebuffer[pixelIndex] = (byte)((color & 0b_0011) * 85);
         color >>= 2;
-        _framebuffer[index + 1] = (byte)((color & 0b_0011) * 85);
+        _framebuffer[pixelIndex + 1] = (byte)((color & 0b_0011) * 85);
         color >>= 2;
-        _framebuffer[index + 2] = (byte)((color & 0b_0011) * 85);
-        _framebuffer[index + 3] = 0xFF;
+        _framebuffer[pixelIndex + 2] = (byte)((color & 0b_0011) * 85);
+        _framebuffer[pixelIndex + 3] = 0xFF;
       }
     }
 
-    //var nameTableAddress = GetNameTableAddress();
-    //nameTableAddress += 
-    //for (int )
+    var nameTableAddress = GetNameTableAddress();
+    var row = VCounter / 8;
+    var line = VCounter % 8;
+    for (int col = 0; col < 32; col++)
+    {
+      var address = nameTableAddress + (row * 64) + (col * 2);
+      var tile = _vram[address + 1].Concat(_vram[address]);
+      var hFlip = tile.TestBit(9);
+      var vFlip = tile.TestBit(10);
+      var useSpritePalette = tile.TestBit(11);
+      var highPriority = tile.TestBit(12);
+
+      for (int i = 0; i < 8; i++)
+      {
+        var x = (col * 8) + i;
+        if (x > _xResolution)
+          break;
+
+        if (x < 8 && _maskLeftBorder)
+          continue;
+
+        var pixelIndex = GetPixelIndex(x, VCounter);
+        if (!highPriority &&
+            _framebuffer[pixelIndex + 3] != 0x00)
+          continue;
+
+        var patternIndex = tile & 0b_0000_0001_1111_1111;
+        var patternAddress = (patternIndex * 32) + (line * 4);
+        var pattern0 = _vram[patternAddress];
+        var pattern1 = _vram[patternAddress + 1];
+        var pattern2 = _vram[patternAddress + 2];
+        var pattern3 = _vram[patternAddress + 3];
+
+
+        byte palette = 0x00;
+        if (pattern0.TestBit(7-i)) palette |= 0b_0001;
+        if (pattern1.TestBit(7-i)) palette |= 0b_0010;
+        if (pattern2.TestBit(7-i)) palette |= 0b_0100;
+        if (pattern3.TestBit(7-i)) palette |= 0b_1000;
+
+        if (palette == 0x00)
+          continue;
+
+        if (useSpritePalette) 
+          palette += 16;
+
+        var color = _cram[palette];
+        _framebuffer[pixelIndex] = (byte)((color & 0b_0011) * 85);
+        color >>= 2;
+        _framebuffer[pixelIndex + 1] = (byte)((color & 0b_0011) * 85);
+        color >>= 2;
+        _framebuffer[pixelIndex + 2] = (byte)((color & 0b_0011) * 85);
+        _framebuffer[pixelIndex + 3] = 0xFF;
+      }
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -346,7 +405,7 @@ unsafe public class VDP
   private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private static int GetFramebufferIndex(int x, int y) => (x + (y * 256)) * 4;
+  private static int GetPixelIndex(int x, int y) => (x + (y * 256)) * 4;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort GetSpriteAttributeTableAddress()

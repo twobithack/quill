@@ -29,13 +29,13 @@ unsafe static class ByteExtensions
   public static bool Sign(this byte value) => value.MSB();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static bool TestBit(this byte value, byte index) => ((value >> index) & 1) > 0;
+  public static bool TestBit(this byte value, int index) => ((value >> index) & 1) > 0;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static byte SetBit(this byte value, byte index) => (byte)(value | (1 << index));
+  public static byte SetBit(this byte value, int index) => (byte)(value | (1 << index));
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static byte ResetBit(this byte value, byte index) => (byte)(value & ~(1 << index));
+  public static byte ResetBit(this byte value, int index) => (byte)(value & ~(1 << index));
   
   public static string ToHex(this byte value) => value.ToString("X2");
 }
