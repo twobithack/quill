@@ -27,15 +27,15 @@ unsafe public class VDP
   private byte _dataBuffer = 0x00;
   private Status _status = 0x00;
   private bool _controlWritePending = false;
-  private double _cycleCounter = 0d;
+  private double _cycleCount = 0d;
   private ushort _hCounter = 0x0000;
   private bool _vCounterJumped = false;
   private byte _lineInterrupt = 0x00;
-  private byte _vScroll = 0x00;
   private byte _hScroll = 0x00;
+  private byte _vScroll = 0x00;
   private bool _frameQueued = false;
-  private readonly byte[] _frame;
   private readonly byte[] _framebuffer;
+  private readonly byte[] _renderbuffer;
 
   // TODO: derive from display mode
   private readonly byte _hResolution = 255;
@@ -46,7 +46,7 @@ unsafe public class VDP
   public VDP()
   {
     _framebuffer = new byte[FRAMEBUFFER_SIZE];
-    _frame = new byte[FRAMEBUFFER_SIZE];
+    _renderbuffer = new byte[FRAMEBUFFER_SIZE];
   }
 
   public byte HCounter => (byte)(_hCounter >> 1);
@@ -152,8 +152,8 @@ unsafe public class VDP
   {
     IRQ = false;
 
-    _cycleCounter += cyclesElapsed;
-    var cyclesThisUpdate = (int)_cycleCounter;
+    _cycleCount += cyclesElapsed;
+    var cyclesThisUpdate = (int)_cycleCount;
     _hCounter += (ushort)(cyclesThisUpdate * 2);
 
     if (_hCounter >= HCOUNTER_MAX)
@@ -193,38 +193,37 @@ unsafe public class VDP
         _hScroll = _registers[0x8];
         _vScroll = _registers[0x9];
       }
-      else
-      {
-        if (DisplayEnabled)
-          RenderScanline();
-      }
+      else if (DisplayEnabled)
+        RenderScanline();
     }
 
-    if (VSyncEnabled && VSyncPending)
+    if (!IRQ &&
+        VSyncEnabled && 
+        VSyncPending)
       IRQ = true;
 
-    _cycleCounter -= cyclesThisUpdate;
+    _cycleCount -= cyclesThisUpdate;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte[] ReadFramebuffer()
   {
-    lock (_frame)
+    lock (_framebuffer)
     {
       if (!_frameQueued)
         return null;
 
       _frameQueued = false;
-      return _frame;
+      return _framebuffer;
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RenderFrame()
   {
-    lock (_frame)
+    lock (_framebuffer)
     {
-      Array.Copy(_framebuffer, _frame, FRAMEBUFFER_SIZE);
+      Array.Copy(_renderbuffer, _framebuffer, FRAMEBUFFER_SIZE);
       #if DEBUG
       if (_frameQueued) Debug.WriteLine("Frame dropped");
       #endif
@@ -233,19 +232,19 @@ unsafe public class VDP
 
     if (!DisplayEnabled)
     {
-      Array.Fill<byte>(_framebuffer, 0x00);
+      Array.Fill<byte>(_renderbuffer, 0x00);
       return;
     }
 
-    for (var pixelIndex = 0; pixelIndex < FRAMEBUFFER_SIZE - 4; pixelIndex += 4)
+    for (var pixelIndex = 0; pixelIndex < FRAMEBUFFER_SIZE; pixelIndex += 4)
     {
       var color = _cram[_registers[0x7] & 0b_0011];
-      _framebuffer[pixelIndex] = (byte)((color & 0b_0011) * 85);
+      _renderbuffer[pixelIndex] = (byte)((color & 0b_0011) * 85);
       color >>= 2;
-      _framebuffer[pixelIndex + 1] = (byte)((color & 0b_0011) * 85);
+      _renderbuffer[pixelIndex + 1] = (byte)((color & 0b_0011) * 85);
       color >>= 2;
-      _framebuffer[pixelIndex + 2] = (byte)((color & 0b_0011) * 85);
-      _framebuffer[pixelIndex + 3] = 0x00;
+      _renderbuffer[pixelIndex + 2] = (byte)((color & 0b_0011) * 85);
+      _renderbuffer[pixelIndex + 3] = 0x00;
     }
   }
 
@@ -311,7 +310,7 @@ unsafe public class VDP
           continue;
 
         var pixelIndex = GetPixelIndex(x, VCounter);
-        if (_framebuffer[pixelIndex + 3] != 0x00)
+        if (_renderbuffer[pixelIndex + 3] != 0x00)
         {
           _status |= Status.Collision;
           continue;
@@ -327,12 +326,12 @@ unsafe public class VDP
           continue;
 
         var color = _cram[palette + 16];
-        _framebuffer[pixelIndex] = (byte)((color & 0b_0011) * 85);
+        _renderbuffer[pixelIndex] = (byte)((color & 0b_0011) * 85);
         color >>= 2;
-        _framebuffer[pixelIndex + 1] = (byte)((color & 0b_0011) * 85);
+        _renderbuffer[pixelIndex + 1] = (byte)((color & 0b_0011) * 85);
         color >>= 2;
-        _framebuffer[pixelIndex + 2] = (byte)((color & 0b_0011) * 85);
-        _framebuffer[pixelIndex + 3] = 0xFF;
+        _renderbuffer[pixelIndex + 2] = (byte)((color & 0b_0011) * 85);
+        _renderbuffer[pixelIndex + 3] = 0xFF;
       }
     }
   }
@@ -370,7 +369,7 @@ unsafe public class VDP
 
         var pixelIndex = GetPixelIndex(x, VCounter);
         if (!highPriority &&
-            _framebuffer[pixelIndex + 3] != 0x00)
+            _renderbuffer[pixelIndex + 3] != 0x00)
           continue;
 
         var patternIndex = tile & 0b_0000_0001_1111_1111;
@@ -394,12 +393,12 @@ unsafe public class VDP
           palette += 16;
 
         var color = _cram[palette];
-        _framebuffer[pixelIndex] = (byte)((color & 0b_0011) * 85);
+        _renderbuffer[pixelIndex] = (byte)((color & 0b_0011) * 85);
         color >>= 2;
-        _framebuffer[pixelIndex + 1] = (byte)((color & 0b_0011) * 85);
+        _renderbuffer[pixelIndex + 1] = (byte)((color & 0b_0011) * 85);
         color >>= 2;
-        _framebuffer[pixelIndex + 2] = (byte)((color & 0b_0011) * 85);
-        _framebuffer[pixelIndex + 3] = 0xFF;
+        _renderbuffer[pixelIndex + 2] = (byte)((color & 0b_0011) * 85);
+        _renderbuffer[pixelIndex + 3] = 0xFF;
       }
     }
   }
@@ -408,8 +407,8 @@ unsafe public class VDP
   private void GenerateNoise()
   {
     var random = new Random();
-    for (int index = 0; index < _framebuffer.Length; index += 4)
-      _framebuffer[index] = _framebuffer[index+1] = _framebuffer[index+2] = (byte)(byte.MaxValue * random.NextSingle());
+    for (int index = 0; index < _renderbuffer.Length; index += 4)
+      _renderbuffer[index] = _renderbuffer[index+1] = _renderbuffer[index+2] = (byte)(byte.MaxValue * random.NextSingle());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
