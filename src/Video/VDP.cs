@@ -338,27 +338,32 @@ unsafe public class VDP
 
   private void RasterizeBackground()
   {
-    var nameTableAddress = GetNameTableAddress();
-    var line = VCounter + _vScroll;
-    if (line > 223) line -= 223;
-    var rowOffset = line % 8;
-    line >>= 3;
+    var baseAddress = GetNameTableAddress();
+    var sourceRow = VCounter + _vScroll;
+    if (sourceRow > 223) sourceRow -= 223;
+    var rowOffset = sourceRow % 8;
+    sourceRow >>= 3;
 
-    for (int col = 0; col < 32; col++)
+    for (int targetColumn = 0; targetColumn < 32; targetColumn++)
     {
-      var effectiveCol = (col - (_hScroll / 8)) % 32;
-      if (effectiveCol < 0) effectiveCol += 32;
+      var sourceColumn = targetColumn - (_hScroll / 8);
+      sourceColumn %= 32;
+      if (sourceColumn < 0) 
+        sourceColumn += 32;
 
-      var address = nameTableAddress + (line * 64) + (effectiveCol * 2);
-      var tile = _vram[address + 1].Concat(_vram[address]);
-      var hFlip = tile.TestBit(9);
-      var vFlip = tile.TestBit(10);
-      var useSpritePalette = tile.TestBit(11);
-      var highPriority = tile.TestBit(12);
+      var tileAddress = baseAddress + 
+                        (sourceRow * 64) + 
+                        (sourceColumn * 2);
+                        
+      var tileData = _vram[tileAddress + 1].Concat(_vram[tileAddress]);
+      var hFlip = tileData.TestBit(9);
+      var vFlip = tileData.TestBit(10);
+      var useSpritePalette = tileData.TestBit(11);
+      var highPriority = tileData.TestBit(12);
 
       for (int i = 0; i < 8; i++)
       {
-        var x = (effectiveCol * 8) + _hScroll + i;
+        var x = (sourceColumn * 8) + _hScroll + i;
         x %= (_hResolution + 1);
 
         if (x > _hResolution)
@@ -372,7 +377,7 @@ unsafe public class VDP
             _renderbuffer[pixelIndex + 3] != 0x00)
           continue;
 
-        var patternIndex = tile & 0b_0000_0001_1111_1111;
+        var patternIndex = tileData & 0b_0000_0001_1111_1111;
         var patternAddress = (patternIndex * 32) + (rowOffset * 4);
         var pattern0 = _vram[patternAddress];
         var pattern1 = _vram[patternAddress + 1];
