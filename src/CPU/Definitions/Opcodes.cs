@@ -1,28 +1,7 @@
 namespace Quill.CPU.Definitions;
 
-unsafe public struct Opcodes
+unsafe public ref struct Opcodes
 {
-  public readonly struct Opcode
-  {
-    public readonly Operation Operation;
-    public readonly Operand Destination;
-    public readonly Operand Source;
-    public readonly byte Cycles;
-
-    public Opcode() 
-      : this(Operation.NOP, Operand.Implied, Operand.Implied, 4) {}
-
-    public Opcode(Operation op, Operand dst, Operand src, byte cycles)
-    {
-      Operation = op;
-      Destination = dst;
-      Source = src;
-      Cycles = cycles;
-    }
-
-    public override string ToString() => $"{Operation} {Destination},{Source}";
-  }
-
   public static readonly Opcode[] Main = new Opcode[]
   {
     // Opcodes 0x00 - 0x0F
@@ -1987,4 +1966,25 @@ unsafe public struct Opcodes
     new Opcode(Operation.SET7,  Operand.IYd,        Operand.Implied,    23),
     new Opcode(Operation.SET7,  Operand.IYd,        Operand.A,          23),
   };
+
+  public readonly struct Opcode
+  {
+    public readonly Operation Operation;
+    public readonly Operand Destination;
+    public readonly Operand Source;
+    public readonly byte Cycles;
+
+    public Opcode() 
+      : this(Operation.NOP, Operand.Implied, Operand.Implied, 4) {}
+
+    public Opcode(Operation op, Operand dst, Operand src, byte cycles)
+    {
+      Operation = op;
+      Destination = dst;
+      Source = src;
+      Cycles = cycles;
+    }
+
+    public override string ToString() => $"{Operation} {Destination},{Source}";
+  }
 }
