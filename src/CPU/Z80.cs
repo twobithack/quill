@@ -487,9 +487,10 @@ unsafe public ref partial struct Z80
                      mirror % 2 == 0 => _input.ReadPortA(),
     byte mirror when mirror > 0xC1 && 
                      mirror % 2 != 0 => _input.ReadPortB(),
-    _ => 0xFF,
     #if DEBUG
     _ => throw new Exception($"Unable to read port: {port}\r\n{this.ToString()}")
+    #else
+    _ => 0x00
     #endif
   };
 
