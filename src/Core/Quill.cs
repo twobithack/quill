@@ -7,22 +7,25 @@ namespace Quill;
 
 public class Quill : Game
 {
+  #region Constants
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 192;
   private const int BORDER_MASK_WIDTH = 8;
   private const int PLAYER_1 = 0;
   private const int PLAYER_2 = 1;
+  #endregion
 
+  #region Fields
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
-
-  private GraphicsDeviceManager _graphics;
+  private readonly GraphicsDeviceManager _graphics;
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
   private Rectangle _viewport;
   private readonly bool _cropBorder;
   private readonly int _scale;
-  
+  #endregion
+
   public Quill(byte[] rom, bool cropBorders, int scalingFactor = 4)
   {
     Content.RootDirectory = "content";
@@ -33,6 +36,7 @@ public class Quill : Game
     _scale = scalingFactor;
   }
 
+  #region Methods
   protected override void Initialize()
   {
     Window.Title = "Quill";
@@ -135,4 +139,5 @@ public class Quill : Game
               kb.IsKeyDown(Keys.OemPeriod)
     );
   }
+  #endregion
 }

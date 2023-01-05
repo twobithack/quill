@@ -2,7 +2,7 @@ using System;
 
 namespace Quill.Input.Definitions;
 
-[FlagsAttribute]
+[Flags]
 public enum PortA : byte
 {
   None      = 0b_0000_0000,

@@ -13,9 +13,9 @@ unsafe public ref partial struct Z80
 {
   #region Fields
   private const byte NOP_CYCLES = 0x04;
-  private Memory _memory;
+  private IO _input;
   private VDP _vdp;
-  private Joypads _input;
+  private Memory _memory;
   private Flags _flags;
   private bool _halt = false;
   private bool _iff1 = true;
@@ -42,7 +42,7 @@ unsafe public ref partial struct Z80
   private Opcode _instruction;
   #endregion
 
-  public Z80(byte[] rom, VDP vdp, Joypads input)
+  public Z80(byte[] rom, VDP vdp, IO input)
   {
     _flags = Flags.None;
     _instruction = new Opcode();

@@ -1,18 +1,15 @@
-using Microsoft.Xna.Framework.Graphics;
 using Quill.Common;
 using Quill.Video.Definitions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using static Quill.Video.VDP;
 
 namespace Quill.Video;
 
 unsafe public class VDP
 {
-  #region Fields
+  #region Constants
   private const int FRAMEBUFFER_SIZE = 0x30000;
   private const int VRAM_SIZE = 0x4000;
   private const int CRAM_SIZE = 0x20;
@@ -22,7 +19,9 @@ unsafe public class VDP
   private const int TILE_SIZE = 8;
   private const int HCOUNTER_MAX = 684;
   private const int SPRITES_DISABLED = 0xD0;
+  #endregion
 
+  #region Fields
   public bool IRQ;
   public byte VCounter;
 
@@ -51,6 +50,7 @@ unsafe public class VDP
   private readonly byte _vCounterJumpEnd = 0xD5;
   #endregion
 
+  #region Constructors
   public VDP()
   {
     _vram = new byte[VRAM_SIZE];
@@ -59,6 +59,7 @@ unsafe public class VDP
     _framebuffer = new byte[FRAMEBUFFER_SIZE];
     _renderbuffer = new byte[FRAMEBUFFER_SIZE];
   }
+  #endregion
 
   #region Properties
   private ControlCode ControlCode => (ControlCode)(_controlWord >> 14);
@@ -91,6 +92,7 @@ unsafe public class VDP
   }
   #endregion
 
+  #region Methods
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadStatus()
   {
@@ -242,9 +244,6 @@ unsafe public class VDP
     lock (_framebuffer)
     {
       Array.Copy(_renderbuffer, _framebuffer, FRAMEBUFFER_SIZE);
-      #if DEBUG
-      if (_frameQueued) Debug.WriteLine("Frame dropped");
-      #endif
       _frameQueued = true;
     }
 
@@ -391,14 +390,10 @@ unsafe public class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private Pattern GetPatternData(int patternAddress)
-  {
-    var row0 = _vram[patternAddress];
-    var row1 = _vram[patternAddress + 1];
-    var row2 = _vram[patternAddress + 2];
-    var row3 = _vram[patternAddress + 3];
-    return new Pattern(row0, row1, row2, row3);
-  }
+  private Pattern GetPatternData(int patternAddress) => new(_vram[patternAddress],
+                                                            _vram[patternAddress + 1],
+                                                            _vram[patternAddress + 2],
+                                                            _vram[patternAddress + 3]);
 
   private Tile GetTileData(int tileAddress)
   {
@@ -498,7 +493,9 @@ unsafe public class VDP
 
     return state;
   }
+  #endregion
 
+  #region Structs
   public struct Color
   {
     private const byte BITMASK = 0b_0011;
@@ -557,4 +554,5 @@ unsafe public class VDP
     public bool UseSpritePalette => Data.TestBit(11);
     public bool HighPriotity => Data.TestBit(12);
   }
+  #endregion
 }

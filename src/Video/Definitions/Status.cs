@@ -2,7 +2,7 @@ using System;
 
 namespace Quill.Video.Definitions;
 
-[FlagsAttribute]
+[Flags]
 public enum Status : byte
 {
   None      = 0b_0000_0000,
