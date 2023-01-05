@@ -3,6 +3,7 @@ using Quill.CPU.Definitions;
 using Quill.Input;
 using Quill.Video;
 using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using static Quill.CPU.Definitions.Opcodes;
 
@@ -183,9 +184,10 @@ unsafe public ref partial struct Z80
       _iyh = value.HighByte();
       _iyl = value.LowByte();
     }
-  } 
+  }
   #endregion
 
+  #region Methods
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int Step()
   {
@@ -440,7 +442,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort ReadWordOperand(Operand operand)
   {
-    ushort address = 0x0000;
+    ushort address;
     switch (operand)
     {
       case Operand.Indirect: 
@@ -575,10 +577,14 @@ unsafe public ref partial struct Z80
                              mirror % 2 != 0):
         _io = value;
         return;
-      
+
+      case 0xFC:
+      case 0xFD:
+        // SDSC
+        return;
+
       #if DEBUG
-      default: 
-       throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
+      default: throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
       #endif
     }
   }
@@ -599,6 +605,18 @@ unsafe public ref partial struct Z80
   };
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private static bool CheckOverflow(int a, int b, int result)
+  {
+    var carry = a ^ b ^ result;
+    var carryIn = ((carry >> 7) & 1) > 0;
+    var carryOut = ((carry >> 8) & 1) > 0;
+    return carryIn != carryOut;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private static bool CheckParity(uint value) => BitOperations.PopCount(value) % 2 == 0;
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetFlag(Flags flag, bool value) => _flags = value
                                                           ? _flags | flag 
                                                           : _flags & ~flag;
@@ -616,4 +634,5 @@ unsafe public ref partial struct Z80
   public void DumpROM(string path) => _memory.DumpROM(path);
 
   public override string ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction}\r\n{_memory.ToString()}\r\n{_vdp.ToString()}\r\n";
+  #endregion
 }

@@ -275,19 +275,19 @@ unsafe public ref partial struct Z80
   private void DEC8()
   {
     var minuend = ReadByteOperand(_instruction.Destination);
-    var difference = minuend.Decrement();
+    var difference = minuend - 1;
 
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
-    if (difference == 0)
+    if ((byte)difference == 0)
       flags |= Flags.Zero;
     if (minuend.LowNibble() == 0)
       flags |= Flags.Halfcarry;
-    if (minuend.Sign() != flags.HasFlag(Flags.Sign))
-      flags |= Flags.Parity;      
+    if (CheckOverflow(minuend, -1, difference))
+      flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
 
-    WriteByteResult(difference);
+    WriteByteResult((byte)difference);
     _flags = flags;
   }
 
@@ -332,7 +332,7 @@ unsafe public ref partial struct Z80
       _afShadow = temp;
       return;
     }
-    
+
     if (_instruction.Destination == Operand.DE)
     {
       temp = DE;
@@ -401,11 +401,11 @@ unsafe public ref partial struct Z80
 
     if (_instruction.Destination == Operand.A)
       return;
-    
+
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
@@ -417,19 +417,19 @@ unsafe public ref partial struct Z80
   private void INC8()
   {
     var augend = ReadByteOperand(_instruction.Destination);
-    var sum = augend.Increment();
-    
+    var sum = augend + 1;
+
     var flags = (Flags)(sum & 0b_1010_1000);
-    if (sum == 0)
+    if ((byte)sum == 0)
       flags |= Flags.Zero;
     if (augend.LowNibble() == 0xF)
       flags |= Flags.Halfcarry;
-    if (augend.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(augend, 1, sum))
       flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
 
-    WriteByteResult(sum);
+    WriteByteResult((byte)sum);
     _flags = flags;
   }
 
@@ -713,7 +713,6 @@ unsafe public ref partial struct Z80
     _pc = _memory.ReadWord(_sp);
     _sp += 2;
     _iff1 = _iff2;
-    _vdp.AcknowledgeIRQ();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
