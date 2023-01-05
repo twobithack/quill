@@ -26,14 +26,17 @@ public class Quill : Game
   private readonly int _scale;
   #endregion
 
-  public Quill(byte[] rom, bool cropBorders, int scalingFactor = 4)
+  public Quill(byte[] rom,
+               bool fixSlowdown = true,
+               bool cropBorders = true, 
+               int scaleFactor = 4)
   {
     Content.RootDirectory = "content";
-    _emulator = new Emulator(rom);
+    _emulator = new Emulator(rom, fixSlowdown);
     _emulationThread = new Thread(_emulator.Run);
     _graphics = new GraphicsDeviceManager(this);
     _cropBorder = cropBorders;
-    _scale = scalingFactor;
+    _scale = scaleFactor;
   }
 
   #region Methods
@@ -110,9 +113,9 @@ public class Quill : Game
       right:  joypad.IsButtonDown(Buttons.DPadRight) ||
               joypad.IsButtonDown(Buttons.LeftThumbstickRight),
       fireA:  joypad.IsButtonDown(Buttons.A) ||
-              joypad.IsButtonDown(Buttons.X),
+              joypad.IsButtonDown(Buttons.Y),
       fireB:  joypad.IsButtonDown(Buttons.B) ||
-              joypad.IsButtonDown(Buttons.Y)
+              joypad.IsButtonDown(Buttons.X)
     );
     return true;
   }

@@ -15,15 +15,16 @@ unsafe public class VDP
   private const int CRAM_SIZE = 0x20;
   private const int REGISTER_COUNT = 11;
   private const int HORIZONTAL_RESOLUTION = 256;
+  private const int VCOUNTER_MAX_DEFAULT = 260;
+  private const int VCOUNTER_MAX_EXTENDED = 395;
   private const int BACKGROUND_COLUMNS = 32;
   private const int TILE_SIZE = 8;
-  private const int HCOUNTER_MAX = 684;
   private const int SPRITES_DISABLED = 0xD0;
   #endregion
 
   #region Fields
   public bool IRQ;
-  public byte VCounter;
+  public int VCounter;
 
   private readonly byte[] _vram;
   private readonly Color[] _cram;
@@ -31,12 +32,11 @@ unsafe public class VDP
   private readonly byte[] _framebuffer;
   private readonly byte[] _renderbuffer;
 
-  private double _cycleCount;
   private ushort _controlWord;
   private Status _status;
   private byte _dataBuffer;
   private byte _lineInterrupt;
-  private ushort _hCounter;
+  private ushort _hCounter; // TODO: fake values
   private byte _hScroll;
   private byte _vScroll;
   private bool _controlWritePending;
@@ -45,31 +45,37 @@ unsafe public class VDP
 
   // TODO: derive from display mode
   private readonly int _backgroundRows = 28;
+  private readonly int _vCounterMax;
   private readonly byte _vCounterActive = 192;
   private readonly byte _vCounterJumpStart = 0xDA;
   private readonly byte _vCounterJumpEnd = 0xD5;
   #endregion
 
   #region Constructors
-  public VDP()
+  public VDP(bool fixSlowdown)
   {
     _vram = new byte[VRAM_SIZE];
     _cram = new Color[CRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
     _framebuffer = new byte[FRAMEBUFFER_SIZE];
     _renderbuffer = new byte[FRAMEBUFFER_SIZE];
+    _vCounterMax = fixSlowdown 
+                 ? VCOUNTER_MAX_EXTENDED 
+                 : VCOUNTER_MAX_DEFAULT;
   }
   #endregion
 
   #region Properties
+  public byte HCounter => (byte)(_hCounter >> 1);
+  public int ScanlinesPerFrame => _vCounterMax + (_vCounterJumpStart - _vCounterJumpEnd);
+
   private ControlCode ControlCode => (ControlCode)(_controlWord >> 14);
   private ushort Address => (ushort)(_controlWord & 0b_0011_1111_1111_1111);
-  public byte HCounter => (byte)(_hCounter >> 1);
   private bool ShiftX => TestRegisterBit(0x0, 3);
   private bool LineInterruptEnabled => TestRegisterBit(0x0, 4);
   private bool MaskLeftBorder => TestRegisterBit(0x0, 5);
-  private bool HScrollLimit => TestRegisterBit(0x0, 6);
-  private bool VScrollLimit => TestRegisterBit(0x0, 7);
+  private bool HScrollLimit => TestRegisterBit(0x0, 6); // TODO: implement
+  private bool VScrollLimit => TestRegisterBit(0x0, 7); // TODO: implement
   private bool ZoomSprites => TestRegisterBit(0x1, 0);
   private bool StretchSprites => TestRegisterBit(0x1, 1);
   private bool VSyncEnabled => TestRegisterBit(0x1, 5);
@@ -166,63 +172,56 @@ unsafe public class VDP
   public void AcknowledgeIRQ() => IRQ = false;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Step(double cyclesElapsed)
+  public void RenderScanline()
   {
     IRQ = false;
+    VCounter++;
 
-    _cycleCount += cyclesElapsed;
-    var cyclesThisUpdate = (int)_cycleCount;
-    _hCounter += (ushort)(cyclesThisUpdate * 2);
-
-    if (_hCounter > HCOUNTER_MAX)
+    if (VCounter == _vCounterMax)
     {
-      _hCounter %= (HCOUNTER_MAX + 1);
-      VCounter++;
+      VCounter = 0;
+      _vCounterJumped = false;
+    }
+    else if (!_vCounterJumped && VCounter == _vCounterJumpStart)
+    {
+      VCounter = _vCounterJumpEnd;
+      _vCounterJumped = true;
+    }
+    else if (VCounter == _vCounterActive)
+    {
+      RenderFrame();
+      VSyncPending = true;
+    }
 
-      if (VCounter == byte.MinValue)
-      {
-        _vCounterJumped = false;
-      }
-      else if (!_vCounterJumped && VCounter == _vCounterJumpStart)
-      {
-        VCounter = _vCounterJumpEnd;
-        _vCounterJumped = true;
-      }
-      else if (VCounter == _vCounterActive)
-      {
-        RenderFrame();
-        VSyncPending = true;
-      }
-
-      if (VCounter > _vCounterActive)
-        _lineInterrupt = _registers[0xA];
-      else if (_lineInterrupt == 0x00)
-      {
-        _lineInterrupt = _registers[0xA];
-        if (LineInterruptEnabled)
-          IRQ = true;
-      }
-      else
-        _lineInterrupt--;
+    if (VCounter > _vCounterActive)
+    {
+      _lineInterrupt = _registers[0xA];
+    }
+    else if (_lineInterrupt == 0x00)
+    {
+      _lineInterrupt = _registers[0xA];
+      if (LineInterruptEnabled)
+        IRQ = true;
+    }
+    else
+    {
+      _lineInterrupt--;
+    }
      
-
-      if (VCounter >= _vCounterActive)
-      {
-        _vScroll = _registers[0x9];
-      }
-      else if (DisplayEnabled)
-      {
-        _hScroll = _registers[0x8];
-        RenderScanline();
-      }
+    if (VCounter >= _vCounterActive)
+    {
+      _vScroll = _registers[0x9];
+    }
+    else if (DisplayEnabled)
+    {
+      _hScroll = _registers[0x8];
+      RasterizeScanline();
     }
 
     if (!IRQ &&
         VSyncEnabled && 
         VSyncPending)
       IRQ = true;
-
-    _cycleCount -= cyclesThisUpdate;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -259,7 +258,7 @@ unsafe public class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RenderScanline()
+  private void RasterizeScanline()
   {
     RasterizeSprites();
     RasterizeBackground();

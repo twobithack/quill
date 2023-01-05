@@ -9,7 +9,7 @@ unsafe public class Emulator
 {
   #region Constants
   private const double FRAME_TIME_MS = 1000d / 60d;
-  private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d;
+  private const int CYCLES_PER_SCANLINE = 228;
   #endregion
 
   #region Fields
@@ -18,10 +18,10 @@ unsafe public class Emulator
   private readonly VDP _vdp;
   #endregion
 
-  public Emulator(byte[] rom)
+  public Emulator(byte[] rom, bool fixSlowdown)
   {
     _io = new IO();
-    _vdp = new VDP();
+    _vdp = new VDP(fixSlowdown);
     _rom = rom;
   }
 
@@ -43,16 +43,12 @@ unsafe public class Emulator
       if (currentTime < lastFrameTime + FRAME_TIME_MS)
         continue;
 
-      var cyclesThisFrame = 0d;
-      while (cyclesThisFrame <= SYSTEM_CYCLES_PER_FRAME)
+      var scanlines = _vdp.ScanlinesPerFrame;
+      while (scanlines > 0)
       {
-        var cpuCycles = cpu.Step();
-        var systemCycles = cpuCycles * 3;
-        var vdpCycles = (double)systemCycles / 2d;
-        
-        _vdp.Step(vdpCycles);
-
-        cyclesThisFrame += systemCycles;
+        cpu.RunFor(CYCLES_PER_SCANLINE);
+        _vdp.RenderScanline();
+        scanlines--;
       }
 
       lastFrameTime = currentTime;
