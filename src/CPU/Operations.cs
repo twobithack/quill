@@ -113,11 +113,18 @@ unsafe public ref partial struct Z80
     var index = (byte)_instruction.Destination;
     
     // TODO: Handle undocumented flags for HLi and indexed cases
-    var flags = (Flags)(value & 0b_1010_1000) | Flags.Halfcarry;
+    var flags = Flags.Halfcarry;
     if (!value.TestBit(index))
+    {
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
+    }
+    else if (index == 3)
+      flags |= Flags.X;
+    else if (index == 5)
+      flags |= Flags.Y;
+    else if (index == 7)
+      flags |= Flags.Sign;
     if (CarryFlag)
       flags |= Flags.Carry;
 
