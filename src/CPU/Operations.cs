@@ -20,8 +20,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (_a.LowNibble() + addend.LowNibble() > 0xF)
       flags |= Flags.Halfcarry;
-    if (_a.Sign() == addend.Sign() && 
-        _a.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(_a, addend, sum))
       flags |= Flags.Parity;
     if (sum > byte.MaxValue)
       flags |= Flags.Carry;
@@ -42,8 +41,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if ((HL & 0xFFF) + (addend & 0xFFF) > 0xFFF)
       flags |= Flags.Halfcarry;
-    if (HL.Sign() == addend.Sign() && 
-        HL.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(HL, addend, sum))
       flags |= Flags.Parity;
     if (sum > ushort.MaxValue)
       flags |= Flags.Carry;
@@ -63,8 +61,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (_a.LowNibble() + addend.LowNibble() > 0xF)
       flags |= Flags.Halfcarry;
-    if (_a.Sign() == addend.Sign() && 
-        _a.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(_a, addend, sum))
       flags |= Flags.Parity;
     if (sum > byte.MaxValue)
       flags |= Flags.Carry;
@@ -85,8 +82,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if ((augend & 0xFFF) + (addend & 0xFFF) > 0xFFF)
       flags |= Flags.Halfcarry;
-    if (augend.Sign() == addend.Sign() && 
-        augend.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(augend, addend, sum))
       flags |= Flags.Parity;
     if (sum > ushort.MaxValue)
       flags |= Flags.Carry;
@@ -159,14 +155,13 @@ unsafe public ref partial struct Z80
     var difference = _a - subtrahend;
 
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
-    if (_a == subtrahend)
+    if ((byte)difference == 0)
       flags |= Flags.Zero;
     if (_a.LowNibble() < subtrahend.LowNibble())
       flags |= Flags.Halfcarry;
-    if (_a.Sign() != subtrahend.Sign() &&
-        _a.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(_a, subtrahend, difference))
       flags |= Flags.Parity;
-    if (difference < 0)
+    if (_a < subtrahend)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -282,7 +277,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (minuend.LowNibble() == 0)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(minuend, -1, difference))
+    if (CheckOverflow(minuend, 1, difference))
       flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
@@ -582,7 +577,7 @@ unsafe public ref partial struct Z80
     var difference = 0 - _a;
     
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
-    if (difference == 0)
+    if ((byte)difference == 0)
       flags |= Flags.Zero;
     if (_a.LowNibble() > 0)
       flags |= Flags.Halfcarry;
@@ -601,7 +596,7 @@ unsafe public ref partial struct Z80
     var result = _a | ReadByteOperand(_instruction.Source);
 
     var flags = (Flags)(result & 0b_1010_1000);
-    if (result == 0x00)
+    if ((byte)result == 0)
       flags |= Flags.Zero;
 
     if (BitOperations.PopCount((byte)result) % 2 == 0)
@@ -944,12 +939,11 @@ unsafe public ref partial struct Z80
     var difference = _a - subtrahend;
 
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
-    if (difference == 0)
+    if ((byte)difference == 0)
       flags |= Flags.Zero;
     if (_a.LowNibble() < subtrahend.LowNibble())
       flags |= Flags.Halfcarry;
-    if (_a.Sign() != subtrahend.Sign() &&
-        _a.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(_a, subtrahend, difference))
       flags |= Flags.Parity;
     if (difference < 0)
       flags |= Flags.Carry;
@@ -966,12 +960,11 @@ unsafe public ref partial struct Z80
     var difference = HL - subtrahend;
 
     var flags = (Flags)((difference >> 8) & 0b_1010_1000) | Flags.Negative;
-    if (difference == 0)
+    if ((ushort)difference == 0)
       flags |= Flags.Zero;
     if ((HL & 0xFFF) < (subtrahend & 0xFFF))
       flags |= Flags.Halfcarry;
-    if (HL.Sign() != subtrahend.Sign() &&
-        HL.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(HL, subtrahend, difference))
       flags |= Flags.Parity;
     if (difference < 0)
       flags |= Flags.Carry;
@@ -1097,12 +1090,11 @@ unsafe public ref partial struct Z80
     var difference = _a - subtrahend;
 
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
-    if (difference == 0)
+    if ((byte)difference == 0)
       flags |= Flags.Zero;
     if (_a.LowNibble() < subtrahend.LowNibble())
       flags |= Flags.Halfcarry;
-    if (_a.Sign() != subtrahend.Sign() &&
-        _a.Sign() != flags.HasFlag(Flags.Sign))
+    if (CheckOverflow(_a, subtrahend, difference))
       flags |= Flags.Parity;
     if (difference < 0)
       flags |= Flags.Carry;
@@ -1117,7 +1109,7 @@ unsafe public ref partial struct Z80
     var result = _a ^ ReadByteOperand(_instruction.Source);
     
     var flags = (Flags)(result & 0b_1010_1000);
-    if (result == 0)
+    if ((byte)result == 0)
       flags |= Flags.Zero;
     if (BitOperations.PopCount((byte)result) % 2 == 0)
       flags |= Flags.Parity;
