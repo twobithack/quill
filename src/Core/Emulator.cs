@@ -1,5 +1,6 @@
 using Quill.CPU;
 using Quill.Input;
+using Quill.Sound;
 using Quill.Video;
 using System.Diagnostics;
 using System.IO;
@@ -16,34 +17,35 @@ unsafe public class Emulator
 
   #region Fields
   private readonly IO _input;
+  private readonly PSG _audio;
   private readonly VDP _video;
-  private readonly Stopwatch _clock;
   private readonly byte[] _rom;
-  private bool _running;
+  private string _snapshotPath;
   private bool _loadRequested;
   private bool _saveRequested;
-  private string _snapshotPath;
+  private bool _running;
   #endregion
 
   public Emulator(byte[] rom, int fakeScanlines)
   {
     _input = new IO();
+    _audio = new PSG();
     _video = new VDP(fakeScanlines);
-    _clock = new Stopwatch();
     _rom = rom;
   }
 
   #region Methods
   public void Run()
   {
-    var cpu = new Z80(_rom, _input, _video);
+    var cpu = new Z80(_rom, _input, _audio, _video);
+    var clock = new Stopwatch();
     var lastFrame = 0d;
 
-    _clock.Start();
+    clock.Start();
     _running = true;
     while (_running)
     {
-      var currentTime = _clock.Elapsed.TotalMilliseconds;
+      var currentTime = clock.Elapsed.TotalMilliseconds;
       if (currentTime < lastFrame + FRAME_TIME_MS)
         continue;
 
@@ -73,6 +75,8 @@ unsafe public class Emulator
   }
 
   public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
+
+  public byte[] ReadAudioBuffer() => _audio.ReadBuffer();
 
   public void SetJoypadState(int joypad,
                              bool up, 
