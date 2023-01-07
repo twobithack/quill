@@ -16,9 +16,11 @@ unsafe public class VDP
   private const int CRAM_SIZE = 0x20;
   private const int REGISTER_COUNT = 11;
   private const int HORIZONTAL_RESOLUTION = 256;
-  private const int BACKGROUND_COLUMNS = 32;
   private const int TILE_SIZE = 8;
-  private const int SPRITES_DISABLED = 0xD0;
+  private const int BACKGROUND_COLUMNS = 32;
+  private const int HSCROLL_LIMIT = 2;
+  private const int VSCROLL_LIMIT = 23;
+  private const int DISABLE_SPRITES = 0xD0;
   #endregion
 
   #region Fields
@@ -30,7 +32,7 @@ unsafe public class VDP
   private readonly byte[] _framebuffer;
   private readonly byte[] _renderbuffer;
   private ushort _controlWord;
-  private ushort _hCounter; // TODO: fake values
+  private ushort _hCounter;
   private ushort _vCounter;
   private Status _status;
   private byte _dataBuffer;
@@ -59,6 +61,7 @@ unsafe public class VDP
     _renderbuffer = new byte[FRAMEBUFFER_SIZE];
     _vCounterMax += (_vCounterJumpStart - _vCounterJumpEnd);
     _vCounterMax += fakeScanlines;
+    _hCounter = 0x50;
   }
   #endregion
 
@@ -72,8 +75,8 @@ unsafe public class VDP
   private bool ShiftX => TestRegisterBit(0x0, 3);
   private bool LineInterruptEnabled => TestRegisterBit(0x0, 4);
   private bool MaskLeftBorder => TestRegisterBit(0x0, 5);
-  private bool HScrollLimit => TestRegisterBit(0x0, 6); // TODO
-  private bool VScrollLimit => TestRegisterBit(0x0, 7); // TODO
+  private bool LimitHScroll => TestRegisterBit(0x0, 6);
+  private bool LimitVScroll => TestRegisterBit(0x0, 7);
   private bool ZoomSprites => TestRegisterBit(0x1, 0);
   private bool StretchSprites => TestRegisterBit(0x1, 1);
   private bool VSyncEnabled => TestRegisterBit(0x1, 5);
@@ -97,6 +100,32 @@ unsafe public class VDP
   #endregion
 
   #region Methods
+    public void LoadState(Snapshot snapshot)
+  {
+    Array.Copy(snapshot.CRAM, _cram, _cram.Length);
+    Array.Copy(snapshot.VRAM, _vram, _vram.Length);
+    Array.Copy(snapshot.VDPRegisters, _registers, _registers.Length);
+    _status = snapshot.VDPStatus;
+    _dataBuffer = snapshot.DataPort;
+    _lineInterrupt = snapshot.LineInterrupt;
+    _hScroll = snapshot.HScroll;
+    _vScroll = snapshot.VScroll;
+    _controlWritePending = snapshot.ControlWritePending;
+  }
+
+  public void SaveState(ref Snapshot snapshot)
+  {
+    snapshot.CRAM = _cram;
+    snapshot.VRAM = _vram;
+    snapshot.VDPRegisters = _registers;
+    snapshot.VDPStatus = _status;
+    snapshot.DataPort = _dataBuffer;
+    snapshot.LineInterrupt = _lineInterrupt;
+    snapshot.HScroll = _hScroll;
+    snapshot.VScroll = _vScroll;
+    snapshot.ControlWritePending = _controlWritePending;
+  }
+
   public byte ReadStatus()
   {
     var status = (byte)_status;
@@ -226,32 +255,6 @@ unsafe public class VDP
     }
   }
 
-  public void LoadState(Snapshot snapshot)
-  {
-    Array.Copy(snapshot.CRAM, _cram, _cram.Length);
-    Array.Copy(snapshot.VRAM, _vram, _vram.Length);
-    Array.Copy(snapshot.VDPRegisters, _registers, _registers.Length);
-    _status = snapshot.VDPStatus;
-    _dataBuffer = snapshot.DataPort;
-    _lineInterrupt = snapshot.LineInterrupt;
-    _hScroll = snapshot.HScroll;
-    _vScroll = snapshot.VScroll;
-    _controlWritePending = snapshot.ControlWritePending;
-  }
-
-  public void SaveState(ref Snapshot snapshot)
-  {
-    snapshot.CRAM = _cram;
-    snapshot.VRAM = _vram;
-    snapshot.VDPRegisters = _registers;
-    snapshot.VDPStatus = _status;
-    snapshot.DataPort = _dataBuffer;
-    snapshot.LineInterrupt = _lineInterrupt;
-    snapshot.HScroll = _hScroll;
-    snapshot.VScroll = _vScroll;
-    snapshot.ControlWritePending = _controlWritePending;
-  }
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RenderFrame()
   {
@@ -290,7 +293,7 @@ unsafe public class VDP
     for (int sprite = 0; sprite < 64; sprite++)
     {
       ushort y = _vram[baseAddress + sprite];
-      if (y == SPRITES_DISABLED)
+      if (y == DISABLE_SPRITES)
         return;
 
       y++;
@@ -351,15 +354,24 @@ unsafe public class VDP
   private void RasterizeBackground()
   {
     var baseAddress = GetNameTableAddress();
-    var sourceRow = (_vCounter + _vScroll) / TILE_SIZE;
-    if (sourceRow >= _backgroundRows) 
-      sourceRow -= _backgroundRows;
-    var rowOffset = (_vCounter + _vScroll) % TILE_SIZE;
+    var hScroll = LimitHScroll && (_vCounter / TILE_SIZE < HSCROLL_LIMIT) 
+                ? 0 
+                : _hScroll;
 
     for (int destinationColumn = 0; destinationColumn < BACKGROUND_COLUMNS; destinationColumn++)
     {
+      var vScroll = LimitVScroll && destinationColumn > VSCROLL_LIMIT
+                  ? 0 
+                  : _vScroll;
+
+      var sourceRow = _vCounter + vScroll;
+      var rowOffset = sourceRow % TILE_SIZE;
+      sourceRow /= TILE_SIZE;
+      if (sourceRow >= _backgroundRows) 
+        sourceRow -= _backgroundRows;
+                    
       var sourceColumn = destinationColumn;
-      sourceColumn -= _hScroll / TILE_SIZE;
+      sourceColumn -= hScroll / TILE_SIZE;
       sourceColumn %= BACKGROUND_COLUMNS;
       if (sourceColumn < 0) 
         sourceColumn += BACKGROUND_COLUMNS;
@@ -382,7 +394,7 @@ unsafe public class VDP
         if (tile.HorizontalFlip)
           columnOffset = 7 - columnOffset;
 
-        var x = (sourceColumn * TILE_SIZE) + _hScroll + columnOffset;
+        var x = (sourceColumn * TILE_SIZE) + hScroll + columnOffset;
         x %= HORIZONTAL_RESOLUTION;
 
         if (x < TILE_SIZE && MaskLeftBorder)
