@@ -6,7 +6,6 @@ using Quill.Video;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using static Quill.CPU.Definitions.Opcodes;
 
 namespace Quill.CPU;
 
@@ -41,7 +40,7 @@ unsafe public ref partial struct Z80
   private bool _halt = false;
   private bool _iff1 = true;
   private bool _iff2 = true;
-  private Opcode _instruction;
+  private Instruction _instruction;
   #endregion
 
   public Z80(byte[] rom, IO input, VDP vdp)
@@ -328,14 +327,14 @@ unsafe public ref partial struct Z80
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private Opcode DecodeCBInstruction()
+  private Instruction DecodeCBInstruction()
   {
     _r++;
     return Opcodes.CB[FetchByte()];
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private Opcode DecodeDDInstruction()
+  private Instruction DecodeDDInstruction()
   {
     _r++;
     var op = FetchByte();
@@ -347,14 +346,14 @@ unsafe public ref partial struct Z80
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private Opcode DecodeEDInstruction()
+  private Instruction DecodeEDInstruction()
   {
     _r++;
     return Opcodes.ED[FetchByte()];
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private Opcode DecodeFDInstruction()
+  private Instruction DecodeFDInstruction()
   {
     _r++;
     var op = FetchByte();

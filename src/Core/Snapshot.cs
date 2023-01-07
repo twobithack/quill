@@ -1,6 +1,6 @@
-﻿using Quill.Video.Definitions;
+﻿using Quill.Video;
+using Quill.Video.Definitions;
 using System;
-using static Quill.Video.VDP;
 
 namespace Quill.Core;
 

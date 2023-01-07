@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Quill.UI;
 
-public class Client : Game
+public sealed class Client : Game
 {
   #region Constants
   private const int FRAMEBUFFER_WIDTH = 256;
