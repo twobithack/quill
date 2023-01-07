@@ -1,4 +1,5 @@
 using Quill.Common;
+using Quill.Core;
 using Quill.Video.Definitions;
 using System;
 using System.Collections.Generic;
@@ -15,8 +16,7 @@ unsafe public class VDP
   private const int CRAM_SIZE = 0x20;
   private const int REGISTER_COUNT = 11;
   private const int HORIZONTAL_RESOLUTION = 256;
-  private const int VCOUNTER_MAX_DEFAULT = 260;
-  private const int VCOUNTER_MAX_EXTENDED = 395;
+  private const int VCOUNTER_PADDING = 130;
   private const int BACKGROUND_COLUMNS = 32;
   private const int TILE_SIZE = 8;
   private const int SPRITES_DISABLED = 0xD0;
@@ -24,19 +24,18 @@ unsafe public class VDP
 
   #region Fields
   public bool IRQ;
-  public int VCounter;
 
   private readonly byte[] _vram;
   private readonly Color[] _cram;
   private readonly byte[] _registers;
   private readonly byte[] _framebuffer;
   private readonly byte[] _renderbuffer;
-
   private ushort _controlWord;
+  private ushort _hCounter; // TODO: fake values
+  private ushort _vCounter;
   private Status _status;
   private byte _dataBuffer;
   private byte _lineInterrupt;
-  private ushort _hCounter; // TODO: fake values
   private byte _hScroll;
   private byte _vScroll;
   private bool _controlWritePending;
@@ -45,7 +44,7 @@ unsafe public class VDP
 
   // TODO: derive from display mode
   private readonly int _backgroundRows = 28;
-  private readonly int _vCounterMax;
+  private readonly int _vCounterMax = 255;
   private readonly byte _vCounterActive = 192;
   private readonly byte _vCounterJumpStart = 0xDA;
   private readonly byte _vCounterJumpEnd = 0xD5;
@@ -59,14 +58,15 @@ unsafe public class VDP
     _registers = new byte[REGISTER_COUNT];
     _framebuffer = new byte[FRAMEBUFFER_SIZE];
     _renderbuffer = new byte[FRAMEBUFFER_SIZE];
-    _vCounterMax = fixSlowdown 
-                 ? VCOUNTER_MAX_EXTENDED 
-                 : VCOUNTER_MAX_DEFAULT;
+    _vCounterMax += (_vCounterJumpStart - _vCounterJumpEnd);
+    if (fixSlowdown)
+      _vCounterMax += VCOUNTER_PADDING;
   }
   #endregion
 
   #region Properties
   public byte HCounter => (byte)(_hCounter >> 1);
+  public byte VCounter => _vCounter > byte.MaxValue ? byte.MaxValue : (byte)_vCounter;
   public int ScanlinesPerFrame => _vCounterMax + (_vCounterJumpStart - _vCounterJumpEnd);
 
   private ControlCode ControlCode => (ControlCode)(_controlWord >> 14);
@@ -74,8 +74,8 @@ unsafe public class VDP
   private bool ShiftX => TestRegisterBit(0x0, 3);
   private bool LineInterruptEnabled => TestRegisterBit(0x0, 4);
   private bool MaskLeftBorder => TestRegisterBit(0x0, 5);
-  private bool HScrollLimit => TestRegisterBit(0x0, 6); // TODO: implement
-  private bool VScrollLimit => TestRegisterBit(0x0, 7); // TODO: implement
+  private bool HScrollLimit => TestRegisterBit(0x0, 6); // TODO
+  private bool VScrollLimit => TestRegisterBit(0x0, 7); // TODO
   private bool ZoomSprites => TestRegisterBit(0x1, 0);
   private bool StretchSprites => TestRegisterBit(0x1, 1);
   private bool VSyncEnabled => TestRegisterBit(0x1, 5);
@@ -99,7 +99,6 @@ unsafe public class VDP
   #endregion
 
   #region Methods
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadStatus()
   {
     var status = (byte)_status;
@@ -109,7 +108,6 @@ unsafe public class VDP
     return status;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteControl(byte value)
   {
     if (!_controlWritePending)
@@ -141,7 +139,6 @@ unsafe public class VDP
     }
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadData()
   {
     var data = _dataBuffer;
@@ -151,7 +148,6 @@ unsafe public class VDP
     return data;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteData(byte value)
   {
     _controlWritePending = false;
@@ -168,29 +164,28 @@ unsafe public class VDP
     IncrementAddress();
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void RenderScanline()
   {
     IRQ = false;
-    VCounter++;
+    _vCounter++;
 
-    if (VCounter == _vCounterMax)
+    if (_vCounter == _vCounterMax)
     {
-      VCounter = 0;
+      _vCounter = 0;
       _vCounterJumped = false;
     }
-    else if (!_vCounterJumped && VCounter == _vCounterJumpStart)
+    else if (!_vCounterJumped && _vCounter == _vCounterJumpStart)
     {
-      VCounter = _vCounterJumpEnd;
+      _vCounter = _vCounterJumpEnd;
       _vCounterJumped = true;
     }
-    else if (VCounter == _vCounterActive)
+    else if (_vCounter == _vCounterActive)
     {
       RenderFrame();
       VSyncPending = true;
     }
 
-    if (VCounter > _vCounterActive)
+    if (_vCounter > _vCounterActive)
     {
       _lineInterrupt = _registers[0xA];
     }
@@ -205,7 +200,7 @@ unsafe public class VDP
       _lineInterrupt--;
     }
      
-    if (VCounter >= _vCounterActive)
+    if (_vCounter >= _vCounterActive)
     {
       _vScroll = _registers[0x9];
     }
@@ -221,7 +216,6 @@ unsafe public class VDP
       IRQ = true;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte[] ReadFramebuffer()
   {
     lock (_framebuffer)
@@ -232,6 +226,32 @@ unsafe public class VDP
       _frameQueued = false;
       return _framebuffer;
     }
+  }
+
+  public void LoadState(Snapshot snapshot)
+  {
+    Array.Copy(snapshot.CRAM, _cram, _cram.Length);
+    Array.Copy(snapshot.VRAM, _vram, _vram.Length);
+    Array.Copy(snapshot.VDPRegisters, _registers, _registers.Length);
+    _status = snapshot.VDPStatus;
+    _dataBuffer = snapshot.DataPort;
+    _lineInterrupt = snapshot.LineInterrupt;
+    _hScroll = snapshot.HScroll;
+    _vScroll = snapshot.VScroll;
+    _controlWritePending = snapshot.ControlWritePending;
+  }
+
+  public void SaveState(ref Snapshot snapshot)
+  {
+    snapshot.CRAM = _cram;
+    snapshot.VRAM = _vram;
+    snapshot.VDPRegisters = _registers;
+    snapshot.VDPStatus = _status;
+    snapshot.DataPort = _dataBuffer;
+    snapshot.LineInterrupt = _lineInterrupt;
+    snapshot.HScroll = _hScroll;
+    snapshot.VScroll = _vScroll;
+    snapshot.ControlWritePending = _controlWritePending;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -278,8 +298,8 @@ unsafe public class VDP
       if (y >= 0xD0)
         y -= 0x100;
 
-      if (y > VCounter ||
-          y + spriteHeight <= VCounter)
+      if (y > _vCounter ||
+          y + spriteHeight <= _vCounter)
         continue;
 
       spriteCount++;
@@ -296,11 +316,11 @@ unsafe public class VDP
       if (UseSecondPatternTable)
         patternIndex += 0x100;
 
-      if (StretchSprites && y <= VCounter + TILE_SIZE)
+      if (StretchSprites && y <= _vCounter + TILE_SIZE)
         patternIndex &= 0b_1111_1111_1111_1110;
 
       var patternAddress = patternIndex * 32;
-      patternAddress += (VCounter - y) * 4;
+      patternAddress += (_vCounter - y) * 4;
       var patternData = GetPatternData(patternAddress);
 
       var spriteEnd = x + 8;
@@ -312,7 +332,7 @@ unsafe public class VDP
         if (x < 8 && MaskLeftBorder)
           continue;
 
-        var pixelIndex = GetPixelIndex(x, VCounter);
+        var pixelIndex = GetPixelIndex(x, _vCounter);
         if (_renderbuffer[pixelIndex + 3] != 0x00)
         {
           _status |= Status.Collision;
@@ -332,10 +352,10 @@ unsafe public class VDP
   private void RasterizeBackground()
   {
     var baseAddress = GetNameTableAddress();
-    var sourceRow = (VCounter + _vScroll) / TILE_SIZE;
+    var sourceRow = (_vCounter + _vScroll) / TILE_SIZE;
     if (sourceRow >= _backgroundRows) 
       sourceRow -= _backgroundRows;
-    var rowOffset = (VCounter + _vScroll) % TILE_SIZE;
+    var rowOffset = (_vCounter + _vScroll) % TILE_SIZE;
 
     for (int destinationColumn = 0; destinationColumn < BACKGROUND_COLUMNS; destinationColumn++)
     {
@@ -369,7 +389,7 @@ unsafe public class VDP
         if (x < TILE_SIZE && MaskLeftBorder)
           continue;
 
-        var pixelIndex = GetPixelIndex(x, VCounter);
+        var pixelIndex = GetPixelIndex(x, _vCounter);
         if (!tile.HighPriotity && _renderbuffer[pixelIndex + 3] != 0x00)
           continue;
 
@@ -492,6 +512,7 @@ unsafe public class VDP
   #endregion
 
   #region Structs
+  [Serializable]
   public struct Color
   {
     private const byte BITMASK = 0b_0011;

@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace Quill;
 
@@ -11,10 +10,10 @@ public static class Program
     if (args != null && args.Length > 0)
       romPath = args[0];
 
-    var rom = ReadROM(romPath);
-    using var game = new Quill(rom, cropBorders: true, scaleFactor: 5);
-    game.Run();
+    var rom = File.ReadAllBytes(romPath);
+    var romName = Path.GetFileNameWithoutExtension(romPath);
+    var saveDirectory = Path.GetDirectoryName(romPath);
+    using (var game = new Quill(rom, romName, saveDirectory, 4))
+      game.Run();
   }
-
-  private static byte[] ReadROM(string path) => File.ReadAllBytes(path);
 }
