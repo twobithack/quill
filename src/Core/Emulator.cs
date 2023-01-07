@@ -13,7 +13,6 @@ unsafe public class Emulator
   #region Constants
   private const double FRAME_TIME_MS = 1000d / 60d;
   private const int CYCLES_PER_SCANLINE = 228;
-  private const int SNAPSHOT_TIMEOUT_MS = 1000;
   #endregion
 
   #region Fields
@@ -22,15 +21,15 @@ unsafe public class Emulator
   private readonly Stopwatch _clock;
   private readonly byte[] _rom;
   private bool _running;
-  private bool _createSnapshot;
-  private bool _loadSnapshot;
+  private bool _loadRequested;
+  private bool _saveRequested;
   private string _snapshotPath;
   #endregion
 
-  public Emulator(byte[] rom, bool fixSlowdown)
+  public Emulator(byte[] rom, int fakeScanlines)
   {
     _input = new IO();
-    _video = new VDP(fixSlowdown);
+    _video = new VDP(fakeScanlines);
     _clock = new Stopwatch();
     _rom = rom;
   }
@@ -40,7 +39,6 @@ unsafe public class Emulator
   {
     var cpu = new Z80(_rom, _input, _video);
     var lastFrame = 0d;
-    var lastSnapshot = 0d;
 
     _clock.Start();
     _running = true;
@@ -59,21 +57,19 @@ unsafe public class Emulator
         scanlines--;
       }
 
-      if (_createSnapshot && currentTime > lastSnapshot + SNAPSHOT_TIMEOUT_MS)
+      if (_loadRequested)
       {
-        var state = cpu.SaveState();
-        WriteSnapshot(state);
-        lastSnapshot = currentTime;
-      }
-      else if (_loadSnapshot && currentTime > lastSnapshot + SNAPSHOT_TIMEOUT_MS)
-      {
-        var state = ReadSnapshot();
+        var state = LoadSnapshot();
         if (state != null)
           cpu.LoadState(state);
-        lastSnapshot = currentTime;
+        _loadRequested = false;
       }
-
-      _createSnapshot = _loadSnapshot = false;
+      else if (_saveRequested)
+      {
+        var state = cpu.SaveState();
+        SaveSnapshot(state);
+        _saveRequested = false;
+      }
     }
   }
 
@@ -99,19 +95,19 @@ unsafe public class Emulator
   public void LoadState(string path)
   {
     _snapshotPath = path;
-    _loadSnapshot = true;
+    _loadRequested = true;
   }
 
   public void SaveState(string path)
   {
     _snapshotPath = path;
-    _createSnapshot = true;
+    _saveRequested = true;
   }
 
   public void Stop() => _running = false;
 
   #pragma warning disable SYSLIB0011
-  private Snapshot ReadSnapshot()
+  private Snapshot LoadSnapshot()
   {
     if (!File.Exists(_snapshotPath))
       return null;
@@ -125,7 +121,7 @@ unsafe public class Emulator
     return state;
   }
 
-  private void WriteSnapshot(Snapshot state)
+  private void SaveSnapshot(Snapshot state)
   {
     using (var stream = new FileStream(_snapshotPath, FileMode.Create))
     {

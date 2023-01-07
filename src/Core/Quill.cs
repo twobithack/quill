@@ -28,17 +28,18 @@ public class Quill : Game
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
   private Rectangle _viewport;
+  private bool _savesEnabled;
   #endregion
 
   public Quill(byte[] rom, 
                string romName,
                string saveDir,
                int scaleFactor,
-               bool cropBorders = true,
-               bool fixSlowdown = true)
+               int fakeScanlines = 0,
+               bool cropBorders = true)
   {
     Content.RootDirectory = "content";
-    _emulator = new Emulator(rom, fixSlowdown);
+    _emulator = new Emulator(rom, fakeScanlines);
     _emulationThread = new Thread(_emulator.Run);
     _graphics = new GraphicsDeviceManager(this);
     _romName = romName;
@@ -46,6 +47,10 @@ public class Quill : Game
     _cropBorder = cropBorders;
     _scale = scaleFactor;
   }
+
+  #region Properties
+  private string SnapshotFilepath => Path.Combine(_saveDirectory, _romName + ".save");
+  #endregion
 
   #region Methods
   protected override void Initialize()
@@ -110,16 +115,6 @@ public class Quill : Game
     if (!joypad.IsConnected)
       return false;
 
-    if (player == PLAYER_1)
-    {
-      if (joypad.IsButtonDown(Buttons.RightShoulder))
-        _emulator.SaveState(GetSnapshotPath());
-      else if (joypad.IsButtonDown(Buttons.LeftShoulder))
-        _emulator.LoadState(GetSnapshotPath());
-
-      _emulator.SetResetButtonState(joypad.IsButtonDown(Buttons.Back));
-    }
-
     _emulator.SetJoypadState(
       joypad: player,
       up:     joypad.IsButtonDown(Buttons.DPadUp) ||
@@ -137,6 +132,14 @@ public class Quill : Game
       pause:  joypad.IsButtonDown(Buttons.Start) ||
               joypad.IsButtonDown(Buttons.Back)
     );
+    
+    if (player == PLAYER_1)
+    {
+      _emulator.SetResetButtonState(joypad.IsButtonDown(Buttons.Back));
+      HandleSnapshotRequest(loadRequested: joypad.IsButtonDown(Buttons.LeftShoulder),
+                            saveRequested: joypad.IsButtonDown(Buttons.RightShoulder));
+    }
+
     return true;
   }
 
@@ -144,10 +147,6 @@ public class Quill : Game
   private void ReadKeyboardInput()
   {
     var kb = Keyboard.GetState();
-    if (kb.IsKeyDown(Keys.Enter))
-      _emulator.SaveState(GetSnapshotPath());
-    else if (kb.IsKeyDown(Keys.Back))
-      _emulator.LoadState(GetSnapshotPath());
 
     _emulator.SetJoypadState(
       joypad: PLAYER_1,
@@ -165,10 +164,33 @@ public class Quill : Game
               kb.IsKeyDown(Keys.OemPeriod),
       pause:  kb.IsKeyDown(Keys.Space)
     );
+
     _emulator.SetResetButtonState(kb.IsKeyDown(Keys.Escape));
+    HandleSnapshotRequest(loadRequested: kb.IsKeyDown(Keys.Back),
+                          saveRequested: kb.IsKeyDown(Keys.Enter));
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private string GetSnapshotPath() => Path.Combine(_saveDirectory, _romName + ".save");
+  private void HandleSnapshotRequest(bool loadRequested,
+                                     bool saveRequested)
+  {
+    if (!_savesEnabled)
+    {
+      _savesEnabled = !loadRequested && 
+                      !saveRequested; 
+      return;
+    }
+
+    if (loadRequested)
+    {
+      _emulator.LoadState(SnapshotFilepath);
+      _savesEnabled = false;
+    }
+    else if (saveRequested)
+    {
+      _emulator.SaveState(SnapshotFilepath);
+      _savesEnabled = false;
+    }
+  }
   #endregion
 }
