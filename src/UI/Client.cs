@@ -1,13 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Quill.Core;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Quill;
+namespace Quill.UI;
 
-public class Quill : Game
+public class Client : Game
 {
   #region Constants
   private const int FRAMEBUFFER_WIDTH = 256;
@@ -31,12 +32,12 @@ public class Quill : Game
   private bool _savesEnabled;
   #endregion
 
-  public Quill(byte[] rom, 
-               string romName,
-               string saveDir,
-               int scaleFactor,
-               int fakeScanlines = 0,
-               bool cropBorders = true)
+  public Client(byte[] rom, 
+                string romName,
+                string saveDir,
+                int scaleFactor = 1,
+                int fakeScanlines = 0,
+                bool cropBorders = true)
   {
     Content.RootDirectory = "content";
     _emulator = new Emulator(rom, fakeScanlines);
