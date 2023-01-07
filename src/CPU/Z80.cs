@@ -38,7 +38,7 @@ unsafe public ref partial struct Z80
   private ushort _deShadow = 0x0000;
   private ushort _hlShadow = 0x0000;
   private ushort? _memPtr = null;
-  private bool _halted = false;
+  private bool _halt = false;
   private bool _iff1 = true;
   private bool _iff2 = true;
   private Opcode _instruction;
@@ -190,7 +190,7 @@ unsafe public ref partial struct Z80
   #region Methods
   public void Run(int cycles)
   {
-    while (!_halted && cycles > 0)
+    while (cycles > 0)
       cycles -= Step();
   }
 
@@ -210,7 +210,7 @@ unsafe public ref partial struct Z80
     _bcShadow = state.BCs;
     _deShadow = state.DEs;
     _hlShadow = state.HLs;
-    _halted = state.Halted;
+    _halt = state.Halt;
     _iff1 = state.IFF1;
     _iff2 = state.IFF2;
     _memory.LoadState(state);
@@ -235,7 +235,7 @@ unsafe public ref partial struct Z80
       BCs = _bcShadow,
       DEs = _deShadow,
       HLs = _hlShadow,
-      Halted = _halted,
+      Halt = _halt,
       IFF1 = _iff1,
       IFF2 = _iff2
     };
@@ -248,10 +248,10 @@ unsafe public ref partial struct Z80
   private int Step()
   {
     HandleInterrupts();
-    if (_halted)
+    if (_halt)
     {
       _r++;
-      return 0;
+      return 0x04;
     }
     DecodeInstruction();
     ExecuteInstruction();
@@ -261,13 +261,23 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void HandleInterrupts()
   {
+    if (_input.NMI)
+    {
+      PushToStack(_pc);
+      _pc = 0x66;
+      _halt = false;
+      _iff2 = _iff1;
+      _iff1 = false;
+      _input.NMI = false;
+    }
+
     if (_iff1 && _vdp.IRQ)
     {
       PushToStack(_pc);
       _pc = 0x38;
+      _halt = false;
       _iff1 = false;
       _iff2 = false;
-      _halted = false;
       _r++;
     }
   }
@@ -646,9 +656,9 @@ unsafe public ref partial struct Z80
         // SDSC
         return;
 
-      #if DEBUG
-      default: throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
-      #endif
+      //#if DEBUG
+      //default: throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
+      //#endif
     }
   }
 

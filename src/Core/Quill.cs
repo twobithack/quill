@@ -116,6 +116,8 @@ public class Quill : Game
         _emulator.SaveState(GetSnapshotPath());
       else if (joypad.IsButtonDown(Buttons.LeftShoulder))
         _emulator.LoadState(GetSnapshotPath());
+
+      _emulator.SetResetButtonState(joypad.IsButtonDown(Buttons.Back));
     }
 
     _emulator.SetJoypadState(
@@ -131,7 +133,9 @@ public class Quill : Game
       fireA:  joypad.IsButtonDown(Buttons.A) ||
               joypad.IsButtonDown(Buttons.Y),
       fireB:  joypad.IsButtonDown(Buttons.B) ||
-              joypad.IsButtonDown(Buttons.X)
+              joypad.IsButtonDown(Buttons.X),
+      pause:  joypad.IsButtonDown(Buttons.Start) ||
+              joypad.IsButtonDown(Buttons.Back)
     );
     return true;
   }
@@ -140,9 +144,6 @@ public class Quill : Game
   private void ReadKeyboardInput()
   {
     var kb = Keyboard.GetState();
-    if (kb.IsKeyDown(Keys.Escape))
-      Exit();
-
     if (kb.IsKeyDown(Keys.Enter))
       _emulator.SaveState(GetSnapshotPath());
     else if (kb.IsKeyDown(Keys.Back))
@@ -161,8 +162,10 @@ public class Quill : Game
       fireA:  kb.IsKeyDown(Keys.Z) ||
               kb.IsKeyDown(Keys.OemComma),
       fireB:  kb.IsKeyDown(Keys.X) ||
-              kb.IsKeyDown(Keys.OemPeriod)
+              kb.IsKeyDown(Keys.OemPeriod),
+      pause:  kb.IsKeyDown(Keys.Space)
     );
+    _emulator.SetResetButtonState(kb.IsKeyDown(Keys.Escape));
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

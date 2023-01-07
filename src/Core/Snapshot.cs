@@ -37,7 +37,7 @@ public class Snapshot
   public ushort HLs;
   public byte I;
   public byte R;
-  public bool Halted;
+  public bool Halt;
   public bool IFF1;
   public bool IFF2;
 
