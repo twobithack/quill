@@ -17,7 +17,7 @@ unsafe public class Emulator
 
   #region Fields
   private readonly IO _input;
-  private readonly PSG _audio;
+  private readonly PSG _sound;
   private readonly VDP _video;
   private readonly byte[] _rom;
   private string _snapshotPath;
@@ -26,18 +26,18 @@ unsafe public class Emulator
   private bool _running;
   #endregion
 
-  public Emulator(byte[] rom, int fakeScanlines)
+  public Emulator(byte[] rom, int extraScanlines)
   {
     _input = new IO();
-    _audio = new PSG();
-    _video = new VDP(fakeScanlines);
+    _sound = new PSG();
+    _video = new VDP(extraScanlines);
     _rom = rom;
   }
 
   #region Methods
   public void Run()
   {
-    var cpu = new Z80(_rom, _input, _audio, _video);
+    var cpu = new Z80(_rom, _input, _sound, _video);
     var clock = new Stopwatch();
     var lastFrame = 0d;
 
@@ -76,7 +76,7 @@ unsafe public class Emulator
 
   public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
 
-  public byte[] ReadAudioBuffer() => _audio.ReadBuffer();
+  public byte[] ReadAudioBuffer() => _sound.ReadAudioBuffer();
 
   public void SetJoypadState(int joypad,
                              bool up, 

@@ -23,8 +23,8 @@ public sealed class Client : Game
   #region Fields
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
-  private readonly DynamicSoundEffectInstance _audio;
   private readonly GraphicsDeviceManager _graphics;
+  private readonly DynamicSoundEffectInstance _sound;
   private readonly string _romName;
   private readonly string _saveDirectory;
   private readonly bool _cropBorder;
@@ -39,15 +39,15 @@ public sealed class Client : Game
                 string romName,
                 string saveDir,
                 int scaleFactor = 1,
-                int fakeScanlines = 0,
+                int extraScanlines = 0,
                 bool cropBorders = true)
   {
     Content.RootDirectory = "content";
-    _emulator = new Emulator(rom, fakeScanlines);
+    _emulator = new Emulator(rom, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
-    _audio = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
-                                            AudioChannels.Stereo);
     _graphics = new GraphicsDeviceManager(this);
+    _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
+                                            AudioChannels.Stereo);
     _romName = romName;
     _saveDirectory = saveDir;
     _cropBorder = cropBorders;
@@ -56,6 +56,8 @@ public sealed class Client : Game
 
   #region Properties
   private string SnapshotFilepath => Path.Combine(_saveDirectory, _romName + ".save");
+  private int ViewportHeight => _scale * FRAMEBUFFER_HEIGHT;
+  private int ViewportWidth => _scale * FRAMEBUFFER_WIDTH;
   #endregion
 
   #region Methods
@@ -63,21 +65,13 @@ public sealed class Client : Game
   {
     Window.Title = "Quill";
     _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
-    _graphics.PreferredBackBufferHeight = _scale * FRAMEBUFFER_HEIGHT;
-    _graphics.PreferredBackBufferWidth = _scale * FRAMEBUFFER_WIDTH;
-    _graphics.ApplyChanges();    
+    _graphics.PreferredBackBufferHeight = ViewportHeight;
+    _graphics.PreferredBackBufferWidth = ViewportWidth;
+    _graphics.ApplyChanges();
+    ResizeViewport();
 
-    _viewport = GraphicsDevice.Viewport.Bounds;
-    if (_cropBorder)
-    {
-      var offset = _scale * BORDER_MASK_WIDTH;
-      _viewport.X -= offset;
-      _graphics.PreferredBackBufferWidth -= offset;
-      _graphics.ApplyChanges();    
-    }
-
-    _audio.Play();
     _emulationThread.Start();
+    _sound.Play();
 
     base.Initialize();
   }
@@ -89,7 +83,7 @@ public sealed class Client : Game
   protected override void Update(GameTime gameTime)
   {
     ReadInput();
-    ReadAudioBuffer();
+    UpdateSound();
     base.Update(gameTime);
   }
 
@@ -109,11 +103,24 @@ public sealed class Client : Game
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void ReadAudioBuffer()
+  private void ResizeViewport()
   {
-    var audio = _emulator.ReadAudioBuffer();
-    if (audio != null)
-      _audio.SubmitBuffer(audio);
+    _viewport = new Rectangle(0, 0, ViewportWidth, ViewportHeight);
+    if (_cropBorder)
+    {
+      var offset = _scale * BORDER_MASK_WIDTH;
+      _viewport.X -= offset;
+      _graphics.PreferredBackBufferWidth -= offset;
+      _graphics.ApplyChanges();    
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void UpdateSound()
+  {
+    var buffer = _emulator.ReadAudioBuffer();
+    if (buffer != null)
+      _sound.SubmitBuffer(buffer);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -146,8 +153,7 @@ public sealed class Client : Game
               joypad.IsButtonDown(Buttons.Y),
       fireB:  joypad.IsButtonDown(Buttons.B) ||
               joypad.IsButtonDown(Buttons.X),
-      pause:  joypad.IsButtonDown(Buttons.Start) ||
-              joypad.IsButtonDown(Buttons.Back)
+      pause:  joypad.IsButtonDown(Buttons.Start)
     );
     
     if (player == PLAYER_1)

@@ -52,7 +52,7 @@ unsafe public class VDP
   #endregion
 
   #region Constructors
-  public VDP(int fakeScanlines)
+  public VDP(int extraScanlines)
   {
     _vram = new byte[VRAM_SIZE];
     _cram = new Color[CRAM_SIZE];
@@ -60,7 +60,7 @@ unsafe public class VDP
     _framebuffer = new byte[FRAMEBUFFER_SIZE];
     _renderbuffer = new byte[FRAMEBUFFER_SIZE];
     _vCounterMax += (_vCounterJumpStart - _vCounterJumpEnd);
-    _vCounterMax += fakeScanlines;
+    _vCounterMax += extraScanlines;
     _hCounter = 0x50;
   }
   #endregion
