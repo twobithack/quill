@@ -13,7 +13,7 @@ namespace Quill.UI;
 public sealed class Client : Game
 {
   #region Constants
-  private const int AUDIO_SAMPLE_RATE = 48000;
+  private const int AUDIO_SAMPLE_RATE = 44100;
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 192;
   private const int BORDER_MASK_WIDTH = 8;
@@ -24,6 +24,7 @@ public sealed class Client : Game
   #region Fields
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
+  private readonly Thread _bufferingThread;
   private readonly GraphicsDeviceManager _graphics;
   private readonly DynamicSoundEffectInstance _sound;
   private readonly string _romName;
@@ -46,9 +47,10 @@ public sealed class Client : Game
     Content.RootDirectory = "content";
     _emulator = new Emulator(rom, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
+    _bufferingThread = new Thread(UpdateSound);
     _graphics = new GraphicsDeviceManager(this);
     _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
-                                            AudioChannels.Mono);
+                                            AudioChannels.Stereo);
     _romName = romName;
     _saveDirectory = saveDir;
     _cropBorder = cropBorders;
@@ -72,7 +74,7 @@ public sealed class Client : Game
     ResizeViewport();
 
     _emulationThread.Start();
-    _sound.BufferNeeded += UpdateSound;
+    _bufferingThread.Start();
     _sound.Play();
 
     base.Initialize();
@@ -80,7 +82,11 @@ public sealed class Client : Game
 
   protected override void LoadContent() => _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-  protected override void UnloadContent() => _emulator.Stop();
+  protected override void UnloadContent()
+  {
+    _bufferingThread.Abort();
+    _emulator.Stop();
+  }
 
   protected override void Update(GameTime gameTime)
   {
@@ -117,10 +123,18 @@ public sealed class Client : Game
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateSound(object sender, EventArgs e)
+  private void UpdateSound()
   {
-    var buffer = _emulator.ReadAudioBuffer();
-    _sound.SubmitBuffer(buffer);
+    while (true)
+    {
+      if (_sound.PendingBufferCount < AUDIO_SAMPLE_RATE / 1000)
+      {
+        var buffer = _emulator.ReadAudioBuffer();
+        if (buffer.Length != 0)
+          _sound.SubmitBuffer(buffer);
+      }
+      Thread.Sleep(1);
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
