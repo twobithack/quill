@@ -77,13 +77,9 @@ unsafe public ref partial struct Z80
     var addend = ReadWordOperand(_instruction.Source);
     var sum = augend + addend;
 
-    var flags = (Flags)((sum >> 8) & 0b_1010_1000);
-    if ((ushort)sum == 0)
-      flags |= Flags.Zero;
+    var flags = (Flags)((byte)_flags & 0b_1110_1100);
     if ((augend & 0xFFF) + (addend & 0xFFF) > 0xFFF)
       flags |= Flags.Halfcarry;
-    if (CheckWordOverflow(augend, addend, sum))
-      flags |= Flags.Parity;
     if (sum > ushort.MaxValue)
       flags |= Flags.Carry;
 
