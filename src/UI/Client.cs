@@ -13,7 +13,7 @@ public sealed class Client : Game
 {
   #region Constants
   private const int AUDIO_SAMPLE_RATE = 44100;
-  private const int MIN_AUDIO_SAMPLES = 20;
+  private const int MIN_AUDIO_SAMPLES = 5;
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 192;
   private const int BORDER_MASK_WIDTH = 8;
@@ -48,7 +48,7 @@ public sealed class Client : Game
     Content.RootDirectory = "content";
     _emulator = new Emulator(rom, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
-    _bufferingThread = new Thread(UpdateSound);
+    _bufferingThread = new Thread(UpdateAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
     _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
                                             AudioChannels.Mono);
@@ -92,7 +92,7 @@ public sealed class Client : Game
 
   protected override void Update(GameTime gameTime)
   {
-    ReadInput();
+    HandleInput();
     base.Update(gameTime);
   }
 
@@ -125,22 +125,22 @@ public sealed class Client : Game
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateSound()
+  private void UpdateAudioBuffer()
   {
     while (_running)
     {
       if (_sound.PendingBufferCount < MIN_AUDIO_SAMPLES)
       {
         var buffer = _emulator.ReadAudioBuffer();
-        if (buffer.Length != 0)
+        if (buffer != null)
           _sound.SubmitBuffer(buffer);
       }
-      Thread.Sleep(1);
+      Thread.Sleep(10);
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void ReadInput()
+  private void HandleInput()
   {
     if (ReadJoypadInput(PLAYER_1))
       ReadJoypadInput(PLAYER_2);

@@ -81,7 +81,7 @@ unsafe public class Emulator
 
   public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
 
-  public byte[] ReadAudioBuffer() => _sound.ReadAudioBuffer();
+  public byte[] ReadAudioBuffer() => _sound.ReadBuffer();
 
   public void SetJoypadState(int joypad,
                              bool up, 
