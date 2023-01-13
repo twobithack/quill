@@ -21,12 +21,12 @@ public sealed class PSG
   #endregion
 
   #region Fields
+  private readonly Channel[] _channels;
   private readonly BufferManager _bufferPool;
-  private readonly Thread _bufferThread;
+  private readonly Thread _bufferingThread;
   private readonly short[] _buffer;
   private int _bufferPosition;
 
-  private readonly Channel[] _channels;
   private int _latchedChannel;
   private bool _volumeLatched;
   private bool _playing;
@@ -43,14 +43,14 @@ public sealed class PSG
     _bufferPosition = 0;
     _buffer = new short[BUFFER_SIZE];
     _bufferPool = BufferManager.CreateBufferManager(BUFFER_SIZE * 2, BUFFER_SIZE * 2);
-    _bufferThread = new Thread(ManageBuffer);
+    _bufferingThread = new Thread(ManageBuffer);
   }
 
   #region Methods
   public void Start()
   {
     _playing = true;
-    _bufferThread.Start();
+    _bufferingThread.Start();
   }
 
   public void Stop() => _playing = false;
