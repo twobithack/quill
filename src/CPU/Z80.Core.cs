@@ -30,7 +30,6 @@ unsafe public ref partial struct Z80
   private byte _ixl = 0x00;
   private byte _iyh = 0x00;
   private byte _iyl = 0x00;
-  private byte _io = 0x00;
   private ushort _pc = 0x0000;
   private ushort _sp = 0xFFFF;
   private ushort _afShadow = 0x0000;
