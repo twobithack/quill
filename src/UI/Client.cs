@@ -188,18 +188,23 @@ public sealed class Client : Game
 
     _emulator.SetJoypadState(
       joypad: PLAYER_1,
-      up:     kb.IsKeyDown(Keys.Up) ||
-              kb.IsKeyDown(Keys.W),
-      down:   kb.IsKeyDown(Keys.Down) ||
-              kb.IsKeyDown(Keys.S),
-      left:   kb.IsKeyDown(Keys.Left) ||
-              kb.IsKeyDown(Keys.A),
-      right:  kb.IsKeyDown(Keys.Right) ||
-              kb.IsKeyDown(Keys.D),
-      fireA:  kb.IsKeyDown(Keys.Z) ||
-              kb.IsKeyDown(Keys.OemComma),
-      fireB:  kb.IsKeyDown(Keys.X) ||
-              kb.IsKeyDown(Keys.OemPeriod),
+      up:     kb.IsKeyDown(Keys.W),
+      down:   kb.IsKeyDown(Keys.S),
+      left:   kb.IsKeyDown(Keys.A),
+      right:  kb.IsKeyDown(Keys.D),
+      fireA:  kb.IsKeyDown(Keys.F),
+      fireB:  kb.IsKeyDown(Keys.G),
+      pause:  kb.IsKeyDown(Keys.LeftControl)
+    );
+
+    _emulator.SetJoypadState(
+      joypad: PLAYER_2,
+      up:     kb.IsKeyDown(Keys.Up),
+      down:   kb.IsKeyDown(Keys.Down),
+      left:   kb.IsKeyDown(Keys.Left),
+      right:  kb.IsKeyDown(Keys.Right),
+      fireA:  kb.IsKeyDown(Keys.OemComma),
+      fireB:  kb.IsKeyDown(Keys.OemPeriod),
       pause:  kb.IsKeyDown(Keys.Space)
     );
 
