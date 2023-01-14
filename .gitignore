@@ -1,7 +1,3 @@
-.vs/*
-bin/*
-obj/*
-rom/*
-test/*
-!test/zexall.sms
-!test/zexdoc.sms
+src/.vs/*
+src/bin/*
+src/obj/*
