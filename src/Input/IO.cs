@@ -66,14 +66,11 @@ public class IO
     if (right)  stateB |= PortB.Joy2Right;
     if (fireA)  stateB |= PortB.Joy2FireA;
     if (fireB)  stateB |= PortB.Joy2FireB;
-    if (pause)  NMI = true;
 
     _portA = stateA;
     _portB = stateB;
 
-    if (!pause)
-      _pauseEnabled = true;
-    else if (_pauseEnabled)
+    if (pause && _pauseEnabled)
     {
       _pauseEnabled = false;
       NMI = true;

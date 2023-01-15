@@ -193,7 +193,7 @@ public sealed class Client : Game
       right:  kb.IsKeyDown(Keys.D),
       fireA:  kb.IsKeyDown(Keys.F),
       fireB:  kb.IsKeyDown(Keys.G),
-      pause:  kb.IsKeyDown(Keys.LeftControl)
+      pause:  kb.IsKeyDown(Keys.Space)
     );
 
     _emulator.SetJoypadState(
