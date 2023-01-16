@@ -119,21 +119,25 @@ unsafe public class Emulator
       return null;
 
     Snapshot state;
-    using (var stream = new FileStream(_snapshotPath, FileMode.Open))
+    try
     {
+      using var stream = new FileStream(_snapshotPath, FileMode.Open);
       var formatter = new BinaryFormatter();
       state = (Snapshot)formatter.Deserialize(stream);
     }
+    catch
+    { 
+      return null;
+    }
+
     return state;
   }
 
   private void SaveSnapshot(Snapshot state)
   {
-    using (var stream = new FileStream(_snapshotPath, FileMode.Create))
-    {
-      var formatter = new BinaryFormatter();
-      formatter.Serialize(stream, state);
-    }
+    using var stream = new FileStream(_snapshotPath, FileMode.Create);
+    var formatter = new BinaryFormatter();
+    formatter.Serialize(stream, state);
   }
   #pragma warning restore SYSLIB0011
   #endregion

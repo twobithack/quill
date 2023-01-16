@@ -38,6 +38,7 @@ public sealed class PSG
     _channels[NOISE] = new Channel();
 
     _buffer = new short[BUFFER_SIZE];
+    _bufferPosition = BUFFER_SIZE;
     _bufferingThread = new Thread(FillBuffer);
   }
 

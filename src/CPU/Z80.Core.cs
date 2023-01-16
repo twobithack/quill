@@ -735,12 +735,15 @@ unsafe public ref partial struct Z80
            $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {IX.ToHex()} │ IY: {IY.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
            $"│ AF: {AF.ToHex()} │ BC: {BC.ToHex()} │ DE: {DE.ToHex()} │ HL: {HL.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
            $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
-           "╘══════════╧══════════╧══════════╧══════════╧═══════════╛\r\n";
+           "╘══════════╧══════════╧══════════╧══════════╧═══════════╛";
   }
   
   public void DumpMemory(string path) => _memory.DumpRAM(path);
   public void DumpROM(string path) => _memory.DumpROM(path);
 
-  public override string ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction}\r\n{_memory.ToString()}\r\n{_vdp.ToString()}\r\n";
+  public override string ToString() => DumpRegisters() + "\r\n" +
+                                       $"Flags: {_flags} | CIR: {_instruction}\r\n" +
+                                       _memory.ToString() + "\r\n" +
+                                       _vdp.ToString() + "\r\n";
   #endregion
 }
