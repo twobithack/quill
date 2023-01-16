@@ -195,6 +195,20 @@ unsafe public ref partial struct Z80
       cycles -= Step();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public int Step()
+  {
+    HandleInterrupts();
+    if (_halt)
+    {
+      _r++;
+      return 0x04;
+    }
+    DecodeInstruction();
+    ExecuteInstruction();
+    return _instruction.Cycles;
+  }
+
   public void LoadState(Snapshot state)
   {
     AF = state.AF;
@@ -243,20 +257,6 @@ unsafe public ref partial struct Z80
     _memory.SaveState(ref state);
     _vdp.SaveState(ref state);
     return state;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private int Step()
-  {
-    HandleInterrupts();
-    if (_halt)
-    {
-      _r++;
-      return 0x04;
-    }
-    DecodeInstruction();
-    ExecuteInstruction();
-    return _instruction.Cycles;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

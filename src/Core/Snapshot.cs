@@ -10,7 +10,7 @@ public class Snapshot
   #region Constants
   private const ushort MEMORY_SIZE = 0x4000;
   private const int CRAM_SIZE = 0x20;
-  private const int REGISTER_COUNT = 11;
+  private const int VDP_REGISTER_COUNT = 11;
   #endregion
 
   #region Fields
@@ -60,6 +60,6 @@ public class Snapshot
     Bank1 = new byte[MEMORY_SIZE];
     CRAM = new Color[CRAM_SIZE];
     VRAM = new byte[MEMORY_SIZE];
-    VDPRegisters = new byte[REGISTER_COUNT];
+    VDPRegisters = new byte[VDP_REGISTER_COUNT];
   }
 }
