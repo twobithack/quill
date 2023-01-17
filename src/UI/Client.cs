@@ -28,7 +28,7 @@ public sealed class Client : Game
   private readonly GraphicsDeviceManager _graphics;
   private readonly DynamicSoundEffectInstance _sound;
   private readonly string _romName;
-  private readonly string _saveDirectory;
+  private readonly string _savesDirectory;
   private readonly bool _cropBorder;
   private readonly int _scale;
   private SpriteBatch _spriteBatch;
@@ -38,27 +38,27 @@ public sealed class Client : Game
   private bool _running;
   #endregion
 
-  public Client(string filepath,
+  public Client(string romPath,
                 int scaleFactor = 1,
                 int extraScanlines = 0,
                 bool cropLeftBorder = true)
   {
-    var rom = File.ReadAllBytes(filepath);
+    var rom = File.ReadAllBytes(romPath);
     _emulator = new Emulator(rom, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
     _bufferingThread = new Thread(UpdateAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
     _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
                                             AudioChannels.Mono);
-    _romName = Path.GetFileNameWithoutExtension(filepath);
-    _saveDirectory = Path.GetDirectoryName(filepath);
+    _romName = Path.GetFileNameWithoutExtension(romPath);
+    _savesDirectory = Path.Combine(Path.GetDirectoryName(romPath), "saves");
     _cropBorder = cropLeftBorder;
     _scale = scaleFactor;
     _running = true;
   }
 
   #region Properties
-  private string SnapshotFilepath => Path.Combine(_saveDirectory, _romName + ".save");
+  private string SnapshotFilepath => Path.Combine(_savesDirectory, _romName + ".save");
   private int ViewportHeight => _scale * FRAMEBUFFER_HEIGHT;
   private int ViewportWidth => _scale * FRAMEBUFFER_WIDTH;
   #endregion
