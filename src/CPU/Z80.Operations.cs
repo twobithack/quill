@@ -244,7 +244,7 @@ unsafe public ref partial struct Z80
   {
     var value = _a;
 
-    if (HalfcarryFlag || (_a & 0x0f) > 9)
+    if (HalfcarryFlag || (_a & 0xF) > 9)
       value = NegativeFlag
             ? (byte)(value - 0x06)
             : (byte)(value + 0x06);
@@ -261,6 +261,8 @@ unsafe public ref partial struct Z80
       flags |= Flags.Halfcarry;
     if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
+    if (NegativeFlag)
+      flags |= Flags.Negative;
     if (CarryFlag | (_a > 0x99))
       flags |= Flags.Carry;
 
