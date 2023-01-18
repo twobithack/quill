@@ -65,7 +65,6 @@
 
 # LOGIC ISSUES
 * Ace of Aces (blank screen)
-* Altered Beast (stuck on splash screen)
 * Ninja Gaiden (player clips through floor)
 * Paperboy (blank screen)
 * Penguin Land (gameplay and localization)
@@ -79,6 +78,7 @@
 
 # VISUAL ISSUES
 * Action Figther (artifacts)
+* Altered Beast (palette issues)
 * Astro Warrior (artifacts)
 * Disney's Aladdin (sprite flicker)
 * Disney's Deep Duck Trouble (palette issues)

@@ -43,7 +43,7 @@ public sealed class PSG
   }
 
   #region Methods
-  public void Start()
+  public void Play()
   {
     _playing = true;
     _bufferingThread.Start();
