@@ -59,20 +59,15 @@ public sealed class Client : Game
 
   #region Properties
   private string SnapshotFilepath => Path.Combine(_savesDirectory, _romName + ".save");
-  private int ViewportHeight => _scale * FRAMEBUFFER_HEIGHT;
-  private int ViewportWidth => _scale * FRAMEBUFFER_WIDTH;
   #endregion
 
   #region Methods
   protected override void Initialize()
   {
     Window.Title = "Quill";
-    _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
-    _graphics.PreferredBackBufferHeight = ViewportHeight;
-    _graphics.PreferredBackBufferWidth = ViewportWidth;
-    _graphics.ApplyChanges();
     ResizeViewport();
 
+    _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
     _emulationThread.Start();
     _bufferingThread.Start();
     _sound.Play();
@@ -90,18 +85,18 @@ public sealed class Client : Game
 
   protected override void Update(GameTime gameTime)
   {
+    var buffer = _emulator.ReadFramebuffer();
+    if (buffer != null)
+      _framebuffer.SetData(buffer);
+
     HandleInput();
     base.Update(gameTime);
   }
 
   protected override void Draw(GameTime gameTime)
   {
-    var frame = _emulator.ReadFramebuffer();
-    if (frame == null) 
-      return;
-   
     GraphicsDevice.Clear(Color.Black);
-    _framebuffer.SetData(frame);
+
     _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
     _spriteBatch.Draw(_framebuffer, _viewport, Color.White);
     _spriteBatch.End();
@@ -112,14 +107,18 @@ public sealed class Client : Game
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ResizeViewport()
   {
-    _viewport = new Rectangle(0, 0, ViewportWidth, ViewportHeight);
+    _viewport = new Rectangle(0, 0, _scale * FRAMEBUFFER_WIDTH, _scale * FRAMEBUFFER_HEIGHT);
+    _graphics.PreferredBackBufferHeight = _viewport.Height;
+    _graphics.PreferredBackBufferWidth = _viewport.Width;
+
     if (_cropBorder)
     {
-      var offset = _scale * BORDER_MASK_WIDTH;
-      _viewport.X -= offset;
-      _graphics.PreferredBackBufferWidth -= offset;
-      _graphics.ApplyChanges();    
+      var maskOffset = _scale * BORDER_MASK_WIDTH;
+      _viewport.X -= maskOffset;
+      _graphics.PreferredBackBufferWidth -= maskOffset;
     }
+
+    _graphics.ApplyChanges();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
