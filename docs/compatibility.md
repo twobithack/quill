@@ -9,6 +9,7 @@
 * Alex Kidd In Shinobi World
 * Alex Kidd: The Lost Stars
 * Altered Beast
+* Arcade Smash Hits
 * Argos no Juujiken
 * Assault City
 * Asterix
@@ -27,6 +28,7 @@
 * Choplifter
 * Chuck Rock II - Son of Chuck
 * Columns
+* The Cyber Shinobi
 * Daffy Duck in Hollywood
 * Dead Angle
 * Disney's Aladdin 
@@ -40,19 +42,24 @@
 * Dynamite Headdy
 * Earthworm Jim 
 * Ecco the Dolphin
-* Felipe em Ação 
+* E-SWAT - City under Siege
 * Férias Frustradas do Pica-Pau
 * FIFA International Soccer
+* Flight of the Pigarus
 * Gauntlet
 * Geraldinho
 * Ghouls'n Ghosts
+* G-LOC Air Battle
 * Golden Axe
 * Golden Axe Warrior 
 * Golvellius - Valley of Doom
 * Hang-On
+* Impossible Mission
+* James 'Buster' Douglas Knockout Boxing
 * Kenseiden
 * King's Quest
 * Lemmings
+* Lord of the Sword
 * Master of Darkness
 * Marble Madness
 * Michael Jackson's Moonwalker
@@ -67,6 +74,7 @@
 * Pac-Mania
 * Paperboy
 * Phantasy Star
+* Populous
 * Power Strike
 * Power Strike II
 * Prince of Persia
@@ -95,9 +103,11 @@
 * Streets of Rage
 * Streets of Rage 2
 * Strider
+* Strider II
 * Super Space Invaders
 * Super Tetris
 * Teddy Boy
+* Tom and Jerry: The Movie
 * Turma da Mônica em O Resgate
 * Ultima IV: Quest of the Avatar
 * Wonder Boy III - The Dragon's Trap
@@ -121,6 +131,9 @@
 * Disney's Deep Duck Trouble (palette issues)
 * Mortal Kombat II (palette issues)
 * Mortal Kombat 3 (no splash screen)
+* Teddy Boy Blues (palette issues)
+* Solomon no Kagi - Oujo Rihita no Namida (palette issues)
+* Virtua Fighter Animation (sprite flickering)
 
 # AUDIO ISSUES
 * Sonic Blast (no startup jingle)
