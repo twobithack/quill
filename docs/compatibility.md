@@ -47,6 +47,7 @@
 * Columns
 * The Cyber Shinobi
 * Daffy Duck in Hollywood
+* Danan: The Jungle Fighter
 * Dead Angle
 * Desert Strike
 * Disney's Aladdin 
@@ -60,7 +61,9 @@
 * Dynamite Headdy
 * Earthworm Jim 
 * Ecco the Dolphin
+* Enduro Racer
 * E-SWAT - City under Siege
+* F1 Championship
 * Fantasy Zone
 * Fantasy Zone II
 * Fantasy Zone: The Maze
@@ -87,13 +90,17 @@
 * Hang-On
 * Heroes of the Lance
 * Home Alone
+* Hook
 * Impossible Mission
 * Incredible Crash Test Dummies
 * James 'Buster' Douglas Knockout Boxing
 * James Pond 2 - Codename Robocod
+* The Jungle Book
+* Jurassic Park
 * Kenseiden
 * King's Quest
 * Klax
+* Kung Fu Kid
 * Land of Illusion Starring Mickey Mouse
 * Laser Ghost
 * Legend of Illusion starring Mickey Mouse
@@ -215,6 +222,7 @@
 * Dick Tracy (palette)
 * Deep Duck Trouble Starring Donald Duck (palette)
 * Incredible Hulk (palette)
+* Krusty's Fun House (palette)
 * Mortal Kombat II (palette)
 * Mortal Kombat 3 (no splash screen)
 * Teddy Boy Blues (palette)
@@ -229,6 +237,7 @@
 * Asterix and the Great Rescue 
 * Bank Panic
 * Cosmic Spacehead
+* Desert Speedtrap Starring Roadrunner (nothing after menus)
 * Global Gladiators (stuck on splash screen)
 * Indiana Jones and the Last Crusade
 * Parlour Games 
