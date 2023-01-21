@@ -307,7 +307,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void DJNZ()
   {
-    var displacement = FetchDisplacement();
+    var displacement = FetchSignedByte();
     if (--_b != 0)
       _pc = (ushort)(_pc + displacement);
   }
@@ -497,7 +497,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void JR()
   {
-    var displacement = FetchDisplacement();
+    var displacement = FetchSignedByte();
     if (EvaluateCondition()) 
       _pc = (ushort)(_pc + displacement);
   }

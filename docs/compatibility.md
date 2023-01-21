@@ -81,7 +81,6 @@
 * Gauntlet
 * Geraldinho
 * Ghostbusters
-* Ghouls'n Ghosts
 * G-LOC Air Battle
 * Golden Axe
 * Golden Axe Warrior 
@@ -210,6 +209,7 @@
 
 # AUDIO ISSUES
 * Double Hawk (no gunfire sound)
+* Ghouls'n Ghosts (no weapon sound)
 * Sonic Blast (no startup jingle)
 
 # VISUAL ISSUES
