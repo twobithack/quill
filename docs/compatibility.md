@@ -22,6 +22,8 @@
 * Astro Warrior 
 * Astro Warrior & Pit Pot
 * Ayrton Senna's Super Monaco GP II
+* Aztec Adventure
+* Back to the Future Part II
 * Baku Baku Animals
 * Batman Returns
 * Battle Outrun
@@ -30,13 +32,18 @@
 * Bomber Raid
 * Bonanza Bros
 * Bubble Bobble
+* Buggy Run
 * California Games
+* Captain Silver
+* Casino Games
 * Castelo Rá-Tim-Bum
 * Castle of Illusion Starring Mickey Mouse
 * Chapolim x Drácula - Um Duelo Assustador
+* Chase H.Q.
 * Choplifter
 * Chuck Rock
 * Chuck Rock II - Son of Chuck
+* Cloud Master
 * Columns
 * The Cyber Shinobi
 * Daffy Duck in Hollywood
@@ -67,14 +74,18 @@
 * Forgotten Worlds
 * Flight of the Pigarus
 * Gain Ground
+* Galaxy Force
 * Gauntlet
 * Geraldinho
+* Ghostbusters
 * Ghouls'n Ghosts
 * G-LOC Air Battle
 * Golden Axe
 * Golden Axe Warrior 
+* Golf Mania
 * Golvellius - Valley of Doom
 * Hang-On
+* Heroes of the Lance
 * Home Alone
 * Impossible Mission
 * Incredible Crash Test Dummies
@@ -82,11 +93,13 @@
 * James Pond 2 - Codename Robocod
 * Kenseiden
 * King's Quest
+* Klax
 * Land of Illusion Starring Mickey Mouse
 * Laser Ghost
 * Legend of Illusion starring Mickey Mouse
 * Lemmings
 * Line of Fire
+* The Lion King
 * Lord of the Sword
 * The Lucky Dime Caper Starring Donald Duck
 * Master of Darkness
@@ -122,18 +135,25 @@
 * Rainbow Islands - Story of the Bubble Bobble
 * Rambo: First Blood Part II
 * Rampage
+* Rampart
+* R.C. Grand Prix
 * Rastan
 * Renegade
 * Road Rash
 * RoboCop 3
 * RoboCop versus The Terminator
+* Rocky
 * R-Type
-* Running Battle
+* Running Battle:
 * Sagaia
 * Sapo Xulé: O Mestre do Kung Fu
 * Sapo Xulé: S.O.S. Lagoa Poluida
 * SDI - Strategic Defense Initiative
+* Sega World Tournament Golf
+* Shanghai
 * Shinobi
+* The Simpsons: Bart vs. the World
+* Sítio do Picapau Amarelo
 * Sonic Chaos
 * Sonic the Hedgehog
 * Sonic the Hedgehog 2
@@ -150,6 +170,7 @@
 * Strider
 * Strider II
 * Submarine Attack
+* Summer Games
 * Superman
 * Super Racing
 * Super Space Invaders
@@ -157,11 +178,13 @@
 * Taz in Escape from Mars
 * Taz-Mania
 * Teddy Boy
+* Thunder Bladebart vs the space mutants
 * Time Soldiers
 * Tom and Jerry: The Movie
 * Transbot
 * Turma da Mônica em O Resgate
 * Ultima IV: Quest of the Avatar
+* Vigilante
 * Virtua Fighter Animation
 * Wimbledon II
 * Wonder Boy III - The Dragon's Trap
@@ -184,7 +207,11 @@
 
 # VISUAL ISSUES
 * Alien 3 (palette)
+* Back to the Future Part III (palette)
+* Basketball Nightmare (palette)
 * Bram Stoker's Dracula (sprite flickering)
+* California Games II ()
+* Cool Spot (sprite flickering)
 * Dick Tracy (palette)
 * Deep Duck Trouble Starring Donald Duck (palette)
 * Incredible Hulk (palette)
@@ -192,25 +219,32 @@
 * Mortal Kombat 3 (no splash screen)
 * Teddy Boy Blues (palette)
 * Ren and Stimpy - Quest for the Shaven Yak (palette)
+* The Simpsons: Bart vs. the Space Mutants (palette)
 * Solomon no Kagi - Oujo Rihita no Namida (palette)
 * Super Smash TV (sprite transparency)
 
 # UNPLAYABLE
 * Ace of Aces
-* Alex Kidd BMX Trial (input not working)
 * Alien Storm
 * Asterix and the Great Rescue 
+* Bank Panic
+* Cosmic Spacehead
+* Global Gladiators (stuck on splash screen)
 * Indiana Jones and the Last Crusade
-* Mick and Mack as the Global Gladiators (stuck on splash screen)
 * Parlour Games 
-* SEGA Chess (nothing after splash screen)
+* Sega Chess (nothing after splash screen)
+* Sonic's Edusoft
 * Speedball 2 (sound only after splash screen)
-* Spider-Man - Return of the Sinister Six
+* Spider-Man: Return of the Sinister Six
 * Terminator 2 (nothing after splash screen)
 
 # UNSUPPORTED
+* Alex Kidd BMX Trial (paddle)
 * Congo Bongo
 * Dr. Hello
-* Rambo III (light gun)
+* Excellent Dizzy Collection
+* Galactic Protector (paddle)
+* Gangster Town (light phaser)
+* Rambo III (light phaser)
 * Sega-Galaga
-* Wanted! (light gun)
+* Wanted! (light phaser)
