@@ -173,6 +173,7 @@ public sealed class Client : Game
     if (player == PLAYER_1)
     {
       _emulator.FastForward = joypad.IsButtonDown(Buttons.RightTrigger);
+      _emulator.Rewind = joypad.IsButtonDown(Buttons.LeftTrigger);
       _emulator.SetResetButtonState(joypad.IsButtonDown(Buttons.Back));
       HandleSnapshotRequest(loadRequested: joypad.IsButtonDown(Buttons.LeftShoulder),
                             saveRequested: joypad.IsButtonDown(Buttons.RightShoulder));

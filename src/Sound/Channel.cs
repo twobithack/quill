@@ -85,6 +85,6 @@ public struct Channel
 
   public void ResetLFSR() => _lfsr = INITIAL_LFSR;
 
-  private int Parity(int value) => 1 - (BitOperations.PopCount((uint)value) % 2);
+  private static int Parity(int value) => 1 - (BitOperations.PopCount((uint)value) % 2);
   #endregion
 }

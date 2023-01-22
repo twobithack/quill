@@ -103,9 +103,9 @@ public sealed partial class VDP
 
   public void SaveState(ref Snapshot snapshot)
   {
-    snapshot.CRAM = _cram;
-    snapshot.VRAM = _vram;
-    snapshot.VDPRegisters = _registers;
+    Array.Copy(_cram, snapshot.CRAM, _cram.Length);
+    Array.Copy(_vram, snapshot.VRAM, _vram.Length);
+    Array.Copy(_registers, snapshot.VDPRegisters, _registers.Length);
     snapshot.VDPStatus = _status;
     snapshot.DataPort = _dataBuffer;
     snapshot.LineInterrupt = _lineInterrupt;

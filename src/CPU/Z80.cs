@@ -333,7 +333,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte ReadPort(byte port) => port switch
   {
-    0x3E => 0x00,
+    0x3E => 0xFF,
     0x3F => 0xFF,
     0x7E => _vdp.VCounter,
     0x7F => _vdp.HCounter,
@@ -471,11 +471,6 @@ unsafe public ref partial struct Z80
                              mirror % 2 == 0):
         _vdp.WriteData(value);
         return;
-
-      case 0xFC:
-      case 0xFD:
-        // SDSC
-        return;
     }
   }
 
@@ -483,12 +478,12 @@ unsafe public ref partial struct Z80
   private bool EvaluateCondition() => _instruction.Source switch
   {
     Operand.Carry     => CarryFlag,
-    Operand.Zero      => ZeroFlag,
-    Operand.Negative  => SignFlag,
-    Operand.Even      => ParityFlag,
     Operand.NonCarry  => !CarryFlag,
+    Operand.Zero      => ZeroFlag,
     Operand.NonZero   => !ZeroFlag,
+    Operand.Negative  => SignFlag,
     Operand.Positive  => !SignFlag,
+    Operand.Even      => ParityFlag,
     Operand.Odd       => !ParityFlag,
     Operand.Implied   => true,
     _ => throw new Exception($"Invalid condition: {_instruction}")
@@ -517,7 +512,7 @@ unsafe public ref partial struct Z80
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetFlag(Flags flag, bool value) => _flags = value
-                                                          ? _flags | flag 
-                                                          : _flags & ~flag;
+                                                         ? _flags | flag 
+                                                         : _flags & ~flag;
   #endregion
 }

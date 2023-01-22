@@ -1,7 +1,6 @@
 using Quill.Common;
 using Quill.CPU.Definitions;
 using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Quill.CPU;
@@ -95,7 +94,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(result & 0b_1010_1000) | Flags.Halfcarry;
     if (result == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(result) % 2 == 0)
+    if (CheckParity(result))
       flags |= Flags.Parity;
 
     _a = result;
@@ -259,7 +258,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (_a.TestBit(4) ^ value.TestBit(4))
       flags |= Flags.Halfcarry;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (NegativeFlag)
       flags |= Flags.Negative;
@@ -594,7 +593,7 @@ unsafe public ref partial struct Z80
     if ((byte)result == 0)
       flags |= Flags.Zero;
 
-    if (BitOperations.PopCount((byte)result) % 2 == 0)
+    if (CheckParity((byte)result))
       flags |= Flags.Parity;
 
     _a = (byte)result;
@@ -688,10 +687,8 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RET()
   {
-    if (!EvaluateCondition())
-      return;
-  
-    _pc = PopFromStack();
+    if (EvaluateCondition())
+      _pc = PopFromStack();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -719,7 +716,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (msb)
       flags |= Flags.Carry;
@@ -757,7 +754,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (msb)
       flags |= Flags.Carry;
@@ -798,7 +795,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(_a & 0b_1000_0000);
     if (_a == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(_a) % 2 == 0)
+    if (CheckParity(_a))
       flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
@@ -820,7 +817,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (lsb)
       flags |= Flags.Carry;
@@ -862,7 +859,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (lsb)
       flags |= Flags.Carry;
@@ -904,7 +901,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(_a & 0b_1010_1000);
     if (_a == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(_a) % 2 == 0)
+    if (CheckParity(_a))
       flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
@@ -989,7 +986,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (msb)
       flags |= Flags.Carry;
@@ -1012,7 +1009,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (msb)
       flags |= Flags.Carry;
@@ -1038,7 +1035,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (lsb)
       flags |= Flags.Carry;
@@ -1060,7 +1057,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(value & 0b_0010_1000);
     if (value == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (CheckParity(value))
       flags |= Flags.Parity;
     if (lsb)
       flags |= Flags.Carry;
@@ -1100,7 +1097,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(result & 0b_1010_1000);
     if ((byte)result == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount((byte)result) % 2 == 0)
+    if (CheckParity((byte)result))
       flags |= Flags.Parity;
 
     _a = (byte)result;

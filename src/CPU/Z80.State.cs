@@ -183,6 +183,9 @@ unsafe public ref partial struct Z80
   #region Methods
   public void LoadState(Snapshot state)
   {
+    if (state == null)
+      return;
+
     AF = state.AF;
     BC = state.BC;
     DE = state.DE;
