@@ -5,7 +5,8 @@ namespace Quill.Sound;
 public struct Channel
 {
   #region Constants
-  private const ushort INITIAL_LFSR = 0b_1000_0000_0000_0000;
+  private const ushort INITIAL_LFSR = 0x2000;
+  private const byte LFSR_TAPPED_BITS = 0b_1001;
   private static readonly short[] VOLUME_TABLE = new short[]
   {
     8191, 6507, 5168, 4105,
@@ -21,7 +22,6 @@ public struct Channel
   private ushort _counter;
   private ushort _lfsr;
   private bool _polarity;
-
   #endregion
 
   public Channel()
@@ -59,14 +59,13 @@ public struct Channel
       return 0;
 
     _counter--;
-
     if (_counter <= 0)
     {
       _counter = (Tone & 0b_11) switch
       {
         0x00 => 0x10,
         0x01 => 0x20,
-        0x02 => 0x30,
+        0x02 => 0x40,
         0x03 => tone2
       };
 
@@ -74,16 +73,18 @@ public struct Channel
       if (_polarity)
       {
         var isWhiteNoise = ((Tone >> 2) & 1) > 0;
-        var tapped = (byte)(Tone & 0b_1001);
-        var end = isWhiteNoise
-                ? BitOperations.PopCount((uint)(_lfsr & tapped)) % 2
-                : (_lfsr & 1);
-        end <<= 15;
-        _lfsr = (ushort)((_lfsr >> 1) | end);
+        var input = isWhiteNoise
+                  ? Parity(_lfsr & LFSR_TAPPED_BITS)
+                  : (_lfsr & 1);
+        _lfsr = (ushort)((input << 15 ) | (_lfsr >> 1));
       }
     }
 
     return (short)(VOLUME_TABLE[Volume] * (_lfsr & 1));
   }
+
+  public void ResetLFSR() => _lfsr = INITIAL_LFSR;
+
+  private int Parity(int value) => 1 - (BitOperations.PopCount((uint)value) % 2);
   #endregion
 }

@@ -79,6 +79,7 @@ public sealed class PSG
         if (_latchedChannel == NOISE)
         {
           _channels[NOISE].Tone = value.LowNibble();
+          _channels[NOISE].ResetLFSR();
           return;
         }
 
