@@ -1,4 +1,4 @@
-﻿using Quill.Common;
+﻿using Quill.Common.Extensions;
 
 namespace Quill.Video;
 

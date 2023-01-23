@@ -1,4 +1,4 @@
-﻿using Quill.Common;
+﻿using Quill.Common.Extensions;
 using System;
 using System.Threading;
 

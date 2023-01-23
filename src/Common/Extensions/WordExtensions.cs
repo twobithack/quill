@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
 
-namespace Quill.Common;
+namespace Quill.Common.Extensions;
 
-unsafe static class WordExtensions
+public static class WordExtensions
 {
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static ushort Increment(this ushort word) => (ushort)(word + 1);
@@ -20,7 +20,7 @@ unsafe static class WordExtensions
   public static bool Sign(this ushort value) => (value & 0b_1000_0000_0000_0000) > 0;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static bool TestBit(this ushort value, int bit) => ((value >> bit) & 1) > 0;
+  public static bool TestBit(this ushort value, int bit) => (value >> bit & 1) > 0;
 
   public static string ToHex(this ushort word) => $"{word.HighByte().ToHex()}{word.LowByte().ToHex()}";
 }

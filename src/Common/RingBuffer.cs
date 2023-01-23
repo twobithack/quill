@@ -1,17 +1,17 @@
-﻿namespace Quill.Core;
+﻿namespace Quill.Common;
 
-public sealed class RewindBuffer
+public sealed class RingBuffer<T>
 {
-  private readonly Snapshot[] _buffer;
+  private readonly T[] _buffer;
   private int _bufferPosition;
   private int _bufferEnd;
 
-  public RewindBuffer(int capacity)
+  public RingBuffer(int capacity)
   {
-    _buffer = new Snapshot[capacity];
+    _buffer = new T[capacity];
   }
 
-  public Snapshot Pop()
+  public T Pop()
   {
     if (_bufferPosition != _bufferEnd)
     {
@@ -23,9 +23,9 @@ public sealed class RewindBuffer
     return _buffer[_bufferPosition];
   }
 
-  public void Push(Snapshot state)
+  public void Push(T item)
   {
-    _buffer[_bufferPosition] = state;
+    _buffer[_bufferPosition] = item;
     _bufferPosition = (_bufferPosition + 1) % _buffer.Length;
     if (_bufferEnd == _bufferPosition)
       _bufferEnd = (_bufferEnd + 1) % _buffer.Length;

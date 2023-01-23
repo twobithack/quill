@@ -1,6 +1,8 @@
 ﻿using Quill.Video;
 using Quill.Video.Definitions;
 using System;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Quill.Core;
 
@@ -62,4 +64,35 @@ public sealed class Snapshot
     VRAM = new byte[MEMORY_SIZE];
     VDPRegisters = new byte[VDP_REGISTER_COUNT];
   }
+  
+  #region Methods
+  #pragma warning disable SYSLIB0011
+  public static Snapshot ReadFromFile(string filepath)
+  {
+    if (!File.Exists(filepath))
+      return null;
+
+    Snapshot state;
+    try
+    {
+      using var stream = new FileStream(filepath, FileMode.Open);
+      var formatter = new BinaryFormatter();
+      state = (Snapshot)formatter.Deserialize(stream);
+    }
+    catch
+    {
+      return null;
+    }
+
+    return state;
+  }
+
+  public void WriteToFile(string filepath)
+  {
+    using var stream = new FileStream(filepath, FileMode.Create);
+    var formatter = new BinaryFormatter();
+    formatter.Serialize(stream, this);
+  }
+  #pragma warning restore SYSLIB0011
+  #endregion
 }
