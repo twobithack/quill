@@ -4,8 +4,6 @@ using Quill.Input;
 using Quill.Sound;
 using Quill.Video;
 using System.Diagnostics;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Quill.Core;
 
