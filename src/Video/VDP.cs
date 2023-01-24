@@ -91,23 +91,27 @@ public sealed partial class VDP
     IRQ = false;
     _vCounter++;
 
-    if (_vCounter == _vCounterMax)
-    {
-      _vCounter = 0;
-      _vCounterJumped = false;
-    }
-    else if (!_vCounterJumped && _vCounter == _vCounterJumpStart)
-    {
-      _vCounter = _vCounterJumpEnd;
-      _vCounterJumped = true;
-    }
-    else if (_vCounter == _vCounterActive)
+    if (_vCounter == _vCounterActive)
     {
       RenderFrame();
     }
     else if (_vCounter == _vCounterActive + 1)
     {
       VBlank = true;
+    }
+    else if (!_vCounterJumped)
+    {
+      if (_vCounter == _vCounterJumpStart)
+      {
+        _vCounter = _vCounterJumpEnd;
+        _vCounterJumped = true;
+      }
+    }
+    else if (_vCounter == _vCounterMax)
+    {
+      _vCounter = 0;
+      _vCounterJumped = false;
+      _vScroll = _registers[0x9];
     }
 
     if (_vCounter > _vCounterActive)
@@ -124,14 +128,11 @@ public sealed partial class VDP
       _lineInterrupt--;
     }
      
-    if (_vCounter >= _vCounterActive)
-    {
-      _vScroll = _registers[0x9];
-    }
-    else if (DisplayEnabled)
+    if (_vCounter < _vCounterActive)
     {
       _hScroll = _registers[0x8];
-      RasterizeScanline();
+      if (DisplayEnabled)
+        RasterizeScanline();
     }
 
     IRQ |= VSyncPending;
@@ -191,7 +192,7 @@ public sealed partial class VDP
       ushort y = _vram[baseAddress];
       if (y == DISABLE_SPRITES)
       {
-        StoreIllegalSpriteIndex(sprite);
+        SetIllegalSpriteIndex(sprite);
         return;
       }
 
@@ -217,12 +218,12 @@ public sealed partial class VDP
       spriteCount++;
       if (spriteCount > 4)
       {
-        StoreIllegalSpriteIndex(sprite);
-        Overflow = true;
+        SetIllegalSpriteIndex(sprite);
+        SpriteOverflow = true;
         return;
       }
       else
-        Overflow = false;
+        SpriteOverflow = false;
 
       var offset = _vCounter - y;
       if (spriteHeight == TILE_SIZE)
@@ -237,7 +238,7 @@ public sealed partial class VDP
           var pixelIndex = GetPixelIndex(x, _vCounter);
           if (_renderbuffer[pixelIndex + 3] == OCCUPIED)
           {
-            Collision = true;
+            SpriteCollision = true;
             continue;
           }
           
@@ -283,7 +284,7 @@ public sealed partial class VDP
 
       spriteCount++;
       if (spriteCount > 8)
-        _status |= Status.Overflow;
+        SpriteOverflow = true;
 
       var offset = 0x80 + (sprite * 2);
       int x = _vram[satAddress + offset];
@@ -318,7 +319,7 @@ public sealed partial class VDP
         var pixelIndex = GetPixelIndex(x, _vCounter);
         if (_renderbuffer[pixelIndex + 3] == OCCUPIED)
         {
-          _status |= Status.Collision;
+          SpriteCollision = true;
           continue;
         }
 
@@ -327,9 +328,10 @@ public sealed partial class VDP
     }
   }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeBackgroundMode2()
   {
+    // TODO
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -499,22 +501,27 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void StoreIllegalSpriteIndex(int value)
-  {
-    _status &= Status.All;
-    _status |= (Status)value;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementAddress()
   {
     if (Address + 1 == VRAM_SIZE)
       _controlWord &= 0b_1100_0000_0000_0000;
     else
       _controlWord++;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetFlag(Status flag, bool value) => _status = value
+                                                 ? _status | flag
+                                                 : _status & ~flag;
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetIllegalSpriteIndex(int value)
+  {
+    _status &= Status.All;
+    _status |= (Status)value;
   }
   #endregion
 }

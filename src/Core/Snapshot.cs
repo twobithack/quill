@@ -47,11 +47,11 @@ public sealed class Snapshot
   public byte[] VRAM;
   public byte[] VDPRegisters;
   public Status VDPStatus;
+  public ushort ControlWord;
   public byte DataPort;
   public byte LineInterrupt;
   public byte HScroll;
   public byte VScroll;
-  public bool VCounterJumped;
   public bool ControlWritePending;
   #endregion
 

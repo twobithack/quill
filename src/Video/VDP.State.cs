@@ -71,34 +71,16 @@ public sealed partial class VDP
   private bool UseSecondPatternTable => TestRegisterBit(0x6, 2);
   private byte BackgroundColor => (byte)(_registers[0x7] & 0b_0011);
 
-  private bool Collision
+  private bool SpriteCollision
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _status.HasFlag(Status.Collision);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set
-    {
-      if (value)
-        _status |= Status.Collision;
-      else
-        _status &= ~Status.Collision;
-    }
+    set => SetFlag(Status.Collision, value);
   }
 
-  private bool Overflow
+  private bool SpriteOverflow
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _status.HasFlag(Status.Overflow);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set
-    {
-      if (value)
-        _status |= Status.Overflow;
-      else
-        _status &= ~Status.Overflow;
-    }
+    set => SetFlag(Status.Overflow, value);
   }
 
   private bool VBlank
@@ -107,13 +89,7 @@ public sealed partial class VDP
     get => _status.HasFlag(Status.VBlank);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set
-    {
-      if (value)
-        _status |= Status.VBlank;
-      else
-        _status &= ~Status.VBlank;
-    }
+    set => SetFlag(Status.VBlank, value);
   }
 
   private bool VSyncPending => VSyncEnabled && VBlank;
@@ -130,6 +106,7 @@ public sealed partial class VDP
     _lineInterrupt = snapshot.LineInterrupt;
     _hScroll = snapshot.HScroll;
     _vScroll = snapshot.VScroll;
+    _controlWord = snapshot.ControlWord;
     _controlWritePending = snapshot.ControlWritePending;
   }
 
@@ -143,6 +120,7 @@ public sealed partial class VDP
     snapshot.LineInterrupt = _lineInterrupt;
     snapshot.HScroll = _hScroll;
     snapshot.VScroll = _vScroll;
+    snapshot.ControlWord = _controlWord;
     snapshot.ControlWritePending = _controlWritePending;
   }
 
