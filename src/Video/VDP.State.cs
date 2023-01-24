@@ -11,7 +11,6 @@ namespace Quill.Video;
 public sealed partial class VDP
 {
   #region Constants
-  private const int FRAMEBUFFER_SIZE = 0x30000;
   private const int VRAM_SIZE = 0x4000;
   private const int CRAM_SIZE = 0x20;
   private const int REGISTER_COUNT = 11;
@@ -21,7 +20,6 @@ public sealed partial class VDP
   private const int HSCROLL_LIMIT = 1;
   private const int VSCROLL_LIMIT = 24;
   private const byte DISABLE_SPRITES = 0xD0;
-  private const byte OCCUPIED = 0xFF;
   private const byte TRANSPARENT = 0x00;
   #endregion
 
@@ -29,11 +27,10 @@ public sealed partial class VDP
   public bool IRQ;
   public byte HCounter;
 
+  private readonly Framebuffer _framebuffer;
+  private readonly int[] _palette;
   private readonly byte[] _vram;
-  private readonly Color[] _cram;
   private readonly byte[] _registers;
-  private readonly byte[] _framebuffer;
-  private readonly byte[] _renderbuffer;
   private ushort _vCounter;
   private ushort _controlWord;
   private Status _status;
@@ -101,9 +98,9 @@ public sealed partial class VDP
   #region Methods
   public void LoadState(Snapshot snapshot)
   {
-    Array.Copy(snapshot.CRAM, _cram, _cram.Length);
+    Array.Copy(snapshot.Palette, _palette, _palette.Length);
     Array.Copy(snapshot.VRAM, _vram, _vram.Length);
-    Array.Copy(snapshot.VDPRegisters, _registers, _registers.Length);
+    Array.Copy(snapshot.VRegisters, _registers, _registers.Length);
     _status = snapshot.VDPStatus;
     _dataBuffer = snapshot.DataPort;
     _lineInterrupt = snapshot.LineInterrupt;
@@ -115,9 +112,9 @@ public sealed partial class VDP
 
   public void SaveState(ref Snapshot snapshot)
   {
-    Array.Copy(_cram, snapshot.CRAM, _cram.Length);
+    Array.Copy(_palette, snapshot.Palette, _palette.Length);
     Array.Copy(_vram, snapshot.VRAM, _vram.Length);
-    Array.Copy(_registers, snapshot.VDPRegisters, _registers.Length);
+    Array.Copy(_registers, snapshot.VRegisters, _registers.Length);
     snapshot.VDPStatus = _status;
     snapshot.DataPort = _dataBuffer;
     snapshot.LineInterrupt = _lineInterrupt;

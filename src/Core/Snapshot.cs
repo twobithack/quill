@@ -11,7 +11,7 @@ public sealed class Snapshot
 {
   #region Constants
   private const ushort MEMORY_SIZE = 0x4000;
-  private const int CRAM_SIZE = 0x20;
+  private const int PALETTE_SIZE = 0x20;
   private const int VDP_REGISTER_COUNT = 11;
   #endregion
 
@@ -43,9 +43,9 @@ public sealed class Snapshot
   public bool IFF1;
   public bool IFF2;
 
-  public Color[] CRAM;
+  public int[] Palette;
   public byte[] VRAM;
-  public byte[] VDPRegisters;
+  public byte[] VRegisters;
   public Status VDPStatus;
   public ushort ControlWord;
   public byte DataPort;
@@ -60,9 +60,9 @@ public sealed class Snapshot
     RAM = new byte[MEMORY_SIZE];
     Bank0 = new byte[MEMORY_SIZE];
     Bank1 = new byte[MEMORY_SIZE];
-    CRAM = new Color[CRAM_SIZE];
+    Palette = new int[PALETTE_SIZE];
     VRAM = new byte[MEMORY_SIZE];
-    VDPRegisters = new byte[VDP_REGISTER_COUNT];
+    VRegisters = new byte[VDP_REGISTER_COUNT];
   }
   
   #region Methods
