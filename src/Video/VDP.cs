@@ -22,11 +22,12 @@ public sealed partial class VDP
   #region Methods
   public byte ReadStatus()
   {
-    var status = (byte)_status;
-    _status = Status.None;
     _controlWritePending = false;
+
+    var value = (byte)_status;
+    _status &= ~Status.All;
     IRQ = false;
-    return status;
+    return value;
   }
 
   public void WriteControl(byte value)
@@ -63,8 +64,9 @@ public sealed partial class VDP
 
   public byte ReadData()
   {
-    var data = _dataBuffer;
     _controlWritePending = false;
+
+    var data = _dataBuffer;
     _dataBuffer = _vram[Address];
     IncrementAddress();
     return data;
@@ -73,7 +75,6 @@ public sealed partial class VDP
   public void WriteData(byte value)
   {
     _controlWritePending = false;
-    _dataBuffer = value;
 
     if (ControlCode == ControlCode.WriteCRAM)
     {
@@ -83,6 +84,7 @@ public sealed partial class VDP
     else
       _vram[Address] = value;
 
+    _dataBuffer = value;
     IncrementAddress();
   }
 
@@ -93,15 +95,15 @@ public sealed partial class VDP
 
     if (_vCounter == _vCounterActive)
     {
-      RenderFrame();
+      EnqueueFrame();
     }
     else if (_vCounter == _vCounterActive + 1)
     {
       VBlank = true;
     }
-    else if (!_vCounterJumped)
+    else if (_vCounter == _vCounterJumpStart)
     {
-      if (_vCounter == _vCounterJumpStart)
+      if (!_vCounterJumped)
       {
         _vCounter = _vCounterJumpEnd;
         _vCounterJumped = true;
@@ -118,7 +120,7 @@ public sealed partial class VDP
     {
       _lineInterrupt = _registers[0xA];
     }
-    else if (_lineInterrupt == 0x00)
+    else if (_lineInterrupt == 0)
     {
       _lineInterrupt = _registers[0xA];
       IRQ = LineInterruptEnabled;
@@ -151,14 +153,14 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RenderFrame()
+  private void EnqueueFrame()
   {
     lock (_framebuffer)
     {
       Buffer.BlockCopy(_renderbuffer, 0, _framebuffer, 0, FRAMEBUFFER_SIZE);
       _frameQueued = true;
     }
-    
+
     Array.Clear(_renderbuffer);
   }
 
@@ -192,7 +194,8 @@ public sealed partial class VDP
       ushort y = _vram[baseAddress];
       if (y == DISABLE_SPRITES)
       {
-        SetIllegalSpriteIndex(sprite);
+        if (!SpriteOverflow)
+          SetLastSpriteIndex(sprite);
         return;
       }
 
@@ -218,7 +221,7 @@ public sealed partial class VDP
       spriteCount++;
       if (spriteCount > 4)
       {
-        SetIllegalSpriteIndex(sprite);
+        SetLastSpriteIndex(sprite);
         SpriteOverflow = true;
         return;
       }
@@ -232,23 +235,24 @@ public sealed partial class VDP
         var spriteAddress = sgtAddress + (pattern * 8);
         var data = _vram[spriteAddress + offset];
 
-        var spriteEnd = x + TILE_SIZE;
-        for (byte column = TILE_SIZE - 1; x < spriteEnd; x++, column--)
+        for (byte i = 0; i < TILE_SIZE; i++)
         {
-          var pixelIndex = GetPixelIndex(x, _vCounter);
+          var pixelIndex = GetPixelIndex(x + i, _vCounter);
           if (_renderbuffer[pixelIndex + 3] == OCCUPIED)
           {
             SpriteCollision = true;
             continue;
           }
           
-          if (!data.TestBit(column))
+          if (!data.TestBit(7 - i))
             continue;
-
+          
           SetPixelColor(pixelIndex, legacyColor, true);
         }
       }
     }
+    
+    SetLastSpriteIndex(31);
   }
 
   private void RasterizeSpriteMode2()
@@ -518,7 +522,7 @@ public sealed partial class VDP
                                                  : _status & ~flag;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetIllegalSpriteIndex(int value)
+  private void SetLastSpriteIndex(int value)
   {
     _status &= Status.All;
     _status |= (Status)value;
