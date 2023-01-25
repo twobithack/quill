@@ -16,8 +16,9 @@ public sealed class Client : Game
   private const int AUDIO_SAMPLE_RATE = 44100;
   private const int MIN_AUDIO_SAMPLES = 5;
   private const int FRAMEBUFFER_WIDTH = 256;
-  private const int FRAMEBUFFER_HEIGHT = 192;
-  private const int BORDER_MASK_WIDTH = 8;
+  private const int FRAMEBUFFER_HEIGHT = 240;
+  private const int BOTTOM_BORDER_HEIGHT = 48;
+  private const int LEFT_BORDER_WIDTH = 8;
   private const int PLAYER_1 = 0;
   private const int PLAYER_2 = 1;
   #endregion
@@ -28,21 +29,24 @@ public sealed class Client : Game
   private readonly Thread _pollingThread;
   private readonly GraphicsDeviceManager _graphics;
   private readonly DynamicSoundEffectInstance _sound;
+
   private readonly string _romName;
   private readonly string _savesDirectory;
-  private readonly bool _cropBorder;
+  private readonly bool _cropBorders;
   private readonly int _scale;
+
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
   private Rectangle _viewport;
-  private bool _savesEnabled;
+
   private bool _running;
+  private bool _savesEnabled;
   #endregion
 
   public Client(string romPath,
                 int scaleFactor = 1,
                 int extraScanlines = 0,
-                bool cropLeftBorder = true)
+                bool cropBorders = true)
   {
     var rom = File.ReadAllBytes(romPath);
     _emulator = new Emulator(rom, extraScanlines);
@@ -53,7 +57,7 @@ public sealed class Client : Game
                                             AudioChannels.Mono);
     _romName = Path.GetFileNameWithoutExtension(romPath);
     _savesDirectory = Path.Combine(Path.GetDirectoryName(romPath), "saves");
-    _cropBorder = cropLeftBorder;
+    _cropBorders = cropBorders;
     _scale = scaleFactor;
     _running = true;
   }
@@ -112,11 +116,14 @@ public sealed class Client : Game
     _graphics.PreferredBackBufferHeight = _viewport.Height;
     _graphics.PreferredBackBufferWidth = _viewport.Width;
 
-    if (_cropBorder)
+    if (_cropBorders)
     {
-      var maskOffset = _scale * BORDER_MASK_WIDTH;
-      _viewport.X -= maskOffset;
-      _graphics.PreferredBackBufferWidth -= maskOffset;
+      var bottomBorder = _scale * BOTTOM_BORDER_HEIGHT;
+      _graphics.PreferredBackBufferHeight -= bottomBorder;
+
+      var leftBorder = _scale * LEFT_BORDER_WIDTH;
+      _viewport.X -= leftBorder;
+      _graphics.PreferredBackBufferWidth -= leftBorder;
     }
 
     _graphics.ApplyChanges();
