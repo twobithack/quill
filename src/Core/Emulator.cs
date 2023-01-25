@@ -20,11 +20,11 @@ unsafe public class Emulator
   public bool FastForward;
   public bool Rewind;
 
+  private readonly RingBuffer<Snapshot> _history;
   private readonly IO _input;
   private readonly PSG _audio;
   private readonly VDP _video;
   private readonly byte[] _rom;
-  private readonly RingBuffer<Snapshot> _rewindBuffer;
   private string _snapshotPath;
   private bool _loadRequested;
   private bool _saveRequested;
@@ -33,7 +33,7 @@ unsafe public class Emulator
 
   public Emulator(byte[] rom, int extraScanlines)
   {
-    _rewindBuffer = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
+    _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
     _input = new IO();
     _audio = new PSG();
     _video = new VDP(extraScanlines);
@@ -70,7 +70,7 @@ unsafe public class Emulator
 
       if (Rewind)
       {
-        var state = _rewindBuffer.Pop();
+        var state = _history.Pop();
         cpu.LoadState(state);
       }
       else if (_loadRequested)
@@ -88,7 +88,7 @@ unsafe public class Emulator
       else if (frameCounter >= FRAMES_PER_REWIND)
       {
         var state = cpu.SaveState();
-        _rewindBuffer.Push(state);
+        _history.Push(state);
         frameCounter = 0;
       }
     }

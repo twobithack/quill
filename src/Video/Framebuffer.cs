@@ -7,48 +7,40 @@ unsafe public sealed class Framebuffer
 {
   private const int FRAMEBUFFER_SIZE = 0x30000;
   private readonly bool[] _containsSprite;
-  private readonly byte[] _framebuffer;
-  private readonly int[] _pixelbuffer;
+  private readonly byte[] _frame;
+  private readonly int[] _buffer;
   private readonly int _width;
   private bool _frameQueued;
 
   public Framebuffer(int width, int height)
   {
-    _framebuffer = new byte[FRAMEBUFFER_SIZE];
-    _pixelbuffer = new int[width * height];
+    _buffer = new int[width * height];
     _containsSprite = new bool[width * height];
+    _frame = new byte[FRAMEBUFFER_SIZE];
     _width = width;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetPixel(int x, int y, int rgba, bool isSprite)
   {
-    var pixelIndex = GetPixelIndex(x, y);
-    _pixelbuffer[pixelIndex] = rgba;
+    var pixelIndex = GetIndex(x, y);
+    _buffer[pixelIndex] = rgba;
     _containsSprite[pixelIndex] = isSprite;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetLegacyPixel(int x, int y, byte colorIndex, bool isSprite)
-  {
-    var pixelIndex = GetPixelIndex(x, y);
-    _pixelbuffer[pixelIndex] = Color.ToLegacyRGBA(colorIndex);
-    _containsSprite[pixelIndex] = isSprite;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public bool CheckCollision(int x, int y) => _containsSprite[GetPixelIndex(x, y)];
+  public bool CheckCollision(int x, int y) => _containsSprite[GetIndex(x, y)];
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void PushFrame()
   {
-    lock (_framebuffer)
+    lock (_frame)
     {
-      Buffer.BlockCopy(_pixelbuffer, 0, _framebuffer, 0, FRAMEBUFFER_SIZE);
+      Buffer.BlockCopy(_buffer, 0, _frame, 0, FRAMEBUFFER_SIZE);
       _frameQueued = true;
     }
 
-    Array.Clear(_pixelbuffer);
+    Array.Clear(_buffer);
     Array.Clear(_containsSprite);
   }
 
@@ -58,13 +50,13 @@ unsafe public sealed class Framebuffer
     if (!_frameQueued)
       return null;
 
-    lock (_framebuffer)
+    lock (_frame)
     {
       _frameQueued = false;
-      return _framebuffer;
+      return _frame;
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private int GetPixelIndex(int x, int y) => (x + (y * _width));
+  private int GetIndex(int x, int y) => (x + (y * _width));
 }

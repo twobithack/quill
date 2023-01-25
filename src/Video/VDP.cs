@@ -33,31 +33,29 @@ public sealed partial class VDP
   {
     if (!_controlWritePending)
     {
-      _controlWord &= 0b_1111_1111_0000_0000;
-      _controlWord |= value;
+      _addressBus &= 0b_1111_1111_0000_0000;
+      _addressBus |= value;
       _controlWritePending = true;
       return;
     }
     
-    _controlWord &= 0b_0000_0000_1111_1111;
-    _controlWord |= (ushort)(value << 8);
+    _addressBus &= 0b_0000_0000_1111_1111;
+    _addressBus |= (ushort)((value & 0b_0011_1111) << 8);
+    _controlCode = (ControlCode)(value >> 6);
     _controlWritePending = false;
-    
-    if (ControlCode == ControlCode.ReadVRAM)
+
+    if (_controlCode == ControlCode.ReadVRAM)
     {
-      _dataBuffer = _vram[Address];
+      _dataBuffer = _vram[_addressBus];
       IncrementAddress();
     }
-    else if (ControlCode == ControlCode.WriteRegister)
+    else if (_controlCode == ControlCode.WriteRegister)
     {
-      var register = _controlWord.HighByte().LowNibble();
+      var register = _addressBus.HighByte().LowNibble();
       if (register >= REGISTER_COUNT)
         return;
 
-      _registers[register] = _controlWord.LowByte();
-
-      if (register == 0x1)
-        IRQ = VSyncPending;
+      WriteRegister(register, _addressBus.LowByte());
     }
   }
 
@@ -66,7 +64,7 @@ public sealed partial class VDP
     _controlWritePending = false;
 
     var data = _dataBuffer;
-    _dataBuffer = _vram[Address];
+    _dataBuffer = _vram[_addressBus];
     IncrementAddress();
     return data;
   }
@@ -75,13 +73,13 @@ public sealed partial class VDP
   {
     _controlWritePending = false;
 
-    if (ControlCode == ControlCode.WriteCRAM)
+    if (_controlCode == ControlCode.WriteCRAM)
     {
-      var index = _controlWord & 0b_0001_1111;
+      var index = _addressBus & 0b_0001_1111;
       _palette[index] = Color.ToRGBA(value);
     }
     else
-      _vram[Address] = value;
+      _vram[_addressBus] = value;
 
     _dataBuffer = value;
     IncrementAddress();
@@ -122,7 +120,7 @@ public sealed partial class VDP
     else if (_lineInterrupt == 0)
     {
       _lineInterrupt = _registers[0xA];
-      IRQ = LineInterruptEnabled;
+      IRQ = _lineInterruptEnabled;
     }
     else
     {
@@ -132,7 +130,7 @@ public sealed partial class VDP
     if (_vCounter < _vCounterActive)
     {
       _hScroll = _registers[0x8];
-      if (DisplayEnabled)
+      if (_displayEnabled)
         RasterizeScanline();
     }
 
@@ -144,113 +142,31 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   {
-    var mode = GetDisplayMode();
-    if (mode == DisplayMode.Graphic_2)
+    if (_displayMode4)
     {
-      RasterizeSpritesMode2();
-      RasterizeBackgroundMode2();
+      RasterizeSprites();
+      RasterizeBackground();
     }
     else
     {
-      RasterizeSpritesMode4();
-      RasterizeBackgroundMode4();
+      RasterizeLegacySprites();
+      RasterizeLegacyBackground();
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeSpritesMode2()
+  private void RasterizeSprites()
   {
-    var spriteHeight = StretchSprites ? 16 : TILE_SIZE;
-    var satAddress = GetSpriteAttributeTableAddress();
-    var sgtAddress = GetSpriteGeneratorTableAddress();
-
-    var spriteCount = 0;
-    for (int sprite = 0; sprite < 32; sprite++)
-    {
-      var baseAddress = satAddress + (sprite * 4);
-      ushort y = _vram[baseAddress];
-      if (y == DISABLE_SPRITES)
-      {
-        if (!SpriteOverflow)
-          StoreLastSpriteIndex(sprite);
-        return;
-      }
-
-      y++;
-      if (y >= DISABLE_SPRITES)
-        y -= 0x100;
-
-      if (y > _vCounter ||
-          y + spriteHeight <= _vCounter)
-        continue;
-
-      var x = _vram[baseAddress + 1];
-      var pattern = _vram[baseAddress + 2];
-      var color = _vram[baseAddress + 3];
-
-      if (color.TestBit(7))
-        x -= 32;
-
-      color &= 0b_0000_1111;
-      if (color == TRANSPARENT)
-        continue;
-
-      spriteCount++;
-      if (spriteCount > 4)
-      {
-        StoreLastSpriteIndex(sprite);
-        SpriteOverflow = true;
-        return;
-      }
-      else
-        SpriteOverflow = false;
-
-      var offset = _vCounter - y;
-      if (spriteHeight == TILE_SIZE)
-      {
-        var spriteAddress = sgtAddress + (pattern * 8);
-        var data = _vram[spriteAddress + offset];
-
-        for (byte i = 0; i < TILE_SIZE; i++)
-        {
-          if (_framebuffer.CheckCollision(x + i, _vCounter))
-          {
-            SpriteCollision = true;
-            continue;
-          }
-          
-          if (!data.TestBit(7 - i))
-            continue;
-
-          _framebuffer.SetLegacyPixel(x + i, _vCounter, color, true);
-        }
-      }
-    }
-    
-    StoreLastSpriteIndex(31);
-  }
-
-  private void RasterizeSpriteMode2()
-  {
-
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeSpritesMode4()
-  {
-    var spriteHeight = (StretchSprites || ZoomSprites) ? 16 : TILE_SIZE;
-    var satAddress = GetSpriteAttributeTableAddress();
-
+    var spriteHeight = (_stretchSprites || _zoomSprites) ? 16 : TILE_SIZE;
     var spriteCount = 0;
     for (int sprite = 0; sprite < 64; sprite++)
     {
-      ushort y = _vram[satAddress + sprite];
+      ushort y = _vram[_spriteAttributeTableAddress + sprite];
       if (y == DISABLE_SPRITES)
       {
-        // var mode = GetDisplayMode();
-        // if (mode != DisplayMode.Mode_4_224 &&
-        //     mode != DisplayMode.Mode_4_240)
-          return;
+        // if (_displayMode != DisplayMode.Mode_4_224 &&
+        //     _displayMode != DisplayMode.Mode_4_240)
+        return;
       }
 
       y++;
@@ -266,16 +182,16 @@ public sealed partial class VDP
         SpriteOverflow = true;
 
       var offset = 0x80 + (sprite * 2);
-      int x = _vram[satAddress + offset];
-      int patternIndex = _vram[satAddress + offset + 1];
+      int x = _vram[_spriteAttributeTableAddress + offset];
+      int patternIndex = _vram[_spriteAttributeTableAddress + offset + 1];
 
-      if (ShiftX)
+      if (_shiftX)
         x -= TILE_SIZE;
 
-      if (UseSecondPatternTable)
+      if (_useSecondPatternTable)
         patternIndex += 0x100;
 
-      if (StretchSprites && y <= _vCounter + TILE_SIZE)
+      if (_stretchSprites && y <= _vCounter + TILE_SIZE)
         patternIndex &= 0b_1111_1111_1111_1110;
 
       var patternAddress = patternIndex * 32;
@@ -288,7 +204,7 @@ public sealed partial class VDP
         if (x >= HORIZONTAL_RESOLUTION)
           break;
 
-        if (x < 8 && MaskLeftBorder)
+        if (x < 8 && _maskLeftBorder)
           continue;
 
         var paletteIndex = patternData.GetPaletteIndex(column);
@@ -308,22 +224,15 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeBackgroundMode2()
+  private void RasterizeBackground()
   {
-    // TODO
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeBackgroundMode4()
-  {
-    var baseAddress = GetNameTableAddress();
-    var allowHScroll = !LimitHScroll ||
+    var allowHScroll = !_limitHScroll ||
                        _vCounter / TILE_SIZE > HSCROLL_LIMIT;
 
     for (int column = 0; column < BACKGROUND_COLUMNS; column++)
     {
       int tilemapY = _vCounter;
-      if (!LimitVScroll ||
+      if (!_limitVScroll ||
           column < VSCROLL_LIMIT)
         tilemapY += _vScroll;
 
@@ -339,7 +248,7 @@ public sealed partial class VDP
       if (tilemapColumn < 0) 
         tilemapColumn += BACKGROUND_COLUMNS;
 
-      var tileAddress = baseAddress + 
+      var tileAddress = _nameTableAddress + 
                         (tilemapRow * BACKGROUND_COLUMNS * 2) + 
                         (tilemapColumn * 2);
 
@@ -365,7 +274,7 @@ public sealed partial class VDP
         if (x < 0)
           throw new Exception();
 
-        if (x < TILE_SIZE && MaskLeftBorder)
+        if (x < TILE_SIZE && _maskLeftBorder)
           continue;
 
         if (!tile.HighPriotity && 
@@ -377,7 +286,7 @@ public sealed partial class VDP
         {
           if (_framebuffer.CheckCollision(x, _vCounter))
             continue;
-          paletteIndex = BackgroundColor;
+          paletteIndex = _backgroundColor;
         }
         
         if (tile.UseSpritePalette)
@@ -389,10 +298,85 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixel(int x, int y, int paletteIndex, bool sprite) => _framebuffer.SetPixel(x, y, _palette[paletteIndex], sprite);
+  private void RasterizeLegacySprites()
+  {
+    var spriteHeight = _stretchSprites ? 16 : TILE_SIZE;
+
+    var spriteCount = 0;
+    for (int sprite = 0; sprite < 32; sprite++)
+    {
+      var baseAddress = _spriteAttributeTableAddress + (sprite * 4);
+      ushort y = _vram[baseAddress];
+      if (y == DISABLE_SPRITES)
+      {
+        if (!SpriteOverflow)
+          SetLastSpriteIndex(sprite);
+        return;
+      }
+
+      y++;
+      if (y >= DISABLE_SPRITES)
+        y -= 0x100;
+
+      if (y > _vCounter ||
+          y + spriteHeight <= _vCounter)
+        continue;
+
+      var x = _vram[baseAddress + 1];
+      var pattern = _vram[baseAddress + 2];
+      var color = _vram[baseAddress + 3];
+
+      if (color.TestBit(7))
+        x -= 32;
+
+      color &= 0b_0000_1111;
+      if (color == TRANSPARENT)
+        continue;
+
+      spriteCount++;
+      if (spriteCount > 4)
+      {
+        SetLastSpriteIndex(sprite);
+        SpriteOverflow = true;
+        return;
+      }
+      else
+        SpriteOverflow = false;
+
+      var offset = _vCounter - y;
+      if (spriteHeight == TILE_SIZE)
+      {
+        var address = _spriteGeneratorTableAddress + (pattern * 8);
+        RasterizeMode2Sprite(address, x, offset, color);
+      }
+    }
+
+    SetLastSpriteIndex(31);
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacyPixel(int x, int y, byte color, bool sprite) => _framebuffer.SetLegacyPixel(x, y, color, sprite);
+  private void RasterizeMode2Sprite(int address, int x, int offset, byte color)
+  {
+    var data = _vram[address + offset];
+    for (byte i = 0; i < TILE_SIZE; i++)
+    {
+      if (_framebuffer.CheckCollision(x + i, _vCounter))
+      {
+        SpriteCollision = true;
+        continue;
+      }
+
+      if (!data.TestBit(7 - i))
+        continue;
+
+      SetLegacyPixel(x + i, _vCounter, color, true);
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void RasterizeLegacyBackground()
+  {
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Pattern GetPatternData(int patternAddress) => new(_vram[patternAddress],
@@ -408,70 +392,10 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private DisplayMode GetDisplayMode()
-  {
-    byte mode = 0x00;
-    if (TestRegisterBit(0x0, 2))
-      mode |= 0b_1000;
-    if (TestRegisterBit(0x1, 3))
-      mode |= 0b_0100;
-    if (TestRegisterBit(0x0, 1))
-      mode |= 0b_0010;
-    if (TestRegisterBit(0x1, 4))
-      mode |= 0b_0001;
-
-    return (DisplayMode)mode;
-  }
+  private void SetPixel(int x, int y, int paletteIndex, bool sprite) => _framebuffer.SetPixel(x, y, _palette[paletteIndex], sprite);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private ushort GetNameTableAddress()
-  {
-    var addressMask = 0b_0000_1110;
-
-    // var mode = GetDisplayMode();
-    // if (mode == 0b_1011 ||
-    //     mode == 0b_1110)
-    //   addressMask = 0b_0000_1100;
-
-    var address = _registers[0x2] & addressMask;
-    return (ushort)(address << 10);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private ushort GetColorTableAddress() => (ushort)(_registers[0x3] << 6);
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private ushort GetPatternGeneratorTableAddress()
-  {
-    var address = _registers[0x4] & 0b_0000_0111;
-    return (ushort)(address << 11);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private ushort GetSpriteAttributeTableAddress()
-  {
-    var address = _registers[0x5] & 0b_0111_1110;
-    return (ushort)(address << 7);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private ushort GetSpriteGeneratorTableAddress()
-  {
-    var address = _registers[0x6] & 0b_0000_0111;
-    return (ushort)(address << 11);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void IncrementAddress()
-  {
-    if (Address + 1 == VRAM_SIZE)
-      _controlWord &= 0b_1100_0000_0000_0000;
-    else
-      _controlWord++;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
+  private void SetLegacyPixel(int x, int y, byte color, bool sprite) => _framebuffer.SetPixel(x, y, Color.ToLegacyRGBA(color), sprite);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetFlag(Status flag, bool value) => _status = value
@@ -479,10 +403,88 @@ public sealed partial class VDP
                                                  : _status & ~flag;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void StoreLastSpriteIndex(int value)
+  private void SetLastSpriteIndex(int value)
   {
     _status &= Status.All;
     _status |= (Status)value;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetDisplayMode()
+  {
+    var mode = DisplayMode.Graphic_1;
+    if (TestRegisterBit(0x0, 2))
+      mode |= DisplayMode.Mode_4a;
+    if (TestRegisterBit(0x1, 3))
+      mode |= DisplayMode.Multicolor;
+    if (TestRegisterBit(0x0, 1))
+      mode |= DisplayMode.Graphic_2;
+    if (TestRegisterBit(0x1, 4))
+      mode |= DisplayMode.Text;
+
+    _displayMode4 = mode != DisplayMode.Graphic_2 &&
+                    mode != DisplayMode.Mode_1_2;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void IncrementAddress() => _addressBus = (ushort)((_addressBus + 1) % VRAM_SIZE);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void WriteRegister(byte register, byte value)
+  {
+    _registers[register] = value;
+    switch (register)
+    {
+      case 0x0:
+        _shiftX = value.TestBit(3);
+        _lineInterruptEnabled = value.TestBit(4);
+        _maskLeftBorder = value.TestBit(5);
+        _limitHScroll = value.TestBit(6);
+        _limitVScroll = value.TestBit(7);
+        SetDisplayMode();
+        return;
+
+      case 0x1:
+        _zoomSprites = value.TestBit(0);
+        _stretchSprites = value.TestBit(1);
+        _vSyncEnabled = value.TestBit(5);
+        _displayEnabled = value.TestBit(6);
+        IRQ = VSyncPending;
+        SetDisplayMode();
+        return;
+
+      case 0x2:
+        _nameTableAddress = (ushort)(value & 0b_0000_1110);
+        _nameTableAddress <<= 10;
+        return;
+
+      case 0x3:
+        _colorTableAddress = (ushort)(value << 6);
+        return;
+
+      case 0x4:
+        _patternGeneratorTableAddress = (ushort)(value & 0b_0000_0111);
+        _patternGeneratorTableAddress <<= 11;
+        return;
+
+      case 0x5:
+        _spriteAttributeTableAddress = (ushort)(value & 0b_0111_1110);
+        _spriteAttributeTableAddress <<= 7;
+        return;
+
+      case 0x6:
+        _useSecondPatternTable = value.TestBit(2);
+        _spriteGeneratorTableAddress = (ushort)(value & 0b_0000_0111);
+        _spriteGeneratorTableAddress <<= 11;
+        return;
+
+      case 0x7:
+        _backgroundColor = (byte)(value & 0b_0011);
+        return;
+    };
   }
   #endregion
 }
