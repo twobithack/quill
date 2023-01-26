@@ -1,4 +1,6 @@
-# WORKING
+# MASTER SYSTEM
+
+## WORKING
 * 20-em-1
 * Action Figther
 * Addams Family
@@ -210,15 +212,15 @@
 * Zillion
 * Zillion II: The Tri-Formation Cycle
 
-# BUGGED
+## LOGIC BUGS
 * Mônica no Castelo do Dragão (Wonder Boy in Monster Land clone)
 * Penguin Land (region detection)
 * Wonder Boy in Monster Land (region detection)
 
-# AUDIO ISSUES
+## AUDIO BUGS
 * Sonic Blast (no startup jingle)
 
-# VISUAL ISSUES
+## VISUAL BUGS
 * Alien 3 (palette)
 * Back to the Future Part III (palette)
 * Basketball Nightmare (palette)
@@ -236,7 +238,7 @@
 * Solomon no Kagi - Oujo Rihita no Namida (palette)
 * Super Smash TV (sprite transparency)
 
-# UNPLAYABLE
+## UNPLAYABLE
 * Ace of Aces
 * Alien Storm
 * Asterix and the Great Rescue 
@@ -247,13 +249,55 @@
 * Parlour Games 
 * Sega Chess (nothing after splash screen)
 
-# UNSUPPORTED
+## UNSUPPORTED
 * Alex Kidd BMX Trial (paddle)
-* Congo Bongo
-* Dr. Hello
 * Excellent Dizzy Collection
 * Galactic Protector (paddle)
 * Gangster Town (light phaser)
 * Rambo III (light phaser)
-* Sega-Galaga
 * Wanted! (light phaser)
+
+# SG-1000
+
+## WORKING
+* Bomb Jack
+* Borderline
+* Chank'n Pop
+* Challenge Derby
+* Champion Billiards
+* Dr. Hello
+* Drol
+* Dragon Wang
+* Flicky
+* Girl's Garden
+* Hang-On II
+* Ninja Princess
+* N-Sub
+* Pachinko II
+* Pitfall II - The Lost Caverns
+* Q-bert
+* Sega Flipper
+* Sega Galaga
+* Space Armor
+* Space Invaders
+* Space Slalom
+* Star Jacker 
+
+## LOGIC BUGS
+
+## AUDIO BUGS
+
+## VISUAL BUGS
+* Bomberman Special (menu logo)
+* Congo Bongo (background color)
+* Exerion 
+* Golgo 13 (sprite wrapping)
+* Hustle Chumy (background color)
+* Rock n' Bolt (sprite sorting)
+* Wonder Boy (sprite wrapping)
+* Yamato (background tiles)
+
+## UNPLAYABLE
+
+# Game Gear
+Unsupported

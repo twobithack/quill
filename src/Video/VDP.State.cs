@@ -34,6 +34,7 @@ public sealed partial class VDP
 
   private ControlCode _controlCode;
   private Status _status;
+  private byte _dataBuffer;
 
   private ushort _addressBus;
   private ushort _nameTableAddress;
@@ -41,9 +42,8 @@ public sealed partial class VDP
   private ushort _patternGeneratorTableAddress;
   private ushort _spriteAttributeTableAddress;
   private ushort _spriteGeneratorTableAddress;
+  
   private ushort _vCounter;
-
-  private byte _dataBuffer;
   private byte _lineInterrupt;
   private byte _hScroll;
   private byte _vScroll;
@@ -68,12 +68,12 @@ public sealed partial class VDP
   private readonly int _backgroundRows = 28;
   private readonly int _vCounterMax = 255;
   private readonly byte _vCounterActive = 192;
-  private readonly byte _vCounterJumpStart = 0xDA;
-  private readonly byte _vCounterJumpEnd = 0xD5;
+  private readonly byte _vCounterJumpFrom = 0xDA;
+  private readonly byte _vCounterJumpTo = 0xD5;
   #endregion
 
   #region Properties
-  public int ScanlinesPerFrame => _vCounterMax + (_vCounterJumpStart - _vCounterJumpEnd);
+  public int ScanlinesPerFrame => _vCounterMax + (_vCounterJumpFrom - _vCounterJumpTo);
   public byte VCounter => (byte)Math.Min(_vCounter, byte.MaxValue);
 
   private bool SpriteCollision
