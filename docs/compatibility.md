@@ -1,6 +1,4 @@
 # MASTER SYSTEM
-
-## WORKING
 * 20-em-1
 * Action Figther
 * Addams Family
@@ -67,6 +65,7 @@
 * Enduro Racer
 * E-SWAT - City under Siege
 * F1 Championship
+* F-16 Fighting Falcon
 * Fantasy Zone
 * Fantasy Zone II
 * Fantasy Zone: The Maze
@@ -238,39 +237,44 @@
 * Solomon no Kagi - Oujo Rihita no Namida (palette)
 * Super Smash TV (sprite transparency)
 
-## UNPLAYABLE
+## BROKEN
 * Ace of Aces
+* Alibaba and 40 Thieves
 * Alien Storm
 * Asterix and the Great Rescue 
 * Bank Panic
-* Cosmic Spacehead
+* Block Hole
 * Desert Speedtrap Starring Roadrunner (nothing after menus)
 * Indiana Jones and the Last Crusade
+* King & Road
 * Parlour Games 
 * Sega Chess (nothing after splash screen)
 
 ## UNSUPPORTED
 * Alex Kidd BMX Trial (paddle)
-* Excellent Dizzy Collection
+* Cosmic Spacehead (Codemasters mapper)
+* Excellent Dizzy Collection (Codemasters mapper)
 * Galactic Protector (paddle)
 * Gangster Town (light phaser)
 * Rambo III (light phaser)
 * Wanted! (light phaser)
 
 # SG-1000
-
-## WORKING
+* Bank Panic
 * Bomb Jack
 * Borderline
 * Chank'n Pop
 * Challenge Derby
 * Champion Billiards
+* Choplifter
 * Dr. Hello
+* Dokidoki Penguin Land
 * Drol
 * Dragon Wang
 * Flicky
 * Girl's Garden
 * Hang-On II
+* H.E.R.O.
 * Ninja Princess
 * N-Sub
 * Pachinko II
@@ -283,10 +287,6 @@
 * Space Slalom
 * Star Jacker 
 
-## LOGIC BUGS
-
-## AUDIO BUGS
-
 ## VISUAL BUGS
 * Bomberman Special (menu logo)
 * Congo Bongo (background color)
@@ -297,7 +297,8 @@
 * Wonder Boy (sprite wrapping)
 * Yamato (background tiles)
 
-## UNPLAYABLE
+## BROKEN
+* James Bomd 007 (sound only)
 
 # Game Gear
 Unsupported
