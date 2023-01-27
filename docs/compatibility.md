@@ -101,7 +101,7 @@
 * The Jungle Book
 * Jurassic Park
 * Kenseiden
-* King's Quest
+* King's Quest: Quest for the Crown
 * Klax
 * Kung Fu Kid
 * Land of Illusion Starring Mickey Mouse
@@ -231,6 +231,7 @@
 * Incredible Hulk (palette)
 * Krusty's Fun House (palette)
 * Mortal Kombat II (palette)
+* Miracle Warriors: Seal of the Dark Lord (backgrond)
 * Teddy Boy Blues (palette)
 * Ren and Stimpy - Quest for the Shaven Yak (palette)
 * The Simpsons: Bart vs. the Space Mutants (palette)
@@ -255,9 +256,20 @@
 * Cosmic Spacehead (Codemasters mapper)
 * Excellent Dizzy Collection (Codemasters mapper)
 * Galactic Protector (paddle)
-* Gangster Town (light phaser)
-* Rambo III (light phaser)
-* Wanted! (light phaser)
+* Gangster Town (phaser)
+* Marksman Shooting (phaser)
+* Megumi Rescue (paddle)
+* Missile Defence 3D (phaser)
+* Operation: Wolf (phaser)
+* Rambo III (phaser)
+* Rescue Mission (phaser)
+* Safari Hunt (phaser)
+* Shooting Galery (phaser)
+* Sítio do Picapau Amarelo (1mb rom)
+* Space Gun (phaser)
+* Trap Shooting (phaser)
+* Wanted! (phaser)
+* Woody Pop (paddle)
 
 # SG-1000
 * Bank Panic
@@ -271,10 +283,15 @@
 * Dokidoki Penguin Land
 * Drol
 * Dragon Wang
+* Elevator Action
 * Flicky
 * Girl's Garden
+* Gulkave
+* Guzzler
 * Hang-On II
 * H.E.R.O.
+* Hyper Sports
+* Monaco GP
 * Ninja Princess
 * N-Sub
 * Pachinko II
@@ -282,15 +299,18 @@
 * Q-bert
 * Sega Flipper
 * Sega Galaga
+* Sindbad Mystery
 * Space Armor
 * Space Invaders
 * Space Slalom
+* Star Force
 * Star Jacker 
 
 ## VISUAL BUGS
 * Bomberman Special (menu logo)
+* Champion Soccer (background color)
 * Congo Bongo (background color)
-* Exerion 
+* Exerion (no sprites)
 * Golgo 13 (sprite wrapping)
 * Hustle Chumy (background color)
 * Rock n' Bolt (sprite sorting)
@@ -299,6 +319,7 @@
 
 ## BROKEN
 * James Bomd 007 (sound only)
+* Pop Flamer (sound only)
 
 # Game Gear
 Unsupported
