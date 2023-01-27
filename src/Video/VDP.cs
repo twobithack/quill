@@ -89,7 +89,19 @@ public sealed partial class VDP
 
   public void RenderScanline()
   {
-    IRQ = false;
+    IncrementScanline();
+    UpdateInterrupts();
+        
+    if (_displayEnabled &&
+        _vCounter < _vCounterActive)
+      RasterizeScanline();
+  }
+
+  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void IncrementScanline()
+  {
     _vCounter++;
 
     if (_vCounter == _vCounterActive)
@@ -114,6 +126,12 @@ public sealed partial class VDP
       _vCounterJumped = false;
       _vScroll = _registers[0x9];
     }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void UpdateInterrupts()
+  {
+    IRQ = VSyncPending;
 
     if (_vCounter > _vCounterActive)
     {
@@ -122,28 +140,19 @@ public sealed partial class VDP
     else if (_lineInterrupt == 0)
     {
       _lineInterrupt = _registers[0xA];
-      IRQ = _lineInterruptEnabled;
+      IRQ |= _lineInterruptEnabled;
     }
     else
     {
       _lineInterrupt--;
     }
-     
-    if (_vCounter < _vCounterActive)
-    {
-      _hScroll = _registers[0x8];
-      if (_displayEnabled)
-        RasterizeScanline();
-    }
-
-    IRQ |= VSyncPending;
   }
-
-  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
-  {
+  { 
+    _hScroll = _registers[0x8];
+    
     if (_displayMode4)
     {
       RasterizeSprites();

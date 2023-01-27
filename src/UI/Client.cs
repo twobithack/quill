@@ -90,9 +90,9 @@ public sealed class Client : Game
 
   protected override void Update(GameTime gameTime)
   {
-    var buffer = _emulator.ReadFramebuffer();
-    if (buffer != null)
-      _framebuffer.SetData(buffer);
+    var frame = _emulator.ReadFramebuffer();
+    if (frame != null)
+      _framebuffer.SetData(frame);
 
     HandleInput();
     base.Update(gameTime);
