@@ -38,9 +38,6 @@ Bit3 = Bit13 of the name base table address
 Bit2 = Bit12 of the name base table address
 Bit1 = Bit11 of the name base table address if resolution is "small" otherwise unused
 
-## Registers 0x3 + 0x4
-Unused
-
 ## Register 0x5
 Bit 6 = Bit13 of sprite info base table
 Bit 5 = Bit12 of sprite info base table
@@ -62,7 +59,7 @@ Background X Scrolling position
 Background Y Scrolling position
 
 ## Register 0xA
-The entire 8 bit register is what the line counter should be set to (explained later)
+The entire 8 bit register is what the line counter should be set to
 
 
 # VDP Regions
