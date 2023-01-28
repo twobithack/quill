@@ -11,11 +11,12 @@
 * Alex Kidd In Shinobi World
 * Alex Kidd: The Lost Stars
 * A.L.F.
+* Alien 3 
 * Alien Syndrome
 * Altered Beast
 * Arcade Smash Hits
 * Argos no Juujiken
-* Ariel - The Little Mermaid
+* Ariel: The Little Mermaid
 * Assault City
 * Asterix
 * Asterix and the Secret Mission
@@ -24,7 +25,9 @@
 * Ayrton Senna's Super Monaco GP II
 * Aztec Adventure
 * Back to the Future Part II
+* Back to the Future Part III
 * Baku Baku Animals
+* Basketball Nightmare
 * Batman Returns
 * Battle Outrun
 * Battletoads in Battlemaniacs
@@ -49,7 +52,9 @@
 * Daffy Duck in Hollywood
 * Danan: The Jungle Fighter
 * Dead Angle
+* Deep Duck Trouble Starring Donald Duck
 * Desert Strike
+* Dick Tracy
 * Disney's Aladdin 
 * Disney's Bonkers: Wax Up!
 * Double Dragon
@@ -96,6 +101,7 @@
 * Hook
 * Impossible Mission
 * Incredible Crash Test Dummies
+* Incredible Hulk
 * James 'Buster' Douglas Knockout Boxing
 * James Pond 2 - Codename Robocod
 * The Jungle Book
@@ -103,6 +109,7 @@
 * Kenseiden
 * King's Quest: Quest for the Crown
 * Klax
+* Krusty's Fun House
 * Kung Fu Kid
 * Land of Illusion Starring Mickey Mouse
 * Laser Ghost
@@ -116,15 +123,17 @@
 * Marble Madness
 * Mercs
 * Michael Jackson's Moonwalker
+* Miracle Warriors: Seal of the Dark Lord
 * Monopoly
 * Montezuma's Revenge featuring Panama Joe
 * Mortal Kombat
+* Mortal Kombat II
 * Mortal Kombat 3
 * Ms. Pac-Man
 * The New Zealand Story
 * The Ninja
 * Ninja Gaiden
-* Olympic Gold - Barcelona '92
+* Olympic Gold
 * Operation Wolf
 * Ottifants
 * OutRun
@@ -143,12 +152,13 @@
 * Psycho Fox
 * Putt and Putter
 * Quartet
-* Rainbow Islands - Story of the Bubble Bobble
+* Rainbow Islands: The Story of Bubble Bobble 2
 * Rambo: First Blood Part II
 * Rampage
 * Rampart
 * R.C. Grand Prix
 * Rastan
+* Ren and Stimpy: Quest for the Shaven Yak
 * Renegade
 * Road Rash
 * RoboCop 3
@@ -159,13 +169,15 @@
 * Sagaia
 * Sapo Xulé: O Mestre do Kung Fu
 * Sapo Xulé: S.O.S. Lagoa Poluida
-* SDI - Strategic Defense Initiative
+* SDI: Strategic Defense Initiative
 * Sega World Tournament Golf
 * Sensible Soccer
 * Shanghai
 * Shinobi
+* The Simpsons: Bart vs. the Space Mutants
 * The Simpsons: Bart vs. the World
 * Sítio do Picapau Amarelo
+* Solomon no Kagi: Oujo Rihita no Namida
 * Sonic Chaos
 * Sonic the Hedgehog
 * Sonic the Hedgehog 2
@@ -188,11 +200,13 @@
 * Summer Games
 * Superman
 * Super Racing
+* Super Smash TV
 * Super Space Invaders
 * Super Tetris
 * Taz in Escape from Mars
 * Taz-Mania
 * Teddy Boy
+* Teddy Boy Blues
 * Terminator 2
 * Thunder Bladebart vs the space mutants
 * Time Soldiers
@@ -203,7 +217,7 @@
 * Vigilante
 * Virtua Fighter Animation
 * Wimbledon II
-* Wonder Boy III - The Dragon's Trap
+* Wonder Boy III: The Dragon's Trap
 * Wonder Boy in Monster World
 * World Games
 * X-Men: Mojo World
@@ -220,23 +234,9 @@
 * Sonic Blast (no startup jingle)
 
 ## VISUAL BUGS
-* Alien 3 (palette)
-* Back to the Future Part III (palette)
-* Basketball Nightmare (palette)
 * Bram Stoker's Dracula (sprite flickering)
-* California Games II
+* California Games II (garbled screens)
 * Cool Spot (sprite flickering)
-* Dick Tracy (palette)
-* Deep Duck Trouble Starring Donald Duck (palette)
-* Incredible Hulk (palette)
-* Krusty's Fun House (palette)
-* Mortal Kombat II (palette)
-* Miracle Warriors: Seal of the Dark Lord (backgrond)
-* Teddy Boy Blues (palette)
-* Ren and Stimpy - Quest for the Shaven Yak (palette)
-* The Simpsons: Bart vs. the Space Mutants (palette)
-* Solomon no Kagi - Oujo Rihita no Namida (palette)
-* Super Smash TV (sprite transparency)
 
 ## BROKEN
 * Ace of Aces
@@ -250,6 +250,7 @@
 * King & Road
 * Parlour Games 
 * Sega Chess (nothing after splash screen)
+* Zool: Warrior of the "Nth" Dimension (character won't load)
 
 ## UNSUPPORTED
 * Alex Kidd BMX Trial (paddle)
@@ -265,7 +266,6 @@
 * Rescue Mission (phaser)
 * Safari Hunt (phaser)
 * Shooting Galery (phaser)
-* Sítio do Picapau Amarelo (1mb rom)
 * Space Gun (phaser)
 * Trap Shooting (phaser)
 * Wanted! (phaser)
@@ -278,7 +278,9 @@
 * Chank'n Pop
 * Challenge Derby
 * Champion Billiards
+* Champion Soccer
 * Choplifter
+* Congo Bongo
 * Dr. Hello
 * Dokidoki Penguin Land
 * Drol
@@ -290,12 +292,13 @@
 * Guzzler
 * Hang-On II
 * H.E.R.O.
+* Hustle Chumy
 * Hyper Sports
 * Monaco GP
 * Ninja Princess
 * N-Sub
 * Pachinko II
-* Pitfall II - The Lost Caverns
+* Pitfall II: The Lost Caverns
 * Q-bert
 * Sega Flipper
 * Sega Galaga
@@ -308,11 +311,8 @@
 
 ## VISUAL BUGS
 * Bomberman Special (menu logo)
-* Champion Soccer (background color)
-* Congo Bongo (background color)
 * Exerion (no sprites)
 * Golgo 13 (sprite wrapping)
-* Hustle Chumy (background color)
 * Rock n' Bolt (sprite sorting)
 * Wonder Boy (sprite wrapping)
 * Yamato (background tiles)
