@@ -8,23 +8,22 @@ unsafe public sealed class Framebuffer
   #region Constants
   private const int FRAME_WIDTH = 256;
   private const int FRAME_HEIGHT = 240;
-  private const int FRAMEBUFFER_SIZE = FRAME_WIDTH *
-                                       FRAME_HEIGHT *
-                                       sizeof(int);
+  private const int BACK_BUFFER_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
+  private const int FRONT_BUFFER_SIZE = BACK_BUFFER_SIZE * sizeof(int);
   #endregion
 
   #region Fields
-  private readonly int[] _pixelbuffer;
+  private readonly byte[] _frontBuffer;
+  private readonly int[] _backBuffer;
   private readonly bool[] _occupied;
-  private readonly byte[] _framebuffer;
   private bool _frameQueued;
   #endregion
 
   public Framebuffer()
   {
-    _framebuffer = new byte[FRAMEBUFFER_SIZE];
-    _pixelbuffer = new int[FRAME_WIDTH * FRAME_HEIGHT];
-    _occupied = new bool[FRAME_WIDTH * FRAME_HEIGHT];
+    _frontBuffer = new byte[FRONT_BUFFER_SIZE];
+    _backBuffer = new int[BACK_BUFFER_SIZE];
+    _occupied = new bool[BACK_BUFFER_SIZE];
   }
 
   #region Methods
@@ -32,7 +31,7 @@ unsafe public sealed class Framebuffer
   public void SetPixel(int x, int y, int value, bool isSprite)
   {
     var index = GetPixelIndex(x, y);
-    _pixelbuffer[index] = value;
+    _backBuffer[index] = value;
     _occupied[index] = isSprite;
   }
 
@@ -42,13 +41,13 @@ unsafe public sealed class Framebuffer
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void PushFrame()
   {
-    lock (_framebuffer)
+    lock (_frontBuffer)
     {
-      Buffer.BlockCopy(_pixelbuffer, 0, _framebuffer, 0, FRAMEBUFFER_SIZE);
+      Buffer.BlockCopy(_backBuffer, 0, _frontBuffer, 0, FRONT_BUFFER_SIZE);
       _frameQueued = true;
     }
 
-    Array.Clear(_pixelbuffer);
+    Array.Clear(_backBuffer);
     Array.Clear(_occupied);
   }
 
@@ -58,10 +57,10 @@ unsafe public sealed class Framebuffer
     if (!_frameQueued)
       return null;
 
-    lock (_framebuffer)
+    lock (_frontBuffer)
     {
       _frameQueued = false;
-      return _framebuffer;
+      return _frontBuffer;
     }
   }
 
