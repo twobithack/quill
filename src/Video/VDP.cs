@@ -13,7 +13,7 @@ public sealed partial class VDP
     _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
-    _vCounterMax += (_vCounterJumpFrom - _vCounterJumpTo);
+    _vCounterMax = byte.MaxValue + (_vCounterJumpFrom - _vCounterJumpTo);
     _vCounterMax += extraScanlines;
   }
 
@@ -24,7 +24,7 @@ public sealed partial class VDP
     IRQ = false;
 
     var value = (byte)_status;
-    if (_displayMode4)
+    if (DisplayMode4)
       _status &= ~Status.All;
     else
       _status &= ~(Status.Collision | Status.VBlank);
@@ -153,7 +153,7 @@ public sealed partial class VDP
   { 
     _hScroll = _registers[0x8];
     
-    if (_displayMode4)
+    if (DisplayMode4)
     {
       RasterizeSprites();
       RasterizeBackground();
@@ -245,7 +245,7 @@ public sealed partial class VDP
 
     for (int backgroundColumn = 0; backgroundColumn < BACKGROUND_COLUMNS; backgroundColumn++)
     {
-      int tilemapY = _vCounter;
+      var tilemapY = _vCounter;
       if (!_limitVScroll ||
           backgroundColumn < VSCROLL_LIMIT)
         tilemapY += _vScroll;
@@ -263,17 +263,17 @@ public sealed partial class VDP
                         (tilemapRow * BACKGROUND_COLUMNS * 2) + 
                         (tilemapColumn * 2);
 
-      var tile = GetTileData(tileAddress);
-      var offset = tile.VerticalFlip
+      var tileData = GetTileData(tileAddress);
+      var tileOffset = tileData.VerticalFlip
                  ? 7 - (tilemapY % TILE_SIZE)
                  : tilemapY % TILE_SIZE;
 
-      var patternAddress = (tile.PatternIndex * 32) + (offset * 4);
+      var patternAddress = (tileData.PatternIndex * 32) + (tileOffset * 4);
       var patternData = GetPatternData(patternAddress);
 
       for (int i = 0; i < TILE_SIZE; i++)
       {
-        var columnOffset = tile.HorizontalFlip
+        var columnOffset = tileData.HorizontalFlip
                          ? 7 - i
                          : i;
 
@@ -289,10 +289,10 @@ public sealed partial class VDP
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
 
         if (_framebuffer.IsOccupied(x, _vCounter) &&
-            (!tile.HighPriotity || paletteIndex == TRANSPARENT))
+            (!tileData.HighPriotity || paletteIndex == TRANSPARENT))
           continue;
 
-        if (tile.UseSpritePalette)
+        if (tileData.UseSpritePalette)
           paletteIndex += 16;
 
         SetPixel(x, _vCounter, paletteIndex, false);
@@ -449,10 +449,10 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixel(int x, int y, int paletteIndex, bool sprite) => _framebuffer.SetPixel(x, y, _palette[paletteIndex], sprite);
+  private void SetPixel(int x, int y, int paletteIndex, bool isSprite) => _framebuffer.SetPixel(x, y, _palette[paletteIndex], isSprite);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacyPixel(int x, int y, byte color, bool sprite) => _framebuffer.SetPixel(x, y, Color.ToLegacyRGBA(color), sprite);
+  private void SetLegacyPixel(int x, int y, byte color, bool isSprite) => _framebuffer.SetPixel(x, y, Color.ToLegacyRGBA(color), isSprite);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetFlag(Status flag, bool value) => _status = value
@@ -467,20 +467,17 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetDisplayMode()
+  private void UpdateDisplayMode()
   {
-    var mode = DisplayMode.Graphic_1;
-    if (TestRegisterBit(0x0, 2))
-      mode |= DisplayMode.Mode_4a;
-    if (TestRegisterBit(0x1, 3))
-      mode |= DisplayMode.Multicolor;
-    if (TestRegisterBit(0x0, 1))
-      mode |= DisplayMode.Graphic_2;
+    _displayMode = DisplayMode.None;
     if (TestRegisterBit(0x1, 4))
-      mode |= DisplayMode.Text;
-
-    _displayMode4 = mode != DisplayMode.Graphic_2 &&
-                    mode != DisplayMode.Mode_1_2;
+      _displayMode |= DisplayMode.Mode_1;
+    if (TestRegisterBit(0x0, 1))
+      _displayMode |= DisplayMode.Mode_2;
+    if (TestRegisterBit(0x1, 3))
+      _displayMode |= DisplayMode.Mode_3;
+    if (TestRegisterBit(0x0, 2))
+      _displayMode |= DisplayMode.Mode_4;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -501,7 +498,7 @@ public sealed partial class VDP
         _maskLeftBorder = value.TestBit(5);
         _limitHScroll = value.TestBit(6);
         _limitVScroll = value.TestBit(7);
-        SetDisplayMode();
+        UpdateDisplayMode();
         return;
 
       case 0x1:
@@ -510,7 +507,7 @@ public sealed partial class VDP
         _vSyncEnabled = value.TestBit(5);
         _displayEnabled = value.TestBit(6);
         IRQ = VSyncPending;
-        SetDisplayMode();
+        UpdateDisplayMode();
         return;
 
       case 0x2:

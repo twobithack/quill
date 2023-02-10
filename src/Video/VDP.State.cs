@@ -49,6 +49,7 @@ public sealed partial class VDP
   private byte _vScroll;
   private byte _blankColor;
 
+  private bool _controlWritePending;
   private bool _shiftX;
   private bool _lineInterruptEnabled;
   private bool _maskLeftBorder;
@@ -60,16 +61,13 @@ public sealed partial class VDP
   private bool _displayEnabled;
   private bool _useSecondPatternTable;
 
-  private bool _controlWritePending;
+  private DisplayMode _displayMode;
+  private readonly int _backgroundRows = 28; // 32
+  private readonly int _vCounterMax;
+  private readonly byte _vCounterActive = 192; // 224
+  private readonly byte _vCounterJumpFrom = 0xDA; // 0xEA
+  private readonly byte _vCounterJumpTo = 0xD5; // 0xE5
   private bool _vCounterJumped;
-  private bool _displayMode4;
-
-  // TODO: derive from display mode
-  private readonly int _backgroundRows = 28;
-  private readonly int _vCounterMax = 255;
-  private readonly byte _vCounterActive = 192;
-  private readonly byte _vCounterJumpFrom = 0xDA;
-  private readonly byte _vCounterJumpTo = 0xD5;
   #endregion
 
   #region Properties
@@ -101,6 +99,7 @@ public sealed partial class VDP
   }
 
   private bool VSyncPending => _vSyncEnabled && VBlank;
+  private bool DisplayMode4 => _displayMode.HasFlag(DisplayMode.Mode_4);
   #endregion
 
   #region Methods
