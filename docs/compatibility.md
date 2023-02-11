@@ -19,6 +19,7 @@
 * Ariel: The Little Mermaid
 * Assault City
 * Asterix
+* Asterix and the Great Rescue 
 * Asterix and the Secret Mission
 * Astro Warrior 
 * Astro Warrior & Pit Pot
@@ -102,6 +103,7 @@
 * Impossible Mission
 * Incredible Crash Test Dummies
 * Incredible Hulk
+* Indiana Jones and the Last Crusade
 * James 'Buster' Douglas Knockout Boxing
 * James Pond 2 - Codename Robocod
 * The Jungle Book
@@ -242,11 +244,9 @@
 * Ace of Aces
 * Alibaba and 40 Thieves
 * Alien Storm
-* Asterix and the Great Rescue 
 * Bank Panic
 * Block Hole
 * Desert Speedtrap Starring Roadrunner (nothing after menus)
-* Indiana Jones and the Last Crusade
 * King & Road
 * Parlour Games 
 * Sega Chess (nothing after splash screen)
