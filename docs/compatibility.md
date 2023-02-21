@@ -84,6 +84,7 @@
 * The Flintstones
 * Forgotten Worlds
 * Flight of the Pigarus
+* Fushigi no Oshiro Pit Pot
 * Gain Ground
 * Galaxy Force
 * Gauntlet
@@ -171,6 +172,7 @@
 * Sagaia
 * Sapo Xulé: O Mestre do Kung Fu
 * Sapo Xulé: S.O.S. Lagoa Poluida
+* Scramble Spirits
 * SDI: Strategic Defense Initiative
 * Sega World Tournament Golf
 * Sensible Soccer
@@ -248,6 +250,7 @@
 * Block Hole
 * Desert Speedtrap Starring Roadrunner (nothing after menus)
 * King & Road
+* Knightmare II: The Maze of Galious
 * Parlour Games 
 * Sega Chess (nothing after splash screen)
 * Zool: Warrior of the "Nth" Dimension (character won't load)
