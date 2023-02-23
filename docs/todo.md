@@ -1,19 +1,18 @@
 # Compatibility
-* 224-line mode
-* Codemasters mapper
+* Fix region detection
+* Codemasters games
+  * 224-line mode
+  * Codemasters mapper
 * MSX mapper
-* Korean mapper
-* PAL detection
-* Region detection
+* "Korean" mapper
+* NTSC/PAL detection
 
 # Accuracy
 * Fix audio aliasing
-
-# Improvements
-* File picker
-* Shaders
+* Composite video effect
 
 # Stretch goals
+* FM chip support
 * Light Phaser support
 * Paddle support
 * Game Gear support
