@@ -5,17 +5,11 @@ namespace Quill.Input;
 
 public sealed class IO
 {
-  #region Constants
-  private const byte TH1_DIRECTION = 0x01;
-  private const byte TH2_DIRECTION = 0x03;
-  private const byte TH1_OUTPUT = 0x05;
-  private const byte TH2_OUTPUT = 0x07;
-  #endregion
-
   #region Fields
   public bool NMI;
 
   private bool _pauseEnabled;
+  private ControlPort _control;
   private PortA _portA;
   private PortB _portB;
   #endregion
@@ -32,14 +26,15 @@ public sealed class IO
 
   public void WriteControl(byte value)
   {
+    _control = (ControlPort)value;
     _portB &= PortB.Joy2;
 
-    if (value.TestBit(TH1_DIRECTION) || 
-        value.TestBit(TH1_OUTPUT))
+    if (!_control.HasFlag(ControlPort.TH1_Input) &&
+        !_control.HasFlag(ControlPort.TH1_Output))
       _portB |= PortB.TH1;
       
-    if (value.TestBit(TH2_DIRECTION) || 
-        value.TestBit(TH2_OUTPUT))
+    if (!_control.HasFlag(ControlPort.TH2_Input) &&
+        !_control.HasFlag(ControlPort.TH2_Output))
       _portB |= PortB.TH2;
   }
 
