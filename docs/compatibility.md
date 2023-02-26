@@ -127,6 +127,7 @@
 * Mercs
 * Michael Jackson's Moonwalker
 * Miracle Warriors: Seal of the Dark Lord
+* Mônica no Castelo do Dragão
 * Monopoly
 * Montezuma's Revenge featuring Panama Joe
 * Mortal Kombat
@@ -143,6 +144,7 @@
 * OutRun Europa
 * Pac-Mania
 * Paperboy
+* Penguin Land
 * Phantasy Star
 * Pit Fighter
 * Populous
@@ -222,17 +224,13 @@
 * Virtua Fighter Animation
 * Wimbledon II
 * Wonder Boy III: The Dragon's Trap
+* Wonder Boy in Monster Land
 * Wonder Boy in Monster World
 * World Games
 * X-Men: Mojo World
 * Ys: The Vanished Omens
 * Zillion
 * Zillion II: The Tri-Formation Cycle
-
-## LOGIC BUGS
-* Mônica no Castelo do Dragão (Wonder Boy in Monster Land clone)
-* Penguin Land (region detection)
-* Wonder Boy in Monster Land (region detection)
 
 ## AUDIO BUGS
 * Sonic Blast (no startup jingle)
