@@ -32,10 +32,9 @@ public sealed class Client : Game
   private readonly GraphicsDeviceManager _graphics;
   private readonly DynamicSoundEffectInstance _sound;
 
+  private readonly Configuration _configuration;
   private readonly string _romName;
   private readonly string _savesDirectory;
-  private readonly bool _cropBorders;
-  private readonly int _scale;
 
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
@@ -45,13 +44,10 @@ public sealed class Client : Game
   private bool _savesEnabled;
   #endregion
 
-  public Client(string romPath,
-                int scaleFactor = 1,
-                int extraScanlines = 0,
-                bool cropBorders = true)
+  public Client(string romPath, Configuration config)
   {
     var rom = File.ReadAllBytes(romPath);
-    _emulator = new Emulator(rom, AUDIO_SAMPLE_RATE, extraScanlines);
+    _emulator = new Emulator(rom, AUDIO_SAMPLE_RATE, config.ExtraScanlines);
     _emulationThread = new Thread(_emulator.Run);
     _pollingThread = new Thread(PollAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
@@ -59,8 +55,7 @@ public sealed class Client : Game
                                             AudioChannels.Mono);
     _romName = Path.GetFileNameWithoutExtension(romPath);
     _savesDirectory = Path.Combine(Path.GetDirectoryName(romPath), "saves");
-    _cropBorders = cropBorders;
-    _scale = scaleFactor;
+    _configuration = config;
     _running = true;
   }
 
@@ -114,19 +109,25 @@ public sealed class Client : Game
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ResizeViewport()
   {
-    _viewport = new Rectangle(0, 0, _scale * FRAMEBUFFER_WIDTH, _scale * FRAMEBUFFER_HEIGHT);
+    _viewport = new Rectangle(0, 0, 
+                              _configuration.ScaleFactor * FRAMEBUFFER_WIDTH, 
+                              _configuration.ScaleFactor * FRAMEBUFFER_HEIGHT);
     _graphics.PreferredBackBufferHeight = _viewport.Height;
     _graphics.PreferredBackBufferWidth = _viewport.Width;
 
-    if (_cropBorders)
+    if (_configuration.CropBottomBorder)
     {
-      var leftBorder = _scale * LEFT_BORDER_WIDTH;
+      var bottomBorder = _configuration.ScaleFactor * BOTTOM_BORDER_HEIGHT;
+      _graphics.PreferredBackBufferHeight -= bottomBorder;
+    }
+
+    if (_configuration.CropLeftBorder)
+    {
+      var leftBorder = _configuration.ScaleFactor * LEFT_BORDER_WIDTH;
       _viewport.X -= leftBorder;
       _graphics.PreferredBackBufferWidth -= leftBorder;
     }
 
-    var bottomBorder = _scale * BOTTOM_BORDER_HEIGHT;
-    _graphics.PreferredBackBufferHeight -= bottomBorder;
     _graphics.ApplyChanges();
   }
 
