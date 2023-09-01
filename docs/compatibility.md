@@ -1,4 +1,6 @@
 # MASTER SYSTEM
+
+## WORKING
 * 20-em-1
 * Action Figther
 * Addams Family
@@ -273,6 +275,8 @@
 * Woody Pop (paddle)
 
 # SG-1000
+
+## WORKING
 * Bank Panic
 * Bomb Jack
 * Borderline
@@ -321,6 +325,3 @@
 ## BROKEN
 * James Bomd 007 (sound only)
 * Pop Flamer (sound only)
-
-# Game Gear
-Unsupported
