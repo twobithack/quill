@@ -15,15 +15,17 @@ public static class Program
     var romPath = args[0];
     var config = LoadConfiguration();
 
-    using var quill = new Client(romPath,
-                                 scaleFactor: config.ScaleFactor,
-                                 extraScanlines: config.ExtraScanlines);
+    using var quill = new Client(romPath, config);
     quill.Run();
   }
 
   private static Configuration LoadConfiguration()
   {
     var configPath = Path.Join(Directory.GetCurrentDirectory(), "config.json");
+
+    if (!File.Exists(configPath))
+      return new Configuration();
+
     var configJson = File.ReadAllText(configPath);
     var options = new JsonSerializerOptions
     {

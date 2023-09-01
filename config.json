@@ -1,4 +1,6 @@
 {
-  "scaleFactor": 1,
-  "extraScanlines": 0
+  "cropBottomBorder": true,
+  "cropLeftBorder": true,
+  "extraScanlines": 0,
+  "scaleFactor": 1
 }
