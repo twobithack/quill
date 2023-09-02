@@ -7,14 +7,14 @@ namespace Quill.Video;
 
 public sealed partial class VDP
 {
-  public VDP(int extraScanlines)
+  public VDP(int virtualScanlines)
   {
     _framebuffer = new Framebuffer();
     _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
     _vCounterMax = byte.MaxValue + (_vCounterJumpFrom - _vCounterJumpTo);
-    _vCounterMax += extraScanlines;
+    _vCounterMax += virtualScanlines;
   }
 
   #region Methods

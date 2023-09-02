@@ -31,12 +31,12 @@ unsafe public class Emulator
   private bool _running;
   #endregion
 
-  public Emulator(byte[] rom, int sampleRate, int extraScanlines)
+  public Emulator(byte[] rom, int sampleRate, int virtualScanlines)
   {
     _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
     _input = new IO();
     _audio = new PSG(sampleRate);
-    _video = new VDP(extraScanlines);
+    _video = new VDP(virtualScanlines);
     _rom = rom;
   }
 
