@@ -1,8 +1,6 @@
 using Quill.CPU;
 using Quill.Input;
-using Quill.Input.Definitions;
 using Quill.Video;
-using System;
 using System.Diagnostics;
 using System.IO;
 
@@ -14,20 +12,19 @@ unsafe public class Emulator
   private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d; 
 
   public Joypads Input;
-  private byte[] _framebuffer;
+  private VDP _vdp;
   private byte[] _rom; 
 
   public Emulator(string romPath)
   {
-    _framebuffer = new byte[0x30000];
-    _rom = ReadROM(romPath);
     Input = new Joypads();
+    _vdp = new VDP();
+    _rom = ReadROM(romPath);
   }
 
   public void Run()
   {
-    var vdp = new VDP();
-    var cpu = new Z80(_rom, vdp, Input);
+    var cpu = new Z80(_rom, _vdp, Input);
     var clock = new Stopwatch();
     var lastFrameTime = 0d;
     
@@ -49,23 +46,15 @@ unsafe public class Emulator
         var systemCycles = cpuCycles * 3;
         var vdpCycles = (double)systemCycles / 2d;
         
-        vdp.Update(vdpCycles);
+        _vdp.Update(vdpCycles);
 
         cyclesThisFrame += systemCycles;
       }
 
-      lock (_framebuffer)
-        Array.Copy(vdp.ReadFramebuffer(), _framebuffer, _framebuffer.Length);
-        
       lastFrameTime = currentTime;
     }
   }
 
-  public byte[] ReadFramebuffer()
-  {
-    lock (_framebuffer)
-      return _framebuffer;
-  }
-
+  public byte[] ReadFramebuffer() => _vdp.ReadFramebuffer();
   private static byte[] ReadROM(string path) => File.ReadAllBytes(path);
 }

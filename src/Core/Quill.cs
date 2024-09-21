@@ -17,7 +17,7 @@ public class Quill : Game
   private GraphicsDeviceManager _graphics;
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
-  private Matrix _frameTransform;
+  private Rectangle _viewport;
   private bool _maskBorder;
   private int _scale;
   
@@ -40,16 +40,17 @@ public class Quill : Game
     _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
     _graphics.PreferredBackBufferHeight = _scale * FRAMEBUFFER_HEIGHT;
     _graphics.PreferredBackBufferWidth = _scale * FRAMEBUFFER_WIDTH;
+    _graphics.ApplyChanges();    
+    _viewport = GraphicsDevice.Viewport.Bounds;
 
     if (_maskBorder)
     {
-      _graphics.PreferredBackBufferWidth -= _scale * BORDER_MASK_WIDTH;
-      _frameTransform = Matrix.CreateTranslation(-(_scale * BORDER_MASK_WIDTH), 0, 0);
+      var offset = _scale * BORDER_MASK_WIDTH;
+      _viewport.X -= offset;
+      _graphics.PreferredBackBufferWidth -= offset;
+      _graphics.ApplyChanges();    
     }
-    else
-      _frameTransform = new Matrix();
 
-    _graphics.ApplyChanges();
     base.Initialize();
   }
 
@@ -69,12 +70,17 @@ public class Quill : Game
 
   protected override void Draw(GameTime gameTime)
   {
-    GraphicsDevice.Clear(Color.Black);
-    _framebuffer.SetData(_emulator.ReadFramebuffer());
+    var frame = _emulator.ReadFramebuffer();
+    if (frame != null)
+    {
+      GraphicsDevice.Clear(Color.Black);
+      _framebuffer.SetData(frame);
 
-    _spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: _frameTransform);
-    _spriteBatch.Draw(_framebuffer, GraphicsDevice.Viewport.Bounds, Color.White);
-    _spriteBatch.End();
+      _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+      _spriteBatch.Draw(_framebuffer, _viewport, Color.White);
+      _spriteBatch.End();
+    }
+
     base.Draw(gameTime);
   }
 
@@ -104,7 +110,7 @@ public class Quill : Game
     var kb = Keyboard.GetState();
     if (kb.IsKeyDown(Keys.Escape))
       Exit();
-
+      
     _emulator.Input.Joy1Up    = kb.IsKeyDown(Keys.Up) ||
                                 kb.IsKeyDown(Keys.W);
     _emulator.Input.Joy1Left  = kb.IsKeyDown(Keys.Left) ||
