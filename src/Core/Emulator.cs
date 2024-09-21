@@ -1,45 +1,67 @@
-﻿global using Quill.CPU;
+global using Quill.CPU;
 global using Quill.Video;
 using System.Diagnostics;
+using System.IO;
 
 namespace Quill;
 
-public unsafe sealed class Quill
+unsafe public class Emulator
 {
   private const double FRAME_TIME_MS = 1000d / 60d;
   private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d; 
 
-  public static void Main(string[] args)
+  public byte[] Framebuffer;
+  private byte[] _rom; 
+
+  public Emulator(string romPath)
   {
-    var rom = ReadROM(@"test/sdsc.sms");
+    Framebuffer = new byte[256 * 192 * 4];
+    _rom = ReadROM(romPath);
+  }
+
+  public void Run()
+  {
     var vdp = new VDP();
-    var z80 = new Z80(rom, vdp);
+    var cpu = new Z80(_rom, vdp);
     var clock = new Stopwatch();
-    var lastFrame = 0d;
+    var lastFrameTime = 0d;
 
     #if DEBUG
-    z80.InitializeSDSC();
+    cpu.InitializeSDSC();
     #endif
 
     clock.Start();
     while (true)
     {
       var currentTime = clock.Elapsed.TotalMilliseconds;
-      if (currentTime < lastFrame + FRAME_TIME_MS)
+      if (currentTime < lastFrameTime + FRAME_TIME_MS)
         continue;
 
       var cyclesThisFrame = 0d;
       while (cyclesThisFrame <= SYSTEM_CYCLES_PER_FRAME)
       {
-        var cpuCycles = z80.Step();
+        var cpuCycles = cpu.Step();
         var systemCycles = cpuCycles * 3;
         
         vdp.Update(systemCycles);
 
         cyclesThisFrame += systemCycles;
       }
-      
-      lastFrame = currentTime;
+
+      lock (Framebuffer)
+      {
+        Framebuffer = vdp.ReadFramebuffer();
+      }
+
+      lastFrameTime = currentTime;
+    }
+  }
+
+  public byte[] GetFramebuffer()
+  {
+    lock (Framebuffer)
+    {
+      return Framebuffer;
     }
   }
 

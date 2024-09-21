@@ -1,3 +1,5 @@
+using System;
+
 namespace Quill.CPU.Definitions;
 
 [FlagsAttribute]
