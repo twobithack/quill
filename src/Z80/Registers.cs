@@ -6,6 +6,8 @@ namespace Quill.Z80
 {
   public partial class CPU
   {
+    private Flags _flags;
+
     private ushort _pc;
     private ushort _sp;
     private ushort _ix;
@@ -16,20 +18,19 @@ namespace Quill.Z80
     private byte _c;
     private byte _d;
     private byte _e;
-    private byte _f;
     private byte _h;
     private byte _l;
+    private byte _aShadow;
+    private byte _bShadow;
+    private byte _cShadow;
+    private byte _dShadow;
+    private byte _eShadow;
+    private byte _fShadow;
+    private byte _hShadow;
+    private byte _lShadow;
+    
     private byte _i;
     private byte _r;
-    private byte _aS;
-    private byte _bS;
-    private byte _cS;
-    private byte _dS;
-    private byte _eS;
-    private byte _fS;
-    private byte _hS;
-    private byte _lS;
-
     private bool _iff1;
     private bool _iff2;
 
@@ -37,11 +38,11 @@ namespace Quill.Z80
 
     private ushort _af
     {
-      get => _a.Concat(_f);
+      get => _a.Concat((byte)_flags);
       set
       {
         _a = value.GetHighByte();
-        _f = value.GetLowByte();
+        _flags = (Flags)value.GetLowByte();
       }
     }
 
@@ -77,41 +78,41 @@ namespace Quill.Z80
 
     private ushort _afS
     {
-      get => _aS.Concat(_fS);
+      get => _aShadow.Concat(_fShadow);
       set
       {
-        _aS = value.GetHighByte();
-        _fS = value.GetLowByte();
+        _aShadow = value.GetHighByte();
+        _fShadow = value.GetLowByte();
       }
     }
 
     private ushort _bcS
     {
-      get => _bS.Concat(_cS);
+      get => _bShadow.Concat(_cShadow);
       set
       {
-        _bS = value.GetHighByte();
-        _cS = value.GetLowByte();
+        _bShadow = value.GetHighByte();
+        _cShadow = value.GetLowByte();
       }
     }
 
     private ushort _deS
     {
-      get => _dS.Concat(_eS);
+      get => _dShadow.Concat(_eShadow);
       set
       {
-        _dS = value.GetHighByte();
-        _eS = value.GetLowByte();
+        _dShadow = value.GetHighByte();
+        _eShadow = value.GetLowByte();
       }
     }
 
     private ushort _hlS
     {
-      get => _hS.Concat(_lS);
+      get => _hShadow.Concat(_lShadow);
       set
       {
-        _hS = value.GetHighByte();
-        _lS = value.GetLowByte();
+        _hShadow = value.GetHighByte();
+        _lShadow = value.GetLowByte();
       }
     }
 
@@ -123,7 +124,6 @@ namespace Quill.Z80
       Operand.C => _c,
       Operand.D => _d,
       Operand.E => _e,
-      Operand.F => _f,
       Operand.H => _h,
       Operand.L => _l,
       _ => throw new InvalidOperationException()
@@ -185,16 +185,10 @@ namespace Quill.Z80
       set => SetFlag(Flags.Carry, value);
     }
 
-    private Flags _flags
-    {
-      get => (Flags) _f;
-      set => _f = (byte)value;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetFlag(Flags flag, bool value) => _flags = value
-                                                          ? _flags | flag 
-                                                          : _flags & ~flag;
+                                                           ? _flags | flag 
+                                                           : _flags & ~flag;
 
     private void ResetRegisters()
     { 
