@@ -11,7 +11,7 @@ namespace Quill.CPU;
 unsafe public ref struct Memory
 {
   #region Constants
-  private const ushort PAGE_COUNT = 0x100;
+  private const ushort HEADER_SIZE = 0x200;
   private const ushort PAGE_SIZE = 0x4000;
   private const ushort PAGING_START = 0x400;
   private const ushort MIRROR_SIZE = 0x2000;
@@ -27,6 +27,7 @@ unsafe public ref struct Memory
   private readonly Span<byte> _ram;
   private readonly Span<byte> _ramBank0;
   private readonly Span<byte> _ramBank1;
+  private readonly byte _pageMask;
   private bool _bankEnable;
   private bool _bankSelect;
   private byte _page0;
@@ -36,8 +37,10 @@ unsafe public ref struct Memory
 
   public Memory(byte[] program)
   {
-    var headerOffset = (program.Length % PAGE_SIZE == 512) ? 512 : 0;
-    var rom = new byte[PAGE_COUNT, PAGE_SIZE];
+    var headerOffset = (program.Length % PAGE_SIZE == HEADER_SIZE) ? HEADER_SIZE : 0;
+    var pageCount = (program.Length + PAGE_SIZE - 1) / PAGE_SIZE;
+    var rom = new byte[pageCount, PAGE_SIZE];
+                     
     for (int i = headerOffset; i < program.Length; i++)
     {
       var page = i / PAGE_SIZE;
@@ -49,6 +52,17 @@ unsafe public ref struct Memory
     _page0 = 0x00;
     _page1 = 0x01;
     _page2 = 0x02;
+    
+    _pageMask = pageCount switch 
+    {
+      <= 4 =>   0b_0000_0011,
+      <= 8 =>   0b_0000_0111,
+      <= 16 =>  0b_0000_1111,
+      <= 32 =>  0b_0001_1111,
+      <= 64 =>  0b_0011_1111,
+      <= 128 => 0b_0111_1111,
+      _ =>      0b_1111_1111,
+    };
 
     _ram = new Span<byte>(new byte[PAGE_SIZE]);
     _ramBank0 = new Span<byte>(new byte[PAGE_SIZE]);
@@ -117,11 +131,11 @@ unsafe public ref struct Memory
       _bankSelect = value.TestBit(2);
     }
     else if (address == PAGE0_CONTROL)
-      _page0 = (byte)(value & 0b_0011_1111);
+      _page0 = (byte)(value & _pageMask);
     else if (address == PAGE1_CONTROL)
-      _page1 = (byte)(value & 0b_0011_1111);
+      _page1 = (byte)(value & _pageMask);
     else if (address == PAGE2_CONTROL)
-      _page2 = (byte)(value & 0b_0011_1111);
+      _page2 = (byte)(value & _pageMask);
 
     _ram[index] = value;
   }
