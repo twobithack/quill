@@ -2,7 +2,7 @@ using System;
 
 namespace Quill.CPU.Definitions;
 
-[FlagsAttribute]
+[Flags]
 public enum Flags : byte
 {
   None      = 0b_0000_0000,

@@ -7,20 +7,25 @@ namespace Quill;
 
 unsafe public class Emulator
 {
+  #region Constants
   private const double FRAME_TIME_MS = 1000d / 60d;
   private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d;
+  #endregion
 
+  #region Fields
   private readonly byte[] _rom;
-  private readonly Joypads _io;
+  private readonly IO _io;
   private readonly VDP _vdp;
+  #endregion
 
   public Emulator(byte[] rom)
   {
-    _io = new Joypads();
+    _io = new IO();
     _vdp = new VDP();
     _rom = rom;
   }
 
+  #region Methods
   public void Run()
   {
     var cpu = new Z80(_rom, _vdp, _io);
@@ -69,4 +74,5 @@ unsafe public class Emulator
     else
       _io.SetJoypad2State(up, down, left, right, fireA, fireB);
   }
+  #endregion
 }

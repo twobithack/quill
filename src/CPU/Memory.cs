@@ -9,39 +9,50 @@ namespace Quill.CPU;
 
 unsafe public ref struct Memory
 {
-  private const ushort PAGE_COUNT = 0x40;
+  #region Constants
   private const ushort PAGE_SIZE = 0x4000;
+  #endregion
 
+  #region Fields
+  private readonly ReadOnlySpan2D<byte> _rom;
   private readonly Span<byte> _ram;
   private readonly Span<byte> _bank0;
   private readonly Span<byte> _bank1;
+  private readonly bool _useMapper;
   private bool _bankEnable;
   private bool _bankSelect;
-
-  private readonly ReadOnlySpan2D<byte> _rom;
-  private byte _page0 = 0x00;
-  private byte _page1 = 0x01;
-  private byte _page2 = 0x02;
-  private bool _useMapper = false;
+  private byte _page0;
+  private byte _page1;
+  private byte _page2;
+  #endregion
 
   public Memory(byte[] program)
   {
     var headerOffset = (program.Length % PAGE_SIZE == 512) ? 512 : 0;
-    var rom = new byte[PAGE_COUNT, PAGE_SIZE];
+    var romSize = program.Length - headerOffset;
+    var pages = (romSize - 1) / PAGE_SIZE;
+    if (pages++ > byte.MaxValue) 
+      throw new Exception("ROM too large for standard mapper.");
 
-    for (int i = 0; i < program.Length; i++)
+    var rom = new byte[pages, PAGE_SIZE];
+    for (int i = headerOffset; i < program.Length; i++)
     {
-      var page = (i / PAGE_SIZE) + headerOffset;
-      var index = (i % PAGE_SIZE) + headerOffset;
+      var page = i / PAGE_SIZE;
+      var index = i % PAGE_SIZE;
       rom[page, index] = program[i];
     }
 
     _rom = new ReadOnlySpan2D<byte>(rom);
+    _useMapper = pages > 3;
+    _page0 = 0x00;
+    _page1 = 0x01;
+    _page2 = 0x02;
+
     _ram = new Span<byte>(new byte[PAGE_SIZE]);
     _bank0 = new Span<byte>(new byte[PAGE_SIZE]);
     _bank1 = new Span<byte>(new byte[PAGE_SIZE]);
-    _bankEnable = _bankSelect = false;
-    _useMapper = (program.Length > PAGE_SIZE * 3);
+    _bankEnable = false;
+    _bankSelect = false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -131,7 +142,7 @@ unsafe public ref struct Memory
 
     for (ushort address = 0; address < PAGE_SIZE; address++)
     {
-      if (address % PAGE_COUNT == 0)
+      if (address % 64 == 0)
       {
         memory.Add(row);
         row = string.Empty;

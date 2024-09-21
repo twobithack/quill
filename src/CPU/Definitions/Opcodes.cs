@@ -1,7 +1,8 @@
 namespace Quill.CPU.Definitions;
 
-unsafe public ref struct Opcodes
+public readonly unsafe ref struct Opcodes
 {
+  #region Fields
   public static readonly Opcode[] Main = new Opcode[]
   {
     // Opcodes 0x00 - 0x0F
@@ -1966,7 +1967,9 @@ unsafe public ref struct Opcodes
     new Opcode(Operation.SET7,  Operand.IYd,        Operand.Implied,    23),
     new Opcode(Operation.SET7,  Operand.IYd,        Operand.A,          23),
   };
+  #endregion
 
+  #region Structs
   public readonly struct Opcode
   {
     public readonly Operation Operation;
@@ -1987,4 +1990,5 @@ unsafe public ref struct Opcodes
 
     public override string ToString() => $"{Operation} {Destination},{Source}";
   }
+  #endregion
 }

@@ -2,19 +2,23 @@ using Quill.Input.Definitions;
 
 namespace Quill.Input;
 
-public class Joypads
+public class IO
 {
+  #region Fields
   private PortA _portA;
   private PortB _portB;
+  #endregion
 
-  public Joypads()
+  public IO()
   {
     _portA = PortA.None;
     _portB = PortB.None;
   }
 
+  #region Methods
   public byte ReadPortA() => (byte)~_portA;
   public byte ReadPortB() => (byte)~_portB;
+  public void Reset() => _portB |= PortB.Reset;
 
   public void SetJoypad1State(bool up,
                               bool down,
@@ -51,4 +55,5 @@ public class Joypads
     _portA = stateA;
     _portB = stateB;
   }
+  #endregion
 }
