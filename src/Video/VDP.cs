@@ -277,6 +277,7 @@ unsafe public class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   {
+    // TODO: Mode 2 support
     RasterizeSprites();
     RasterizeBackground();
   }

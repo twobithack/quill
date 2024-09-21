@@ -4,7 +4,6 @@ using Quill.Input;
 using Quill.Video;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Quill;
@@ -23,8 +22,8 @@ unsafe public class Emulator
   private readonly Stopwatch _clock;
   private readonly byte[] _rom;
   private bool _running;
-  private bool _loadSnapshot;
   private bool _createSnapshot;
+  private bool _loadSnapshot;
   private string _snapshotPath;
   #endregion
 
@@ -86,13 +85,16 @@ unsafe public class Emulator
                              bool left, 
                              bool right, 
                              bool fireA, 
-                             bool fireB)
+                             bool fireB,
+                             bool pause)
   {
     if (joypad == 0)
-      _input.SetJoypad1State(up, down, left, right, fireA, fireB);
+      _input.SetJoypad1State(up, down, left, right, fireA, fireB, pause);
     else
-      _input.SetJoypad2State(up, down, left, right, fireA, fireB);
+      _input.SetJoypad2State(up, down, left, right, fireA, fireB, pause);
   }
+
+  public void SetResetButtonState(bool reset) => _input.SetResetButtonState(reset);
 
   public void LoadState(string path)
   {
