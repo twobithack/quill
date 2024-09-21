@@ -1,5 +1,5 @@
 using CommunityToolkit.HighPerformance;
-using Quill.Common;
+using Quill.Common.Extensions;
 using Quill.Core;
 using System;
 using System.Collections.Generic;

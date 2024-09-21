@@ -1,3 +1,4 @@
+using Quill.Common;
 using Quill.CPU;
 using Quill.Input;
 using Quill.Sound;
@@ -25,7 +26,7 @@ unsafe public class Emulator
   private readonly PSG _audio;
   private readonly VDP _video;
   private readonly byte[] _rom;
-  private readonly RewindBuffer _rewindBuffer;
+  private readonly RingBuffer<Snapshot> _rewindBuffer;
   private string _snapshotPath;
   private bool _loadRequested;
   private bool _saveRequested;
@@ -34,11 +35,11 @@ unsafe public class Emulator
 
   public Emulator(byte[] rom, int extraScanlines)
   {
+    _rewindBuffer = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
     _input = new IO();
     _audio = new PSG();
     _video = new VDP(extraScanlines);
     _rom = rom;
-    _rewindBuffer = new RewindBuffer(REWIND_BUFFER_SIZE);
   }
 
   #region Methods
@@ -57,8 +58,9 @@ unsafe public class Emulator
       if (!FastForward && 
           frameTimer.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
         continue;
-      
+
       frameTimer.Restart();
+      frameCounter++;
 
       var scanlines = _video.ScanlinesPerFrame;
       while (scanlines > 0)
@@ -91,8 +93,6 @@ unsafe public class Emulator
         _rewindBuffer.Push(state);
         frameCounter = 0;
       }
-
-      frameCounter++;
     }
 
     _audio.Stop();
@@ -133,33 +133,8 @@ unsafe public class Emulator
     _saveRequested = true;
   }
 
-  #pragma warning disable SYSLIB0011
-  private Snapshot LoadSnapshot()
-  {
-    if (!File.Exists(_snapshotPath))
-      return null;
+  private Snapshot LoadSnapshot() => Snapshot.ReadFromFile(_snapshotPath);
 
-    Snapshot state;
-    try
-    {
-      using var stream = new FileStream(_snapshotPath, FileMode.Open);
-      var formatter = new BinaryFormatter();
-      state = (Snapshot)formatter.Deserialize(stream);
-    }
-    catch
-    { 
-      return null;
-    }
-
-    return state;
-  }
-
-  private void SaveSnapshot(Snapshot state)
-  {
-    using var stream = new FileStream(_snapshotPath, FileMode.Create);
-    var formatter = new BinaryFormatter();
-    formatter.Serialize(stream, state);
-  }
-  #pragma warning restore SYSLIB0011
+  private void SaveSnapshot(Snapshot state) => state.WriteToFile(_snapshotPath);
   #endregion
 }

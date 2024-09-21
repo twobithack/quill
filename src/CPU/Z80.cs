@@ -1,4 +1,4 @@
-using Quill.Common;
+using Quill.Common.Extensions;
 using Quill.CPU.Definitions;
 using Quill.Input;
 using Quill.Sound;
