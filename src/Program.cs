@@ -12,7 +12,7 @@ public static class Program
       romPath = args[0];
 
     var rom = ReadROM(romPath);
-    using var game = new Quill(rom, cropBorders: true, scalingFactor: 5);
+    using var game = new Quill(rom, cropBorders: true, scaleFactor: 5);
     game.Run();
   }
 

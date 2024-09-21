@@ -52,7 +52,7 @@ unsafe public ref partial struct Z80
   }
 
   #region Properties
-  private bool _signFlag
+  private bool SignFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _flags.HasFlag(Flags.Sign);
@@ -61,7 +61,7 @@ unsafe public ref partial struct Z80
     set => SetFlag(Flags.Sign, value);
   }
 
-  private bool _zeroFlag
+  private bool ZeroFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _flags.HasFlag(Flags.Zero);
@@ -70,7 +70,7 @@ unsafe public ref partial struct Z80
     set => SetFlag(Flags.Zero, value);
   }
 
-  private bool _halfcarryFlag
+  private bool HalfcarryFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _flags.HasFlag(Flags.Halfcarry);
@@ -79,7 +79,7 @@ unsafe public ref partial struct Z80
     set => SetFlag(Flags.Halfcarry, value);
   }
 
-  private bool _parityFlag
+  private bool ParityFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _flags.HasFlag(Flags.Parity);
@@ -88,7 +88,7 @@ unsafe public ref partial struct Z80
     set => SetFlag(Flags.Parity, value);
   }
 
-  private bool _negativeFlag
+  private bool NegativeFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _flags.HasFlag(Flags.Negative);
@@ -97,7 +97,7 @@ unsafe public ref partial struct Z80
     set => SetFlag(Flags.Negative, value);
   }
 
-  private bool _carryFlag
+  private bool CarryFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _flags.HasFlag(Flags.Carry);
@@ -106,7 +106,7 @@ unsafe public ref partial struct Z80
     set => SetFlag(Flags.Carry, value);
   }
 
-  private ushort _af 
+  private ushort AF 
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _a.Concat((byte)_flags);
@@ -119,7 +119,7 @@ unsafe public ref partial struct Z80
     }
   }
 
-  private ushort _bc
+  private ushort BC
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _b.Concat(_c);
@@ -132,7 +132,7 @@ unsafe public ref partial struct Z80
     }
   }
 
-  private ushort _de
+  private ushort DE
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _d.Concat(_e);
@@ -145,7 +145,7 @@ unsafe public ref partial struct Z80
     }
   }
 
-  private ushort _hl
+  private ushort HL
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _h.Concat(_l);
@@ -158,58 +158,65 @@ unsafe public ref partial struct Z80
     }
   }
   
-  private byte _ixh
+  private byte IHh
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _ix.HighByte();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => _ix = value.Concat(_ixl);
+    set => _ix = value.Concat(IXl);
   }
 
-  private byte _ixl
+  private byte IXl
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _ix.LowByte();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => _ix = _ixh.Concat(value);
+    set => _ix = IHh.Concat(value);
   }
 
-  private byte _iyh
+  private byte IYh
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _iy.HighByte();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => _iy = value.Concat(_iyl);
+    set => _iy = value.Concat(IYl);
   }
 
-  private byte _iyl
+  private byte IYl
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _iy.LowByte();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => _iy = _iyh.Concat(value);
+    set => _iy = IYh.Concat(value);
   }
   #endregion
 
-  public byte Step()
+  public int Step()
   {
     HandleInterrupts();
 
     if (_halt)
     {
       _r++;
-      return NOP_CYCLES;
+      return 4;
     }
-    
+
     DecodeInstruction();
     ExecuteInstruction();
     return _instruction.Cycles;
   }
-  
+
+  public void RunFor(int cycles)
+  {
+    while (cycles > 0)
+      cycles -= Step();
+  }
+
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void HandleInterrupts()
   {
@@ -412,18 +419,18 @@ unsafe public ref partial struct Z80
       case Operand.L: return _l;
       case Operand.I: return _i;
       case Operand.R: return _r;
-      case Operand.IXh: return _ixh;
-      case Operand.IXl: return _ixl;
-      case Operand.IYh: return _iyh;
-      case Operand.IYl: return _iyl;
+      case Operand.IXh: return IHh;
+      case Operand.IXl: return IXl;
+      case Operand.IYh: return IYh;
+      case Operand.IYl: return IYl;
 
       case Operand.Indirect:
         address = FetchWord();
         break;
 
-      case Operand.BCi: address = _bc; break;
-      case Operand.DEi: address = _de; break;
-      case Operand.HLi: address = _hl; break;
+      case Operand.BCi: address = BC; break;
+      case Operand.DEi: address = DE; break;
+      case Operand.HLi: address = HL; break;
 
       case Operand.IXd:
         _memPtr ??= (ushort)(_ix + FetchDisplacement());
@@ -455,10 +462,10 @@ unsafe public ref partial struct Z80
       case Operand.Immediate:
         return FetchWord();
 
-      case Operand.AF: return _af;
-      case Operand.BC: return _bc;
-      case Operand.DE: return _de;
-      case Operand.HL: return _hl;
+      case Operand.AF: return AF;
+      case Operand.BC: return BC;
+      case Operand.DE: return DE;
+      case Operand.HL: return HL;
       case Operand.IX: return _ix;
       case Operand.IY: return _iy;
       case Operand.SP: return _sp;
@@ -474,7 +481,7 @@ unsafe public ref partial struct Z80
   private byte ReadPort(byte port) => port switch
   {
     0x3F => _io,
-    0x7E => _vdp.VCounter,
+    0x7E => (byte)_vdp.VCounter,
     0x7F => _vdp.HCounter,
     0xBE => _vdp.ReadData(),
     0xBF or 0xBD => _vdp.ReadStatus(),
@@ -512,14 +519,14 @@ unsafe public ref partial struct Z80
       case Operand.L: _l = value; return;
       case Operand.I: _i = value; return;
       case Operand.R: _r = value; return;
-      case Operand.IXh: _ixh = value; return;
-      case Operand.IXl: _ixl = value; return;
-      case Operand.IYh: _iyh = value; return;
-      case Operand.IYl: _iyl = value; return;
+      case Operand.IXh: IHh = value; return;
+      case Operand.IXl: IXl = value; return;
+      case Operand.IYh: IYh = value; return;
+      case Operand.IYl: IYl = value; return;
 
-      case Operand.BCi: address = _bc; break;
-      case Operand.DEi: address = _de; break;
-      case Operand.HLi: address = _hl; break;
+      case Operand.BCi: address = BC; break;
+      case Operand.DEi: address = DE; break;
+      case Operand.HLi: address = HL; break;
       case Operand.Indirect: address = FetchWord(); break;
 
       case Operand.IXd:
@@ -547,10 +554,10 @@ unsafe public ref partial struct Z80
         _memory.WriteWord(address, value);
         return;
 
-      case Operand.AF: _af = value; return;
-      case Operand.BC: _bc = value; return;
-      case Operand.DE: _de = value; return;
-      case Operand.HL: _hl = value; return;
+      case Operand.AF: AF = value; return;
+      case Operand.BC: BC = value; return;
+      case Operand.DE: DE = value; return;
+      case Operand.HL: HL = value; return;
       case Operand.IX: _ix = value; return;
       case Operand.IY: _iy = value; return;
       case Operand.SP: _sp = value; return;
@@ -605,14 +612,14 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private bool EvaluateCondition() => _instruction.Source switch
   {
-    Operand.Carry     => _carryFlag,
-    Operand.Zero      => _zeroFlag,
-    Operand.Negative  => _signFlag,
-    Operand.Even      => _parityFlag,
-    Operand.NonCarry  => !_carryFlag,
-    Operand.NonZero   => !_zeroFlag,
-    Operand.Positive  => !_signFlag,
-    Operand.Odd       => !_parityFlag,
+    Operand.Carry     => CarryFlag,
+    Operand.Zero      => ZeroFlag,
+    Operand.Negative  => SignFlag,
+    Operand.Even      => ParityFlag,
+    Operand.NonCarry  => !CarryFlag,
+    Operand.NonZero   => !ZeroFlag,
+    Operand.Positive  => !SignFlag,
+    Operand.Odd       => !ParityFlag,
     Operand.Implied   => true,
 
     #if DEBUG
@@ -629,7 +636,7 @@ unsafe public ref partial struct Z80
   {
     return "╒══════════╤══════════╤══════════╤══════════╤═══════════╕\r\n" +
            $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {_ix.ToHex()} │ IY: {_iy.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
-           $"│ AF: {_af.ToHex()} │ BC: {_bc.ToHex()} │ DE: {_de.ToHex()} │ HL: {_hl.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
+           $"│ AF: {AF.ToHex()} │ BC: {BC.ToHex()} │ DE: {DE.ToHex()} │ HL: {HL.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
            $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
            "╘══════════╧══════════╧══════════╧══════════╧═══════════╛\r\n";
   }
