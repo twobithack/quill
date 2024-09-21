@@ -26,8 +26,8 @@ public class Quill : Game
     _emulationThread = new Thread(_emulator.Run);
     _emulationThread.Start();
 
-    _graphics.PreferredBackBufferWidth = 256;
-    _graphics.PreferredBackBufferHeight = 192;
+    _graphics.PreferredBackBufferWidth = 1024;
+    _graphics.PreferredBackBufferHeight = 768;
     _graphics.ApplyChanges();
 
     base.Initialize();
