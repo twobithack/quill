@@ -8,13 +8,13 @@ namespace Quill.Video;
 
 unsafe public ref struct VDP
 {
+  private const int FRAMEBUFFER_SIZE = 0x30000;
   private const ushort VRAM_SIZE = 0x4000;
   private const byte CRAM_SIZE = 0x20;
   private const byte REGISTER_COUNT = 0xB;
   private const ushort HCOUNTER_MAX = 685;
 
   public bool IRQ = false;
-  public byte VCounter = 0x00;
 
   private readonly byte[] _vram = new byte[VRAM_SIZE];
   private readonly byte[] _cram = new byte[CRAM_SIZE];
@@ -23,7 +23,7 @@ unsafe public ref struct VDP
   private byte _dataBuffer = 0x00;
   private Status _status = 0x00;
   private bool _writePending = false;
-  private double _cycleCount = 0d;
+  private double _cycleCounter = 0d;
   private ushort _hCounter = 0x0000;
   private byte _vCounter = 0x00;
   private bool _vCounterJumped = false;
@@ -31,12 +31,15 @@ unsafe public ref struct VDP
   private byte _hScroll = 0x00;
   private byte _vScroll = 0x00;
   private byte[] _framebuffer;
+  private byte[] _lastFrame;
 
   public VDP()
   {
-    _framebuffer = new byte[256 * 192 * 4];
+    _framebuffer = new byte[FRAMEBUFFER_SIZE];
+    _lastFrame = new byte[FRAMEBUFFER_SIZE];
   }
 
+  public byte VCounter => _vCounter;
   public byte HCounter => (byte)(_hCounter >> 1);
 
   private ushort _address => (ushort)(_controlWord & 0b_0011_1111_1111_1111);
@@ -44,11 +47,9 @@ unsafe public ref struct VDP
 
   // TODO: derive from display mode
   private byte _vCountActive = 191;
+  private byte _displayWidth = 255;
   private byte _vJumpFrom = 0xDA; 
   private byte _vJumpTo = 0xD5;
-  
-  private bool _lineInterruptEnabled => _registers[0].TestBit(4);
-  private bool _vSyncEnabled => _registers[1].TestBit(5);
   private bool _vSyncPending
   {
     get => _status.HasFlag(Status.VSync);
@@ -60,66 +61,14 @@ unsafe public ref struct VDP
         _status &= ~Status.VSync;
     } 
   } 
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Update(double systemCyclesElapsed)
-  {
-    IRQ = _vSyncEnabled && _vSyncPending;
-
-    _cycleCount += (systemCyclesElapsed / 2d);
-    var cyclesThisUpdate = (int)_cycleCount;
-    var hCount = _hCounter + (cyclesThisUpdate * 2);
-    _hCounter = (ushort)(hCount % HCOUNTER_MAX);
-
-    if (hCount >= HCOUNTER_MAX)
-    {
-      _vCounter++;
-      if (_vCounter == byte.MinValue)
-      {
-        _vCounterJumped = false;
-      }
-      else if (!_vCounterJumped && _vCounter == _vJumpFrom)
-      {
-        _vCounter = _vJumpTo;
-        _vCounterJumped = true;
-      }
-      else if (_vCounter == _vCountActive)
-      {
-        _vSyncPending = true;
-      }
-
-      if (_vCounter > _vCountActive)
-        _lineInterrupt = _registers[0xA];
-
-      if (_vCounter >= _vCountActive)
-      {
-        _vScroll = _registers[0x9];
-        // TODO: check mode, update resolution
-      }
-      else
-      {
-        // TODO: check screen disabled
-        RenderFrame();
-      }
-
-      if (_vCounter <= _vCountActive)
-      {
-        if (_lineInterrupt == 0x00)
-        {
-          _lineInterrupt = _registers[0xA];
-          if (_lineInterruptEnabled)
-            IRQ = true;
-        }
-        else
-          _lineInterrupt--;
-      }
-    }
-
-    if (_vSyncEnabled && _vSyncPending)
-      IRQ = true;
-
-    _cycleCount -= cyclesThisUpdate;
-  }
+  
+  private bool _shiftX => TestRegisterBit(0x0, 3);
+  private bool _lineInterruptEnabled => TestRegisterBit(0x0, 4);
+  private bool _zoomSprites => TestRegisterBit(0x1, 0);
+  private bool _stretchSprites => TestRegisterBit(0x1, 1);
+  private bool _vSyncEnabled => TestRegisterBit(0x1, 5);
+  private bool _screenEnabled => TestRegisterBit(0x1, 6);
+  private bool _useSecondPatternTable => TestRegisterBit(0x6, 2);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadStatus()
@@ -159,7 +108,7 @@ unsafe public ref struct VDP
 
       _registers[register] = _controlWord.LowByte();
 
-      if (register == 0 &&
+      if (register == 0x0 &&
           _vSyncEnabled && 
           _vSyncPending)
         IRQ = true;
@@ -200,12 +149,75 @@ unsafe public ref struct VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public byte[] ReadFramebuffer()
+  public void Update(double systemCyclesElapsed)
   {
-    GenerateNoise();
-    return _framebuffer;
+    IRQ = false;
+
+    _cycleCounter += systemCyclesElapsed / 2d;
+    var cyclesThisUpdate = (int)_cycleCounter;
+    var hCount = _hCounter + (cyclesThisUpdate * 2);
+    _hCounter = (ushort)(hCount % HCOUNTER_MAX);
+
+    if (hCount >= HCOUNTER_MAX)
+    {
+      _vCounter++;
+      if (_vCounter == byte.MinValue)
+      {
+        _vCounterJumped = false;
+      }
+      else if (!_vCounterJumped && _vCounter == _vJumpFrom)
+      {
+        _vCounter = _vJumpTo;
+        _vCounterJumped = true;
+      }
+      else if (_vCounter == _vCountActive)
+      {
+        _vSyncPending = true;
+        if (!_screenEnabled)
+          GenerateNoise();
+        RenderFrame();
+      }
+
+      if (_vCounter > _vCountActive)
+        _lineInterrupt = _registers[0xA];
+
+      if (_vCounter >= _vCountActive)
+      {
+        _vScroll = _registers[0x9];
+      }
+      else
+      {
+        //if (_screenEnabled)
+          RenderScanline();
+      }
+
+      if (_vCounter <= _vCountActive)
+      {
+        if (_lineInterrupt == 0x00)
+        {
+          _lineInterrupt = _registers[0xA];
+          if (_lineInterruptEnabled)
+            IRQ = true;
+        }
+        else
+          _lineInterrupt--;
+      }
+    }
+
+    if (_vSyncEnabled && _vSyncPending)
+      IRQ = true;
+
+    _cycleCounter -= cyclesThisUpdate;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public byte[] ReadFramebuffer()
+  {
+    lock (_lastFrame)
+      return _lastFrame;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void GenerateNoise()
   {
     var random = new Random();
@@ -222,14 +234,129 @@ unsafe public ref struct VDP
       _controlWord++;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void RenderScanline()
+  {
+    var spriteHeight = (_stretchSprites || _zoomSprites) ? 16 : 8;
+    var spriteCount = 0;
+
+    var satBaseAddress = GetSpriteAttributeTableAddress();
+    for (int sprite = 0; sprite < 64; sprite++)
+    {
+      int y = _vram[satBaseAddress + sprite];
+      if (y == 0xD0)
+        return;
+      
+      y++;
+      if (y > _vCounter || 
+          y + spriteHeight <= _vCounter)
+        continue;
+      
+      spriteCount++;
+      if (spriteCount > 8)
+      {
+        _status |= Status.Overflow;
+        return;
+      }
+
+      var offset = 0x80 + (sprite * 2);
+      var x = _vram[satBaseAddress + offset];
+      ushort patternIndex = _vram[satBaseAddress + offset + 1];
+
+      if (_shiftX)
+        x -= 8;
+
+      if (_useSecondPatternTable)
+      {
+        patternIndex += 0x100;
+        
+        if (_stretchSprites)
+          patternIndex &= 0b_1111_1111_1111_1110;
+      }
+
+      var patternAddress = patternIndex * 32;
+      patternAddress += (_vCounter - y) * 4;
+      
+      var pattern0 = _vram[patternAddress];
+      var pattern1 = _vram[patternAddress + 1];
+      var pattern2 = _vram[patternAddress + 2];
+      var pattern3 = _vram[patternAddress + 3];
+
+      for (byte i = 0, col = 7; i < 8; i++, col--)
+      {
+        if (x + i >= _displayWidth)
+          return;
+
+        var index = GetFramebufferIndex(x + i, _vCounter);
+        if (_framebuffer[index + 3] == 0x00)
+          _framebuffer[index + 3] = 0xFF;
+        else
+        {
+          _status |= Status.Collision;
+          continue;
+        }
+          
+        byte palette = 0x00;
+        if (pattern0.TestBit(col))
+          palette++;
+        if (pattern1.TestBit(col))
+          palette |= 0b_0010;
+        if (pattern2.TestBit(col))
+          palette |= 0b_0100;
+        if (pattern3.TestBit(col))
+          palette |= 0b_1000;
+
+        if (palette == 0x00)
+          continue;
+
+        var color = _cram[palette + 16];
+        _framebuffer[index] = (byte)((color & 0b_0011) * 85);
+        color >>= 2;
+        _framebuffer[index+1] = (byte)((color & 0b_0011) * 85);
+        color >>= 2;
+        _framebuffer[index+2] = (byte)((color & 0b_0011) * 85);
+      }
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RenderFrame()
   {
-    // TODO
+    lock (_lastFrame)
+      Array.Copy(_framebuffer, _lastFrame, FRAMEBUFFER_SIZE);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private byte GetDisplayMode()
+  {
+    byte mode = 0x00;
+    if (TestRegisterBit(0x0, 2))
+      mode |= 0b_1000;
+    if (TestRegisterBit(0x1, 3))
+      mode |= 0b_0100;
+    if (TestRegisterBit(0x0, 1))
+      mode |= 0b_0010;
+    if (TestRegisterBit(0x1, 4))
+      mode |= 0b_0001;
+    return mode;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private int GetFramebufferIndex(int x, int y) => (x + (y * 256)) * 4;
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort GetSpriteAttributeTableAddress()
+  {
+    var address = _registers[0x5] & 0b_0111_1110;
+    return (ushort)(address << 7);
   }
 
   public override string ToString()
   {
-    var state = $"VDP: {_controlCode.ToString()}\r\n"; 
+    var state = $"VDP: {_controlCode}\r\n"; 
 
     for (var register = 0; register < REGISTER_COUNT; register++)
       state += $"R{register}:{_registers[register].ToHex()} ";

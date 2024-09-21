@@ -2,6 +2,7 @@ using Quill.Common;
 using Quill.CPU.Definitions;
 using Quill.Video;
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using static Quill.CPU.Definitions.Opcodes;
 
@@ -9,6 +10,7 @@ namespace Quill.CPU;
 
 unsafe public ref partial struct Z80
 {
+  #region Fields
   private const byte NOP_CYCLES = 0x04;
   private Memory _memory;
   private VDP _vdp;
@@ -34,6 +36,7 @@ unsafe public ref partial struct Z80
   private ushort _hlShadow = 0x0000;
   private ushort? _memPtr = null;
   private Opcode _instruction;
+  #endregion
 
   public Z80(byte[] rom, VDP vdp)
   {
@@ -43,6 +46,7 @@ unsafe public ref partial struct Z80
     _vdp = vdp;
   }
 
+  #region Properties
   private bool _signFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -184,6 +188,7 @@ unsafe public ref partial struct Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => _iy = _iyh.Concat(value);
   }
+  #endregion
 
   public byte Step()
   {
@@ -571,7 +576,8 @@ unsafe public ref partial struct Z80
         WriteSDSC(value);
         return;
 
-      default: throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
+      default: 
+        throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
       #endif
     }
   }
@@ -611,5 +617,5 @@ unsafe public ref partial struct Z80
   public void DumpMemory(string path) => _memory.DumpRAM(path);
   public void DumpROM(string path) => _memory.DumpROM(path);
 
-  public override String ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction}\r\n{_memory.ToString()}\r\n{_vdp.ToString()}";
+  public override string ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction}\r\n{_memory.ToString()}\r\n{_vdp.ToString()}\r\n";
 }

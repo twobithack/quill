@@ -1,5 +1,6 @@
 global using Quill.CPU;
 global using Quill.Video;
+using System;
 using System.Diagnostics;
 using System.IO;
 
@@ -10,12 +11,12 @@ unsafe public class Emulator
   private const double FRAME_TIME_MS = 1000d / 60d;
   private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d; 
 
-  public byte[] Framebuffer;
+  private byte[] _framebuffer;
   private byte[] _rom; 
 
   public Emulator(string romPath)
   {
-    Framebuffer = new byte[256 * 192 * 4];
+    _framebuffer = new byte[0x30000];
     _rom = ReadROM(romPath);
   }
 
@@ -48,21 +49,17 @@ unsafe public class Emulator
         cyclesThisFrame += systemCycles;
       }
 
-      lock (Framebuffer)
-      {
-        Framebuffer = vdp.ReadFramebuffer();
-      }
-
+      lock (_framebuffer)
+        Array.Copy(vdp.ReadFramebuffer(), _framebuffer, _framebuffer.Length);
+      
       lastFrameTime = currentTime;
     }
   }
 
   public byte[] GetFramebuffer()
   {
-    lock (Framebuffer)
-    {
-      return Framebuffer;
-    }
+    lock (_framebuffer)
+      return _framebuffer;
   }
 
   private static byte[] ReadROM(string path) => File.ReadAllBytes(path);
