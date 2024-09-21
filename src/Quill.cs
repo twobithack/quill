@@ -9,6 +9,7 @@ public unsafe sealed class Quill
     var rom = ReadROM(@"test/zexdoc.sms");
     var vdp = new VDP();
     var cpu = new CPU(rom, vdp);
+    cpu.InitializeSDSC();
     var instructions = 0ul;
 
     var sw = new Stopwatch();

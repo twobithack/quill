@@ -7,29 +7,14 @@ namespace Quill;
 // https://www.smspower.org/Development/SDSCDebugConsoleSpecification
 unsafe public ref partial struct CPU
 {
-  private struct Text
-  {
-    public char Character;
-    public byte Attributes;
-
-    public Text(byte c, byte a)
-    {
-      Character = Encoding.ASCII.GetString(new byte[] {c})[0];
-      Attributes = a;
-    }
-
-    public override string ToString() => Character.ToString();
-  }
-
-  private Text[][] _sdsc;
+  private char[][] _sdsc = new char[25][];
   private int _row = 0;
   private int _col = 0;
-  private int _scrollPosition = 0;
   private byte _attribute = 15;
   private char[] _dataFormats = { 'd', 'u', 'x', 'X', 'b', 'a', 's' };
 
   // control port state 
-  private bool _expectAttr = false;
+  private bool _expectAttribute = false;
   private bool _expectRow = false;
   private bool _expectCol = false;
 
@@ -48,20 +33,22 @@ unsafe public ref partial struct CPU
   private byte _byteParameter = 0;
   private ushort _wordParameter = 0;
   
-  private void InitializeSDSC()
+  public void InitializeSDSC()
   {
     _row = 0;
     _col = 0;
-    _sdsc = new Text[25][];
+    _sdsc = new char[25][];
 
     for (int row = 0; row < 25; row++)
     {
-      _sdsc[row] = new Text[80];
+      _sdsc[row] = new char[80];
       for (int col = 0; col < 80; col++)
-        _sdsc[row][col] = new Text((byte)' ', _attribute);
-      Console.WriteLine();
+        _sdsc[row][col] = ' ';
     }
     
+    _expectAttribute = false;
+    _expectRow = false;
+    _expectCol = false;
     _expectWidth = false;
     _expectFormat = false;
     _expectType0 = false;
@@ -73,22 +60,27 @@ unsafe public ref partial struct CPU
 
   private void PrintSDSC()
   {
-    for (int row = _scrollPosition; row < 25 + _scrollPosition; row++)
+    for (int row = 0; row < 25; row++)
     {
       var output = string.Empty;
       for (int col = 0; col < 80; col++)
-        output += _sdsc[row % 25][col].ToString();
+        output += _sdsc[row][col].ToString();
       Console.WriteLine(output);
     }
+    Console.Read();
+  }
+
+  private void ScrollSDSC()
+  {
+    for (int i = 1; i < 25; i++)
+      _sdsc[i] = _sdsc[i+1];
+    _sdsc[24] = new char[80];
   }
 
   private void ControlSDSC(byte value)
   {
-    if (_expectAttr)
-    {
-      _attribute = value;
-      _expectAttr = false;
-    }
+    if (_expectAttribute)
+      _expectAttribute = false;
     else if (_expectRow)
     {
       _row = value % 25;
@@ -100,12 +92,12 @@ unsafe public ref partial struct CPU
       _col = value % 80;
       _expectCol = false;
     }
-    else if (value == 1)
+    else if (value == 0x01)
       throw new Exception("Emulation suspended.");
-    else if (value == 2)
+    else if (value == 0x02)
       InitializeSDSC();
-    else if (value == 3)
-      _expectAttr = true;
+    else if (value == 0x03)
+      _expectAttribute = true;
     else if (value == 4)
       _expectRow = true;
     else
@@ -114,6 +106,7 @@ unsafe public ref partial struct CPU
 
   private void WriteSDSC(byte value)
   {
+    var ascii = Encoding.ASCII.GetString(new byte[] {value})[0];
     if (_expectWidth)
     {
       _expectWidth = false;
@@ -124,7 +117,7 @@ unsafe public ref partial struct CPU
       }
       else if (value == 37)
       {
-        _sdsc[_row % 25][_col] = new Text(value, _attribute);
+        _sdsc[_row][_col] = ascii;
         return;
       }
       
@@ -143,7 +136,7 @@ unsafe public ref partial struct CPU
     else if (_expectFormat)
     {
       _expectFormat = false;
-      _dataFormat = Encoding.ASCII.GetString(new byte[] {value})[0];
+      _dataFormat = ascii;
       if (_dataFormats.Contains(_dataFormat))
         _expectType0 = true;
       else
@@ -153,12 +146,12 @@ unsafe public ref partial struct CPU
     {
       _expectType0 = false;
       _expectType1 = true;
-      _dataType = Encoding.ASCII.GetString(new byte[] {value});
+      _dataType = ascii.ToString();
     }
     else if (_expectType1)
     {
       _expectType1 = false;
-      _dataType += Encoding.ASCII.GetString(new byte[] {value});
+      _dataType += ascii;
 
       if (!_dataType.EndsWith('b') && 
           (_dataFormat == 'a' || _dataFormat == 's'))
@@ -208,7 +201,7 @@ unsafe public ref partial struct CPU
     {
       _col = 0;
       if (_row == 24)
-        _scrollPosition++;
+        ScrollSDSC();
       else
         _row++;
         
@@ -231,20 +224,20 @@ unsafe public ref partial struct CPU
     {
       WriteCharacter(value);
     }
-    PrintSDSC();
   }
 
-  private void WriteCharacter(byte value) => WriteCharacter(Encoding.ASCII.GetString(new byte[]{value})[0]);
+  private char ByteToChar(byte value) => Encoding.ASCII.GetString(new byte[]{value})[0];
+  private void WriteCharacter(byte value) => WriteCharacter(ByteToChar(value));
   private void WriteCharacter(char value)
   {
-    _sdsc[_row % 25][_col].Character = value;
+    _sdsc[_row][_col] = value;
     _col++;
 
     if (_col == 80) 
     {
       _col = 0;
       if (_row == 24)
-        _scrollPosition++;
+        ScrollSDSC();
       else
         _row++;
         
@@ -279,8 +272,6 @@ unsafe public ref partial struct CPU
 
     for (int i = 0; i < _dataWidth; i++)
       WriteCharacter(padded[i]);
-    
-    PrintSDSC();
   }
 
   private string FormatMemoryByte()

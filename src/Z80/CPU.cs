@@ -12,7 +12,6 @@ unsafe public ref partial struct CPU
     _instruction = new Opcode();
     _memory = new Memory(rom);
     _vdp = vdp;
-    InitializeSDSC();
   }
 
   public void Step()
