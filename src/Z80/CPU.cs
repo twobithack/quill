@@ -47,10 +47,9 @@ unsafe public ref partial struct CPU
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte FetchByte() => _memory.ReadByte(_pc++);
-  
-  
+    
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private sbyte FetchDisplacement() => (sbyte)FetchByte();
+  private sbyte FetchSignedByte() => (sbyte)FetchByte();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort FetchWord()
@@ -221,9 +220,9 @@ unsafe public ref partial struct CPU
     {
       case Operand.Immediate:
         if (_instruction.Destination == Operand.IXd)
-          _memPtr = (ushort)(_ix + FetchDisplacement());
+          _memPtr = (ushort)(_ix + FetchSignedByte());
         if (_instruction.Destination == Operand.IYd)
-          _memPtr = (ushort)(_iy + FetchDisplacement());
+          _memPtr = (ushort)(_iy + FetchSignedByte());
         return FetchByte();
 
       case Operand.A: return _a;
@@ -248,13 +247,13 @@ unsafe public ref partial struct CPU
       case Operand.HLi: address = _hl; break;
 
       case Operand.IXd: 
-        address = (ushort)(_ix + FetchDisplacement());
+        address = (ushort)(_ix + FetchSignedByte());
         if (_instruction.Destination == Operand.IXd)
           _pc--;
         break;
 
       case Operand.IYd:
-        address = (ushort)(_iy + FetchDisplacement());
+        address = (ushort)(_iy + FetchSignedByte());
         if (_instruction.Destination == Operand.IYd)
           _pc--;
         break;
@@ -329,13 +328,13 @@ unsafe public ref partial struct CPU
 
       case Operand.IXd: 
         address = _instruction.Source != Operand.Immediate
-                ? (ushort)(_ix + FetchDisplacement())
+                ? (ushort)(_ix + FetchSignedByte())
                 : _memPtr; 
                 break;
 
       case Operand.IYd:
         address = _instruction.Source != Operand.Immediate
-                ? (ushort)(_iy + FetchDisplacement())
+                ? (ushort)(_iy + FetchSignedByte())
                 : _memPtr; 
                 break;
 
