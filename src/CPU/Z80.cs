@@ -27,6 +27,7 @@ unsafe public ref partial struct Z80
   private byte _e = 0x00;
   private byte _h = 0x00;
   private byte _l = 0x00;
+  private byte _i = 0x00;
   private byte _r = 0x00;
   private byte _io = 0x00;
   private ushort _pc = 0x0000;
@@ -409,6 +410,8 @@ unsafe public ref partial struct Z80
       case Operand.F: return (byte)_flags;
       case Operand.H: return _h;
       case Operand.L: return _l;
+      case Operand.I: return _i;
+      case Operand.R: return _r;
       case Operand.IXh: return _ixh;
       case Operand.IXl: return _ixl;
       case Operand.IYh: return _iyh;
@@ -484,7 +487,7 @@ unsafe public ref partial struct Z80
                      mirror % 2 == 0 => _input.ReadPortA(),
     byte mirror when mirror > 0xC1 && 
                      mirror % 2 != 0 => _input.ReadPortB(),
-
+    _ => 0xFF,
     #if DEBUG
     _ => throw new Exception($"Unable to read port: {port}\r\n{this.ToString()}")
     #endif
@@ -506,6 +509,8 @@ unsafe public ref partial struct Z80
       case Operand.E: _e = value; return;
       case Operand.H: _h = value; return;
       case Operand.L: _l = value; return;
+      case Operand.I: _i = value; return;
+      case Operand.R: _r = value; return;
       case Operand.IXh: _ixh = value; return;
       case Operand.IXl: _ixl = value; return;
       case Operand.IYh: _iyh = value; return;
@@ -590,8 +595,8 @@ unsafe public ref partial struct Z80
         WriteSDSC(value);
         return;
 
-      default: 
-        throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
+      //default: 
+      //  throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
       #endif
     }
   }
