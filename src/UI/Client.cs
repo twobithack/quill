@@ -118,14 +118,13 @@ public sealed class Client : Game
 
     if (_cropBorders)
     {
-      var bottomBorder = _scale * BOTTOM_BORDER_HEIGHT;
-      _graphics.PreferredBackBufferHeight -= bottomBorder;
-
       var leftBorder = _scale * LEFT_BORDER_WIDTH;
       _viewport.X -= leftBorder;
       _graphics.PreferredBackBufferWidth -= leftBorder;
     }
 
+    var bottomBorder = _scale * BOTTOM_BORDER_HEIGHT;
+    _graphics.PreferredBackBufferHeight -= bottomBorder;
     _graphics.ApplyChanges();
   }
 
