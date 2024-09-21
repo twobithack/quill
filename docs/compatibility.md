@@ -51,6 +51,7 @@
 * Golvellius - Valley of Doom
 * Hang-On
 * Kenseiden
+* King's Quest
 * Lemmings
 * Master of Darkness
 * Marble Madness
@@ -64,6 +65,7 @@
 * OutRun
 * OutRun Europa
 * Pac-Mania
+* Paperboy
 * Phantasy Star
 * Power Strike
 * Power Strike II
@@ -108,10 +110,10 @@
 
 # LOGIC ISSUES
 * Ace of Aces (blank screen)
-* Mônica no Castelo do Dragão (region detection)
-* Paperboy (blank screen)
+* Mônica no Castelo do Dragão (Wonder Boy in Monster Land clone)
 * Penguin Land (region detection)
 * Star Wars (collision detection)
+* Terminator (blank screen after splash)
 * Wonder Boy in Monster Land (region detection)
 
 # VISUAL ISSUES
