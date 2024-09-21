@@ -1,8 +1,11 @@
-﻿namespace Quill.Sound;
+﻿using System.Numerics;
+
+namespace Quill.Sound;
 
 public struct Channel
 {
   #region Constants
+  private const ushort LFSR_RESET = 0b_1000_0000_0000_0000;
   private static readonly int[] VOLUME_TABLE = new[]
   {
     8191, 6507, 5168, 4105,
@@ -15,16 +18,19 @@ public struct Channel
   #region Fields
   public byte Volume;
   public ushort Tone;
-  public ushort Counter;
-  public int Polarity;
+  private ushort _counter;
+  private ushort _lfsr;
+  private int _polarity;
+
   #endregion
 
   public Channel()
   {
     Volume = 0xF;
     Tone = 0x0;
-    Counter = 0;
-    Polarity = 1;
+    _counter = 0;
+    _polarity = 1;
+    _lfsr = LFSR_RESET;
   }
 
   #region Methods
@@ -33,20 +39,48 @@ public struct Channel
     if (Tone == 0)
       return 0;
 
-    Counter--;
+    _counter--;
 
-    if (Counter == 0)
+    if (_counter <= 0)
     {
-      Counter = Tone;
-      Polarity = -Polarity;
+      _counter = Tone;
+      _polarity = -_polarity;
     }
 
-    return (short)(VOLUME_TABLE[Volume] * Polarity);
+    return (short)(VOLUME_TABLE[Volume] * _polarity);
   }
 
-  public short GenerateNoise()
+  public short GenerateNoise(ushort tone2)
   {
-    return 0; // TODO
+    if (Tone == 0)
+      return 0;
+
+    _counter--;
+
+    if (_counter <= 0)
+    {
+      _counter = (Tone & 0b_11) switch
+      {
+        0x00 => 0x10,
+        0x01 => 0x20,
+        0x02 => 0x30,
+        0x03 => tone2
+      };
+
+      _polarity = -_polarity;
+      if (_polarity == 1)
+      {
+        var isWhiteNoise = ((Tone >> 2) & 1) > 0;
+        var tapped = (byte)(Tone & 0b_1001);
+        var end = isWhiteNoise
+                ? BitOperations.PopCount((uint)(_lfsr & tapped)) % 2
+                : (_lfsr & 1);
+        end <<= 15;
+        _lfsr = (ushort)((_lfsr >> 1) | end);
+      }
+    }
+
+    return (short)(VOLUME_TABLE[Volume] * (_lfsr & 1));
   }
   #endregion
 }

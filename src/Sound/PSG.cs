@@ -14,36 +14,36 @@ public sealed class PSG
   private const int UPDATE_INTERVAL_MS = 1;
   private const int BUFFER_SIZE = 1000;
   private const int CHANNEL_COUNT = 4;
-  private const int PULSE0 = 0b_00;
-  private const int PULSE1 = 0b_01;
-  private const int PULSE2 = 0b_10;
+  private const int TONE0 = 0b_00;
+  private const int TONE1 = 0b_01;
+  private const int TONE2 = 0b_10;
   private const int NOISE = 0b_11;
   #endregion
 
   #region Fields
+  private readonly BufferManager _bufferPool;
   private readonly Thread _bufferThread;
-  private readonly BufferManager _pool;
   private readonly short[] _buffer;
   private int _bufferPosition;
 
   private readonly Channel[] _channels;
   private int _latchedChannel;
-  private bool _isVolumeLatched;
+  private bool _volumeLatched;
   private bool _playing;
   #endregion
 
   public PSG()
   {
     _channels = new Channel[CHANNEL_COUNT];
-    _channels[PULSE0] = new Channel();
-    _channels[PULSE1] = new Channel();
-    _channels[PULSE2] = new Channel();
+    _channels[TONE0] = new Channel();
+    _channels[TONE1] = new Channel();
+    _channels[TONE2] = new Channel();
     _channels[NOISE] = new Channel();
 
     _bufferPosition = 0;
     _buffer = new short[BUFFER_SIZE];
-    _bufferThread = new Thread(UpdateBuffer);
-    _pool = BufferManager.CreateBufferManager(BUFFER_SIZE * 2, BUFFER_SIZE * 2);
+    _bufferPool = BufferManager.CreateBufferManager(BUFFER_SIZE * 2, BUFFER_SIZE * 2);
+    _bufferThread = new Thread(ManageBuffer);
   }
 
   #region Methods
@@ -60,9 +60,9 @@ public sealed class PSG
     if (value.TestBit(7))
     {
       _latchedChannel = (value >> 5) & 0b_11;
-      _isVolumeLatched = value.TestBit(4);
+      _volumeLatched = value.TestBit(4);
 
-      if (_isVolumeLatched)
+      if (_volumeLatched)
       {
         _channels[_latchedChannel].Volume = value.LowNibble();
       }
@@ -74,7 +74,7 @@ public sealed class PSG
     }
     else
     {
-      if (_isVolumeLatched)
+      if (_volumeLatched)
       {
         _channels[_latchedChannel].Volume = value.LowNibble();
       }
@@ -99,14 +99,14 @@ public sealed class PSG
 
     lock (_buffer)
     {
-      var samples = _pool.TakeBuffer(_bufferPosition * 2);
+      var samples = _bufferPool.TakeBuffer(_bufferPosition * 2);
       Buffer.BlockCopy(_buffer, 0, samples, 0, samples.Length);
       _bufferPosition = 0;
       return samples;
     }
   }
 
-  private void UpdateBuffer()
+  private void ManageBuffer()
   {
     var clock = new Stopwatch();
     var lastUpdate = 0d;
@@ -127,12 +127,12 @@ public sealed class PSG
         {
           short tone = 0;
           for (int index = 0; index < NOISE; index++)
-            tone += _channels[index].GenerateTone(); 
+            tone += _channels[index].GenerateTone();
+
+          tone += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
 
           if (i % 5 == 0)
-          {
             _buffer[_bufferPosition++] = tone;
-          }
         }
       }
     }
