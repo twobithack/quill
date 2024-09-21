@@ -3,7 +3,6 @@ using Quill.Core;
 using Quill.Video.Definitions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -33,9 +32,9 @@ unsafe public class VDP
   private readonly byte[] _registers;
   private readonly byte[] _framebuffer;
   private readonly byte[] _renderbuffer;
-  private ushort _controlWord;
-  private ushort _hCounter;
+  private readonly ushort _hCounter;
   private ushort _vCounter;
+  private ushort _controlWord;
   private Status _status;
   private byte _dataBuffer;
   private byte _lineInterrupt;
@@ -267,7 +266,7 @@ unsafe public class VDP
       _frameQueued = true;
     }
     
-    Array.Fill<byte>(_renderbuffer, 0x00);
+    Array.Clear(_renderbuffer);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
