@@ -1,7 +1,8 @@
-﻿using System.Threading;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Quill;
 
@@ -26,10 +27,10 @@ public class Quill : Game
   private readonly int _scale;
   #endregion
 
-  public Quill(byte[] rom,
-               bool fixSlowdown = true,
-               bool cropBorders = true, 
-               int scaleFactor = 4)
+  public Quill(byte[] rom, 
+               int scaleFactor,
+               bool cropBorders = true,
+               bool fixSlowdown = true)
   {
     Content.RootDirectory = "content";
     _emulator = new Emulator(rom, fixSlowdown);
@@ -63,9 +64,7 @@ public class Quill : Game
 
   protected override void LoadContent() => _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-  #pragma warning disable SYSLIB0006
-  protected override void UnloadContent() => _emulationThread.Abort();
-  #pragma warning restore SYSLIB0006
+  protected override void UnloadContent() => _emulator.Stop();
 
   protected override void Update(GameTime gameTime)
   {
@@ -88,6 +87,7 @@ public class Quill : Game
     base.Draw(gameTime);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ReadInput()
   {
     if (ReadJoypadInput(PLAYER_1))
@@ -96,6 +96,7 @@ public class Quill : Game
       ReadKeyboardInput();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private bool ReadJoypadInput(int player)
   {
     var joypad = GamePad.GetState(player);
@@ -120,6 +121,7 @@ public class Quill : Game
     return true;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ReadKeyboardInput()
   {
     var kb = Keyboard.GetState();
