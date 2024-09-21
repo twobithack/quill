@@ -1,4 +1,3 @@
-using Quill.Definitions;
 using Quill.Extensions;
 
 namespace Quill.Z80
@@ -7,12 +6,12 @@ namespace Quill.Z80
   {
     private void ADC()
     {
-      if (_cir.Destination == Operand.HL)
+      if (_opcode.Destination == Operand.HL)
       {
         var a = HL;
         if (Carry) a++;
 
-        var b = GetWordOperand(_cir.Source);
+        var b = GetWordOperand(_opcode.Source);
         var result = a + b;
 
         SetArithmeticFlags16(result);
@@ -26,7 +25,7 @@ namespace Quill.Z80
         var a = A;
         if (Carry) a++;
 
-        var b = GetByteOperand(_cir.Source);
+        var b = GetByteOperand(_opcode.Source);
         var result = a + b;
 
         SetArithmeticFlags(result);
@@ -39,10 +38,10 @@ namespace Quill.Z80
 
     private void ADD()
     {
-      if (_cir.IsWordOperation())
+      if (IsWordOperation())
       {
-        var a = GetWordOperand(_cir.Destination);
-        var b = GetWordOperand(_cir.Source);
+        var a = GetWordOperand(_opcode.Destination);
+        var b = GetWordOperand(_opcode.Source);
         var result = a + b;
 
         SetArithmeticFlags16(result);
@@ -54,7 +53,7 @@ namespace Quill.Z80
       else
       {
         var a = A;
-        var b = GetByteOperand(_cir.Source);
+        var b = GetByteOperand(_opcode.Source);
         var result = a + b;
 
         SetArithmeticFlags(result);
@@ -198,13 +197,13 @@ namespace Quill.Z80
 
     private void LD()
     {
-      if (_cir.IsWordOperation())
+      if (IsWordOperation())
       {
-        SetWordValue(GetWordOperand(_cir.Source));
+        SetWordValue(GetWordOperand(_opcode.Source));
       }
       else
       {
-        var value = GetByteOperand(_cir.Source);
+        var value = GetByteOperand(_opcode.Source);
         Console.WriteLine($"Operand value: {value}");
         SetByteValue(value);
       }
