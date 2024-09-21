@@ -5,43 +5,52 @@ namespace Quill.Video;
 
 unsafe public sealed class Framebuffer
 {
-  private const int FRAMEBUFFER_SIZE = 0x30000;
-  private readonly bool[] _containsSprite;
-  private readonly byte[] _frame;
-  private readonly int[] _buffer;
-  private readonly int _width;
+  #region Constants
+  private const int FRAME_WIDTH = 256;
+  private const int FRAME_HEIGHT = 240;
+  private const int FRAMEBUFFER_SIZE = FRAME_WIDTH *
+                                       FRAME_HEIGHT *
+                                       sizeof(int);
+  #endregion
+
+  #region Fields
+  private readonly int[] _pixelbuffer;
+  private readonly bool[] _occupied;
+
+  private readonly byte[] _framebuffer;
   private bool _frameQueued;
+  #endregion
 
-  public Framebuffer(int width, int height)
+  public Framebuffer()
   {
-    _buffer = new int[width * height];
-    _containsSprite = new bool[width * height];
-    _frame = new byte[FRAMEBUFFER_SIZE];
-    _width = width;
+    _framebuffer = new byte[FRAMEBUFFER_SIZE];
+    _pixelbuffer = new int[FRAME_WIDTH * FRAME_HEIGHT];
+    _occupied = new bool[FRAME_WIDTH * FRAME_HEIGHT];
+  }
+
+  #region Methods
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetPixel(int x, int y, int value, bool isSprite)
+  {
+    var index = GetPixelIndex(x, y);
+    _pixelbuffer[index] = value;
+    _occupied[index] = isSprite;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetPixel(int x, int y, int rgba, bool isSprite)
-  {
-    var pixelIndex = GetIndex(x, y);
-    _buffer[pixelIndex] = rgba;
-    _containsSprite[pixelIndex] = isSprite;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public bool CheckCollision(int x, int y) => _containsSprite[GetIndex(x, y)];
+  public bool CheckCollision(int x, int y) => _occupied[GetPixelIndex(x, y)];
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void PushFrame()
   {
-    lock (_frame)
+    lock (_framebuffer)
     {
-      Buffer.BlockCopy(_buffer, 0, _frame, 0, FRAMEBUFFER_SIZE);
+      Buffer.BlockCopy(_pixelbuffer, 0, _framebuffer, 0, FRAMEBUFFER_SIZE);
       _frameQueued = true;
     }
 
-    Array.Clear(_buffer);
-    Array.Clear(_containsSprite);
+    Array.Clear(_pixelbuffer);
+    Array.Clear(_occupied);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -50,13 +59,14 @@ unsafe public sealed class Framebuffer
     if (!_frameQueued)
       return null;
 
-    lock (_frame)
+    lock (_framebuffer)
     {
       _frameQueued = false;
-      return _frame;
+      return _framebuffer;
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private int GetIndex(int x, int y) => (x + (y * _width));
+  private static int GetPixelIndex(int x, int y) => x + (y * FRAME_WIDTH);
+  #endregion
 }

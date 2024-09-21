@@ -10,7 +10,7 @@ public sealed partial class VDP
 {
   public VDP(int extraScanlines)
   {
-    _framebuffer = new Framebuffer(HORIZONTAL_RESOLUTION, _vCounterActive);
+    _framebuffer = new Framebuffer();
     _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
@@ -243,10 +243,9 @@ public sealed partial class VDP
       var tilemapColumn = column;
       if (allowHScroll)
         tilemapColumn -= _hScroll / TILE_SIZE;
-
-      tilemapColumn %= BACKGROUND_COLUMNS;
-      if (tilemapColumn < 0) 
+      if (tilemapColumn < 0)
         tilemapColumn += BACKGROUND_COLUMNS;
+      tilemapColumn %= BACKGROUND_COLUMNS;
 
       var tileAddress = _nameTableAddress + 
                         (tilemapRow * BACKGROUND_COLUMNS * 2) + 
@@ -270,9 +269,6 @@ public sealed partial class VDP
         if (allowHScroll)
           x += _hScroll;
         x %= HORIZONTAL_RESOLUTION;
-
-        if (x < 0)
-          throw new Exception();
 
         if (x < TILE_SIZE && _maskLeftBorder)
           continue;
