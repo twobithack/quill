@@ -7,28 +7,36 @@ namespace Quill.Z80
   public partial class CPU
   {
     private Memory _mem;
-    private Registers _reg;
     private int _cycleCount;
     private int _instructionCount;
 
     public CPU()
     {
       _mem = new Memory();
-      _reg = new Registers();
+      _cir = new Instruction();
+    }
+
+    public void LoadProgram(byte[] rom)
+    {
+      ushort i = 0x00;
+      foreach(byte b in rom) 
+        _mem[i++] = b;
     }
     
     public void Step()
     {
       FetchInstruction();
+      Console.WriteLine(_cir);
       ExecuteInstruction();
 
       _instructionCount++;
     }
     
-    private Instruction _cir = new Opcodes.Instruction();
+    private Instruction _cir;
+
     private ushort _address = 0x00;
 
-    private byte FetchByte() => _mem[_reg.PC++];
+    private byte FetchByte() => _mem[PC++];
 
     private ushort FetchWord()
     {
@@ -44,7 +52,7 @@ namespace Quill.Z80
 
       if (!Opcodes.IsPrefix(opcode[0]))
       {
-        _cir = Opcodes.Decode(opcode);
+        _cir = Opcodes.Decode(opcode[0]);
         return;
       }
 
@@ -56,7 +64,7 @@ namespace Quill.Z80
         opcode[2] = FetchByte();
       }
  
-        _cir = Opcodes.Decode(opcode);
+      _cir = Opcodes.Decode(opcode);
     }
 
     private void ExecuteInstruction()
@@ -139,7 +147,7 @@ namespace Quill.Z80
         case Operand.F:
         case Operand.H:
         case Operand.L:
-          return _reg.ReadByte(operand);
+          return ReadByte(operand);
 
         case Operand.Indirect:
           _address = FetchWord();
@@ -148,16 +156,16 @@ namespace Quill.Z80
         case Operand.BCi:
         case Operand.DEi:
         case Operand.HLi:
-          _address = _reg.ReadWord(operand);
+          _address = ReadWord(operand);
           break;
 
         case Operand.IXd:
         case Operand.IYd:
-          _address = (byte)(_reg.ReadByte(operand) + FetchByte());
+          _address = (byte)(ReadByte(operand) + FetchByte());
           break;
         
         default:
-          return _reg.A;
+          return A;
       }
       return _mem[_address];
     }
@@ -181,7 +189,7 @@ namespace Quill.Z80
         case Operand.IY: 
         case Operand.PC:
         case Operand.SP:
-          return _reg.ReadWord(operand);
+          return ReadWord(operand);
 
         default:
           return 0x00;
@@ -201,7 +209,7 @@ namespace Quill.Z80
         case Operand.F:
         case Operand.H:
         case Operand.L:
-          _reg.WriteByte(_cir.Destination, value);
+          WriteByte(_cir.Destination, value);
           return;
 
         case Operand.Indirect:
@@ -209,20 +217,20 @@ namespace Quill.Z80
           break;
         
         case Operand.BCi:
-          _address = _reg.BC;
+          _address = BC;
           break;
 
         case Operand.DEi:
-          _address = _reg.DE;
+          _address = DE;
           break;
 
         case Operand.HLi:
-          _address = _reg.HL;
+          _address = HL;
           break;
 
         case Operand.IXd:
         case Operand.IYd:
-          _address = (byte)(_reg.ReadByte(_cir.Source) + FetchByte());
+          _address = (byte)(ReadByte(_cir.Source) + FetchByte());
           break;
       }
       _mem[_address] = value;
@@ -244,25 +252,32 @@ namespace Quill.Z80
         case Operand.IY:
         case Operand.PC:
         case Operand.SP:
-          _reg.WriteWord(_cir.Destination, value);
+          WriteWord(_cir.Destination, value);
           return;
       }
     }
 
-    private void SetFlagsForByte(int result)
+    private void SetArithmeticFlags(int result)
     {
-        _reg.Sign = ((result >> 7) & 1) != 0;
-        _reg.Zero = (result == 0);
-        _reg.Carry = (result > byte.MaxValue);
+        Sign = ((result >> 7) & 1) != 0;
+        Zero = (result == 0);
+        Carry = (result > byte.MaxValue);
     }
     
-    private void SetFlagsForWord(int result)
+    private void SetArithmeticFlags16(int result)
     {
-        _reg.Sign = ((result >> 15) & 1) != 0;
-        _reg.Zero = (result == 0);
-        _reg.Carry = (result > ushort.MaxValue);
+        Sign = ((result >> 15) & 1) != 0;
+        Zero = (result == 0);
+        Carry = (result > ushort.MaxValue);
     }
 
-    public override String ToString() => _reg.ToString() + $"\r\nInstruction Count: {_instructionCount} "; 
+    public override String ToString()
+    {
+      return  $"╒══════════╤════════════╤════════════╤════════════╤════════════╕\r\n" +
+              $"│Registers │  AF: {AF.ToHex()} │  BC: {BC.ToHex()} │  DE: {DE.ToHex()} │  HL: {HL.ToHex()} │\r\n" +
+              $"│          │  IX: {IX.ToHex()} │  IY: {IY.ToHex()} │  PC: {PC.ToHex()} │  SP: {SP.ToHex()} │\r\n" +
+              $"╘══════════╧════════════╧════════════╧════════════╧════════════╛\r\n" +
+              $"Flags: {_flags.ToString()}\r\nInstruction Count: {_instructionCount} "; 
+    }
   }
 }

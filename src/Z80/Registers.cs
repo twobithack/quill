@@ -3,7 +3,7 @@ using Quill.Extensions;
 
 namespace Quill.Z80
 {
-  public class Registers
+  public partial class CPU
   {
     // special-purpose registers
     public ushort PC;
@@ -132,7 +132,7 @@ namespace Quill.Z80
         case Operand.F: return F;
         case Operand.H: return H;
         case Operand.L: return L;
-        default:        return 0x00;
+        default: throw new InvalidOperationException();
       }
     }
 
@@ -148,7 +148,7 @@ namespace Quill.Z80
         case Operand.IY: return IY;
         case Operand.PC: return PC;
         case Operand.SP: return SP;
-        default:         return 0x00;
+        default: throw new InvalidOperationException();
       }
     }
 
@@ -191,14 +191,5 @@ namespace Quill.Z80
     private void SetFlag(Flags flag, bool value) => _flags = value
                                                           ? _flags | flag 
                                                           : _flags & ~flag;
-
-    public override String ToString()
-    {
-      return  $"╒══════════╤════════════╤════════════╤════════════╤════════════╕\r\n" +
-              $"│Registers │  AF: {AF.ToHex()} │  BC: {BC.ToHex()} │  DE: {DE.ToHex()} │  HL: {HL.ToHex()} │\r\n" +
-              $"│          │  IX: {IX.ToHex()} │  IY: {IY.ToHex()} │  PC: {PC.ToHex()} │  SP: {SP.ToHex()} │\r\n" +
-              $"╘══════════╧════════════╧════════════╧════════════╧════════════╛\r\n" +
-              $"Flags: {_flags.ToString()}";
-    }
   }
 }

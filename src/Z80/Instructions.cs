@@ -9,31 +9,31 @@ namespace Quill.Z80
     {
       if (_cir.Destination == Operand.HL)
       {
-        var a = _reg.HL;
-        if (_reg.Carry) a++;
+        var a = HL;
+        if (Carry) a++;
 
         var b = GetWordOperand(_cir.Source);
         var result = a + b;
 
-        SetFlagsForWord(result);
-        _reg.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
-        _reg.Negative = false;
-        _reg.Overflow = _reg.Carry ^ (a.GetLowByte() + b.GetLowByte() > short.MaxValue);
-        _reg.HL = (ushort)(result & ushort.MaxValue);
+        SetArithmeticFlags16(result);
+        Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
+        Negative = false;
+        Overflow = Carry ^ (a.GetLowByte() + b.GetLowByte() > short.MaxValue);
+        HL = (ushort)(result & ushort.MaxValue);
       }
       else
       {
-        var a = _reg.A;
-        if (_reg.Carry) a++;
+        var a = A;
+        if (Carry) a++;
 
         var b = GetByteOperand(_cir.Source);
         var result = a + b;
 
-        SetFlagsForByte(result);
-        _reg.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
-        _reg.Negative = false;
-        _reg.Overflow = _reg.Carry ^ ((a & sbyte.MaxValue) + (b & sbyte.MaxValue) > sbyte.MaxValue);
-        _reg.A = (byte)(result & byte.MaxValue);
+        SetArithmeticFlags(result);
+        Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
+        Negative = false;
+        Overflow = Carry ^ ((a & sbyte.MaxValue) + (b & sbyte.MaxValue) > sbyte.MaxValue);
+        A = (byte)(result & byte.MaxValue);
       }
     }
 
@@ -45,23 +45,23 @@ namespace Quill.Z80
         var b = GetWordOperand(_cir.Source);
         var result = a + b;
 
-        SetFlagsForWord(result);
-        _reg.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
-        _reg.Negative = false;
-        _reg.Overflow = _reg.Carry ^ ((a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue);
+        SetArithmeticFlags16(result);
+        Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
+        Negative = false;
+        Overflow = Carry ^ ((a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue);
         SetWordValue((ushort)(result & ushort.MaxValue));
       }
       else
       {
-        var a = _reg.A;
+        var a = A;
         var b = GetByteOperand(_cir.Source);
         var result = a + b;
 
-        SetFlagsForByte(result);
-        _reg.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
-        _reg.Negative = false;
-        _reg.Overflow = _reg.Carry ^ (a & sbyte.MaxValue) + (b & sbyte.MaxValue) > sbyte.MaxValue;
-        _reg.A = (byte)(result & byte.MaxValue);
+        SetArithmeticFlags(result);
+        Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
+        Negative = false;
+        Overflow = Carry ^ (a & sbyte.MaxValue) + (b & sbyte.MaxValue) > sbyte.MaxValue;
+        A = (byte)(result & byte.MaxValue);
       }
     }
 
@@ -204,7 +204,9 @@ namespace Quill.Z80
       }
       else
       {
-        SetByteValue(GetByteOperand(_cir.Source));
+        var value = GetByteOperand(_cir.Source);
+        Console.WriteLine($"Operand value: {value}");
+        SetByteValue(value);
       }
     }
 

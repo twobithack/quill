@@ -7,14 +7,14 @@ namespace Quill.Z80
     public struct Instruction
     {
       public readonly Operation Operation;
-      public readonly Operand Source;
       public readonly Operand Destination;
+      public readonly Operand Source;
 
-      public Instruction(Operation op, Operand src, Operand dst)
+      public Instruction(Operation op, Operand dst, Operand src)
       {
         Operation = op;
-        Source = src;
         Destination = dst;
+        Source = src;
       }
 
       public Instruction()
@@ -26,6 +26,8 @@ namespace Quill.Z80
 
       public bool IsWordOperation() => _wordOperands.Contains(Source) ||
                                        _wordOperands.Contains(Destination);
+
+      public override string ToString() => $"{Operation} {Destination},{Source}";
                    
       private static Operand[] _wordOperands = new Operand[]
       {      
@@ -40,7 +42,10 @@ namespace Quill.Z80
       };
     }
 
+    public static Instruction Decode(byte op) => GetOpcodeTable(0x00, 0x00)[op];
+
     public static Instruction Decode(byte[] op) => GetOpcodeTable(op[0], op[1])[op[2]];
+
     public static bool IsPrefix(byte op) => _opcodePrefixes.Contains(op);
 
     private static readonly byte[] _opcodePrefixes = new byte[]
@@ -51,17 +56,24 @@ namespace Quill.Z80
       0xFD 
     };
   
-    public static Instruction[] GetOpcodeTable(byte prefix0, byte prefix1) => new { prefix0, prefix1 } switch
+    public static Instruction[] GetOpcodeTable(byte p0, byte p1)
     {
-      { prefix0: 0x00 } =>                _mainInstructions,
-      { prefix0: 0xCB } =>                _bitInstructions,
-      { prefix0: 0xDD, prefix1: 0xCB } => _ixBitInstructions,
-      { prefix0: 0xFD, prefix1: 0xCB } => _iyBitInstructions,
-      { prefix0: 0xDD } =>                _ixInstructions,
-      { prefix0: 0xED } =>                _miscInstructions,
-      { prefix0: 0xFD } =>                _iyInstructions,
-      _ => throw new InvalidOperationException()
-    };
+      if (p0 == 0x00) return _mainInstructions;
+      if (p0 == 0xCB) return _bitInstructions;
+      if (p0 == 0xDD)
+      {
+        if (p1 == 0xCB) return _ixBitInstructions;
+        else            return _ixInstructions;
+      }
+      if (p0 == 0xED)   return _miscInstructions;
+      if (p0 == 0xFD)
+      {
+        if (p1 == 0xCB) return _iyBitInstructions;
+        else            return _iyInstructions;
+      }
+      
+      throw new InvalidOperationException();
+    } 
 
     private static readonly Instruction[] _mainInstructions = new Instruction[]
     {
@@ -210,22 +222,22 @@ namespace Quill.Z80
       new Instruction(),
 
       // Opcodes 0x80 - 0x8F  
-      new Instruction(Operation.ADD,  Operand.Implied,    Operand.B),  
-      new Instruction(Operation.ADD,  Operand.Implied,    Operand.C),  
-      new Instruction(Operation.ADD,  Operand.Implied,    Operand.D),  
-      new Instruction(Operation.ADD,  Operand.Implied,    Operand.E),  
-      new Instruction(Operation.ADD,  Operand.Implied,    Operand.H),  
-      new Instruction(Operation.ADD,  Operand.Implied,    Operand.L),  
-      new Instruction(Operation.ADD,  Operand.Implied,    Operand.HLi),  
-      new Instruction(Operation.ADD,  Operand.Implied,    Operand.A),  
-      new Instruction(Operation.ADC,  Operand.Implied,    Operand.B),  
-      new Instruction(Operation.ADC,  Operand.Implied,    Operand.C),  
-      new Instruction(Operation.ADC,  Operand.Implied,    Operand.D),  
-      new Instruction(Operation.ADC,  Operand.Implied,    Operand.E),  
-      new Instruction(Operation.ADC,  Operand.Implied,    Operand.H),  
-      new Instruction(Operation.ADC,  Operand.Implied,    Operand.L),  
-      new Instruction(Operation.ADC,  Operand.Implied,    Operand.HLi),  
-      new Instruction(Operation.ADC,  Operand.Implied,    Operand.A),  
+      new Instruction(Operation.ADD,  Operand.A,          Operand.B),  
+      new Instruction(Operation.ADD,  Operand.A,          Operand.C),  
+      new Instruction(Operation.ADD,  Operand.A,          Operand.D),  
+      new Instruction(Operation.ADD,  Operand.A,          Operand.E),  
+      new Instruction(Operation.ADD,  Operand.A,          Operand.H),  
+      new Instruction(Operation.ADD,  Operand.A,          Operand.L),  
+      new Instruction(Operation.ADD,  Operand.A,          Operand.HLi),  
+      new Instruction(Operation.ADD,  Operand.A,          Operand.A),  
+      new Instruction(Operation.ADC,  Operand.A,          Operand.B),  
+      new Instruction(Operation.ADC,  Operand.A,          Operand.C),  
+      new Instruction(Operation.ADC,  Operand.A,          Operand.D),  
+      new Instruction(Operation.ADC,  Operand.A,          Operand.E),  
+      new Instruction(Operation.ADC,  Operand.A,          Operand.H),  
+      new Instruction(Operation.ADC,  Operand.A,          Operand.L),  
+      new Instruction(Operation.ADC,  Operand.A,          Operand.HLi),  
+      new Instruction(Operation.ADC,  Operand.A,          Operand.A),  
 
       // Opcodes 0x90 - 0x9F  
       new Instruction(Operation.SUB,  Operand.Implied,    Operand.B),  
