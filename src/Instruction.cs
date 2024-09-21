@@ -5,17 +5,13 @@ namespace Sonic
 {
   public class Instruction
   {
-    public Operand Source;
-    public Operand Destination;
-    public ushort Parameter0;
-    public ushort Parameter1;
     private byte _opcode;
     private byte _prefix0;
     private byte _prefix1;
 
     public Instruction(byte op)
     {
-      if (InstructionSet.Prefixes.Contains(op))
+      if (Opcodes.Prefixes.Contains(op))
       {
         _prefix0 = op;
       }
@@ -43,6 +39,6 @@ namespace Sonic
 
     public bool isPrefixed => _prefix0 != 0x00;
     public bool isDoublePrefixed => _prefix1 == 0xCB;
-    public OP Operation => InstructionSet.GetInstruction(_prefix0, _prefix1, _opcode);
+    public Operation Operation => Opcodes.DecodeOpcode(_prefix0, _prefix1, _opcode);
   }
 }

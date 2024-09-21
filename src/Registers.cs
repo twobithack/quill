@@ -96,6 +96,5 @@ namespace Sonic
     private void SetFlag(Flags flag, bool value) => _flags = value
                                                            ? _flags | flag 
                                                            : _flags & ~flag;
-    
   }
 }

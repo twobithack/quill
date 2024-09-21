@@ -1,6 +1,6 @@
 namespace Sonic.Definitions
 {
-  public enum OP 
+  public enum Operation 
   {
     ADC,
     ADD,
