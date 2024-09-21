@@ -17,6 +17,10 @@ namespace Quill.Definitions
     L,
     I,
     R,
+    IXl,
+    IXh,
+    IYl,
+    IYh,
 
     // 16-bit registers
     AF, 
@@ -44,26 +48,6 @@ namespace Quill.Definitions
     Even,
     Odd,
     Negative,
-    Positive,
-
-    // bit indexes
-    Bit0,
-    Bit1,
-    Bit2,
-    Bit3,
-    Bit4,
-    Bit5,
-    Bit6,
-    Bit7,
-
-    // restart addresses
-    RST0,
-    RST1,
-    RST2,
-    RST3,
-    RST4,
-    RST5,
-    RST6,
-    RST7
+    Positive
   } 
 }
