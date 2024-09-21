@@ -42,10 +42,7 @@ unsafe public sealed class Framebuffer
   public void PushFrame()
   {
     lock (_frontBuffer)
-    {
       Buffer.BlockCopy(_backBuffer, 0, _frontBuffer, 0, FRONT_BUFFER_SIZE);
-      _frameQueued = true;
-    }
 
     Array.Clear(_backBuffer);
     Array.Clear(_occupied);
@@ -54,14 +51,8 @@ unsafe public sealed class Framebuffer
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte[] PopFrame()
   {
-    if (!_frameQueued)
-      return null;
-
     lock (_frontBuffer)
-    {
-      _frameQueued = false;
       return _frontBuffer;
-    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
