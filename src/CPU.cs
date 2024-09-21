@@ -36,10 +36,10 @@ namespace Sonic
       var instruction = new Instruction(opcode);
 
       if (instruction.isPrefixed)
-        instruction.AddByte(Fetch());
+        instruction.AppendByte(Fetch());
 
       if (instruction.isDoublePrefixed)
-        instruction.AddByte(Fetch());
+        instruction.AppendByte(Fetch());
 
       switch (instruction.Operation)
       {
