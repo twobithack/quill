@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Quill.Core;
+using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -12,7 +13,7 @@ namespace Quill.UI;
 public sealed class Client : Game
 {
   #region Constants
-  private const int AUDIO_SAMPLE_RATE = 44100;
+  private const int AUDIO_SAMPLE_RATE = 48000;
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 192;
   private const int BORDER_MASK_WIDTH = 8;
@@ -47,7 +48,7 @@ public sealed class Client : Game
     _emulationThread = new Thread(_emulator.Run);
     _graphics = new GraphicsDeviceManager(this);
     _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
-                                            AudioChannels.Stereo);
+                                            AudioChannels.Mono);
     _romName = romName;
     _saveDirectory = saveDir;
     _cropBorder = cropBorders;
@@ -71,6 +72,7 @@ public sealed class Client : Game
     ResizeViewport();
 
     _emulationThread.Start();
+    _sound.BufferNeeded += UpdateSound;
     _sound.Play();
 
     base.Initialize();
@@ -83,7 +85,6 @@ public sealed class Client : Game
   protected override void Update(GameTime gameTime)
   {
     ReadInput();
-    UpdateSound();
     base.Update(gameTime);
   }
 
@@ -116,11 +117,10 @@ public sealed class Client : Game
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateSound()
+  private void UpdateSound(object sender, EventArgs e)
   {
     var buffer = _emulator.ReadAudioBuffer();
-    if (buffer != null)
-      _sound.SubmitBuffer(buffer);
+    _sound.SubmitBuffer(buffer);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,4 +1,5 @@
 ﻿using Quill.Common;
+using System;
 using System.Diagnostics;
 using System.Threading;
 
@@ -7,11 +8,12 @@ namespace Quill.Sound;
 public sealed class PSG
 {
   #region Constants
-  private const int SAMPLES_PER_SECOND = 224000;
+  private const int SAMPLE_RATE = 48000;
+  private const int BUFFER_SIZE = 4800;
   private const double UPDATE_INTERVAL_MS = 1d;
-  private const int SAMPLES_PER_UPDATE = (int)((SAMPLES_PER_SECOND / 1000) * UPDATE_INTERVAL_MS);
-  private const int BUFFER_SIZE = SAMPLES_PER_UPDATE * 12;
-  private const int MAX_VOLUME = 255;
+  private const int SAMPLES_PER_UPDATE = 48;
+  private const int MAX_VOLUME = 8191;
+  private const int VOLUME_LEVELS = 16;
   private const double VOLUME_STEP = 0.79432823F;
   private const int CHANNEL_COUNT = 4;
   private const int PULSE0 = 0b_00;
@@ -23,6 +25,7 @@ public sealed class PSG
   #region Fields
   private readonly Thread _bufferThread;
   private readonly byte[] _buffer;
+  private readonly bool _littleEndian;
   private int _bufferPosition;
 
   private readonly Channel[] _channels;
@@ -40,9 +43,10 @@ public sealed class PSG
     _channels[PULSE2] = new Channel();
     _channels[NOISE] = new Channel();
 
+    _littleEndian = BitConverter.IsLittleEndian;
     _bufferPosition = 0;
     _buffer = new byte[BUFFER_SIZE];
-    _volumes = new double[16];
+    _volumes = new double[VOLUME_LEVELS];
     double volume = MAX_VOLUME;
     for (int i = 0; i < 15; i++)
     {
@@ -53,7 +57,6 @@ public sealed class PSG
     _playing = true;
     _bufferThread = new Thread(UpdateBuffer);
     _bufferThread.Start();
-    Debug.WriteLine(SAMPLES_PER_UPDATE);
   }
 
   #region Methods
@@ -65,14 +68,15 @@ public sealed class PSG
 
     while (_playing)
     {
+      if (_bufferPosition == BUFFER_SIZE)
+        continue;
+
       var currentTime = clock.Elapsed.TotalMilliseconds;
       if (currentTime < lastUpdate + UPDATE_INTERVAL_MS)
         continue;
+
       lock (_buffer)
       {
-        if (_bufferPosition == BUFFER_SIZE)
-        continue;
-
         for (int i = 0; i < SAMPLES_PER_UPDATE; i++)
         {
           double tone = 0;
@@ -81,27 +85,37 @@ public sealed class PSG
             if (index == NOISE)
               break; // TODO
 
-            if (_channels[index].Tone == 0)
+            var pulse = _channels[index];
+            if (pulse.Tone == 0)
               continue;
 
-            _channels[index].Counter--;
+            pulse.Counter--;
 
-            if (_channels[index].Counter == 0)
+            if (pulse.Counter == 0)
             {
-              _channels[index].Counter = _channels[index].Tone;
-              _channels[index].Polarity = !_channels[index].Polarity;
+              pulse.Counter = pulse.Tone;
+              pulse.Polarity = !pulse.Polarity;
             }
 
-            if (_channels[index].Polarity)
-              tone += _volumes[_channels[index].Volume];
+            if (pulse.Polarity)
+              tone += _volumes[pulse.Volume];
             else
-              tone -= _volumes[_channels[index].Volume];
+              tone -= _volumes[pulse.Volume];
 
-            _channels[index] = _channels[index];
+            _channels[index] = pulse;
           }
-          tone /= CHANNEL_COUNT;
-          _buffer[_bufferPosition] = (byte)tone;
-          _bufferPosition++;
+          
+          var frame = (short)tone;
+          if (_littleEndian)
+          {
+            _buffer[_bufferPosition++] = (byte)frame;
+            _buffer[_bufferPosition++] = (byte)(frame >> 8);
+          }
+          else
+          {
+            _buffer[_bufferPosition++] = (byte)(frame >> 8);
+            _buffer[_bufferPosition++] = (byte)frame;
+          }
         }
       }
     }
@@ -117,40 +131,37 @@ public sealed class PSG
 
   public void WriteData(byte value)
   {
-    lock (_buffer)
+    if (value.TestBit(7))
     {
-      if (value.TestBit(7))
-      {
-        _latchedChannel = (value >> 5) & 0b_11;
-        _isVolumeLatched = value.TestBit(4);
+      _latchedChannel = (value >> 5) & 0b_11;
+      _isVolumeLatched = value.TestBit(4);
 
-        if (_isVolumeLatched)
-        {
-          _channels[_latchedChannel].Volume = value.LowNibble();
-        }
-        else
-        {
-          _channels[_latchedChannel].Tone &= 0b_0011_1111_0000;
-          _channels[_latchedChannel].Tone |= value.LowNibble();
-        }
+      if (_isVolumeLatched)
+      {
+        _channels[_latchedChannel].Volume = value.LowNibble();
       }
       else
       {
-        if (_isVolumeLatched)
+        _channels[_latchedChannel].Tone &= 0b_0011_1111_0000;
+        _channels[_latchedChannel].Tone |= value.LowNibble();
+      }
+    }
+    else
+    {
+      if (_isVolumeLatched)
+      {
+        _channels[_latchedChannel].Volume = value.LowNibble();
+      }
+      else
+      {
+        if (_latchedChannel == NOISE)
         {
-          _channels[_latchedChannel].Volume = value.LowNibble();
+          _channels[NOISE].Tone = value.LowNibble();
+          return;
         }
-        else
-        {
-          if (_latchedChannel == NOISE)
-          {
-            _channels[NOISE].Tone = value.LowNibble();
-            return;
-          }
 
-          _channels[_latchedChannel].Tone &= 0b_0000_0000_1111;
-          _channels[_latchedChannel].Tone |= (ushort)((value & 0b_0011_1111) << 4);
-        }
+        _channels[_latchedChannel].Tone &= 0b_0000_0000_1111;
+        _channels[_latchedChannel].Tone |= (ushort)((value & 0b_0011_1111) << 4);
       }
     }
   }
@@ -159,10 +170,10 @@ public sealed class PSG
   {
     lock (_buffer)
     {
-      if (_bufferPosition != BUFFER_SIZE)
-        return null;
+      var result = new byte[_bufferPosition];
+      Array.Copy(_buffer, result, _bufferPosition);
       _bufferPosition = 0;
-      return _buffer;
+      return result;
     }
   }
   #endregion
