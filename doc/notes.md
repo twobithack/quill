@@ -27,8 +27,8 @@ Ports:
 0x7E : Reading: returns VDP V counter. Writing: writes data to Sound Chip
 0x7F : Reading: returns VDP H counter. Writing: writes data to Sound Chip (mirror of above)
 0xBE : Reading: reads VDP data port: Writing: writes vdp data port
-0xBF : Reading: Gets VDP statis: Writing: writes to vdp control port
-0xDC : Reading: Reads joypad 1. Writing: cannot write to
-0xDD : Reading: Reads joypad 2. Writing: cannot write to
+0xBF/0xBD : Reading: Gets VDP statis: Writing: writes to vdp control port
+0xDC/0xC0 : Reading: Reads joypad 1. Writing: cannot write to
+0xDD/0xC1 : Reading: Reads joypad 2. Writing: cannot write to
 
-Port 0xBD does the same as port 0xBF. Port 0xC0 does the same as 0xDC and finally port 0xC1 does the same as 0xDD
+Port 0xBD does the same as port 0xBF. Port 0xC0 does the same as 0xDC and finally port 0xC1 does the same as 0xDD  

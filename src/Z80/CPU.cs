@@ -7,10 +7,7 @@ namespace Quill
 {
   public unsafe sealed partial class CPU
   {
-    private Memory _memory;
     private VDP _vdp;
-    private bool _halt;
-    private int _instructionCount;
 
     public CPU(VDP vdp)
     {
@@ -25,10 +22,10 @@ namespace Quill
     {
       HandleInterrupts();
       DecodeInstruction();
-      #if DEBUG
+#if DEBUG
         Console.WriteLine(this);
         Console.Read();
-      #endif
+#endif
       ExecuteInstruction();
       _instructionCount++;
     }
@@ -36,24 +33,39 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void HandleInterrupts()
     {
-      if (_halt) throw new Exception("Halted");
+      if (_halt) 
+        throw new Exception($"Halted\r\n{this}");
 
       if (_vdp.IRQ && _iff1)
       {
         _halt = false;
         _iff1 = false;
         _iff2 = false;
+        _r++;
 
         _memory.WriteWord(_sp, _pc);
         _sp += 2;
         _pc = 0x38;
       }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private byte FetchByte() => _memory.ReadByte(_pc++);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ushort FetchWord()
+    {
+      var lowByte = FetchByte();
+      var highByte = FetchByte();
+      return highByte.Concat(lowByte);
+    }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DecodeInstruction()
     {
       var op = FetchByte();
+      _r++;
+
       _instruction = op switch
       {
         0xCB  =>  DecodeCBInstruction(),
@@ -68,6 +80,8 @@ namespace Quill
     private Opcode DecodeCBInstruction()
     {
       var op = FetchByte();
+      _r++;
+
       return Opcodes.CB[op];
     }
     
@@ -75,6 +89,7 @@ namespace Quill
     private Opcode DecodeDDInstruction()
     {
       var op = FetchByte();
+      _r++;
 
       if (op != 0xCB)
         return Opcodes.DD[op];
@@ -87,6 +102,8 @@ namespace Quill
     private Opcode DecodeEDInstruction()
     {
       var op = FetchByte();
+      _r++;
+      
       return Opcodes.ED[op];
     }
     
@@ -94,6 +111,7 @@ namespace Quill
     private Opcode DecodeFDInstruction()
     {
       var op = FetchByte();
+      _r++;
 
       if (op != 0xCB)
         return Opcodes.FD[op];
@@ -106,7 +124,7 @@ namespace Quill
     private void ExecuteInstruction()
     {
       switch (_instruction.Operation)
-      {
+      {                                         
         case Operation.ADC8:  ADC8();   return;
         case Operation.ADC16: ADC16();  return;
         case Operation.ADD8:  ADD8();   return;
@@ -117,6 +135,7 @@ namespace Quill
         case Operation.CCF:   CCF();    return;
         case Operation.CP:    CP();     return;
         case Operation.CPD:   CPD();    return;
+        case Operation.CPDR:  CPDR();   return;
         case Operation.CPI:   CPI();    return;
         case Operation.CPIR:  CPIR();   return;
         case Operation.CPL:   CPL();    return;
@@ -129,19 +148,22 @@ namespace Quill
         case Operation.EX:    EX();     return;
         case Operation.EXX:   EXX();    return;
         case Operation.HALT:  HALT();   return;
-        case Operation.IM:    IM();     return;
+        case Operation.IM:    return;
         case Operation.IN:    IN();     return;
         case Operation.INC8:  INC8();   return;
         case Operation.INC16: INC16();  return;
         case Operation.IND:   IND();    return;
+        case Operation.INDR:  INDR();   return;
         case Operation.INI:   INI();    return;
         case Operation.INIR:  INIR();   return;
         case Operation.JP:    JP();     return;
         case Operation.JR:    JR();     return;
         case Operation.LD8:   LD8();    return;
         case Operation.LD16:  LD16();   return;
+        case Operation.LDD:   LDD();    return;
+        case Operation.LDDR:  LDDR();   return;
         case Operation.NEG:   NEG();    return;
-        case Operation.NOP:   NOP();    return;
+        case Operation.NOP:   return;
         case Operation.OR:    OR();     return;
         case Operation.OTDR:  OTDR();   return;
         case Operation.OTIR:  OTIR();   return;
@@ -159,7 +181,8 @@ namespace Quill
         case Operation.RES6:  RES(6);   return;
         case Operation.RES7:  RES(7);   return;
         case Operation.RET:   RET();    return;
-        case Operation.RETI:  RET();    return;
+        case Operation.RETI:  RETI();   return;
+        case Operation.RETN:  RETN();   return;
         case Operation.RL:    RL();     return;
         case Operation.RLA:   RLA();    return;
         case Operation.RLC:   RLC();    return;
@@ -183,6 +206,7 @@ namespace Quill
         case Operation.SET6:  SET(6);   return;
         case Operation.SET7:  SET(7);   return;
         case Operation.SLA:   SLA();    return;
+        case Operation.SLL:   SLL();    return;
         case Operation.SRA:   SRA();    return;
         case Operation.SRL:   SRL();    return;
         case Operation.SUB:   SUB();    return;
@@ -192,32 +216,10 @@ namespace Quill
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private byte FetchByte() => _memory.ReadByte(_pc++);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort FetchWord()
-    {
-      var lowByte = FetchByte();
-      var highByte = FetchByte();
-      return highByte.Concat(lowByte);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private byte ReadByteOperand(Operand operand)
     {
       switch (operand)
       {
-        case Operand.Indirect:
-          _memPtr = FetchWord();
-          break;
-
-        case Operand.BCi: _memPtr = _bc; break;
-        case Operand.DEi: _memPtr = _de; break;
-        case Operand.HLi: _memPtr = _hl; break;
-
-        case Operand.IXd: _memPtr = (ushort)(_ix + FetchByte()); break;
-        case Operand.IYd: _memPtr = (ushort)(_iy + FetchByte()); break;
-
         case Operand.Immediate:
           return FetchByte();
 
@@ -229,9 +231,25 @@ namespace Quill
         case Operand.F: return (byte)_flags;
         case Operand.H: return _h;
         case Operand.L: return _l;
+        case Operand.IXh: return _ixh;
+        case Operand.IXl: return _ixl;
+        case Operand.IYh: return _iyh;
+        case Operand.IYl: return _iyl;
+
+        case Operand.Indirect:
+          _addressBus = FetchWord();
+          break;
+
+        case Operand.BCi: _addressBus = _bc; break;
+        case Operand.DEi: _addressBus = _de; break;
+        case Operand.HLi: _addressBus = _hl; break;
+
+        case Operand.IXd: _addressBus = (ushort)(_ix + FetchByte()); break;
+        case Operand.IYd: _addressBus = (ushort)(_iy + FetchByte()); break;
+
         default: throw new Exception($"Invalid byte operand: {_instruction}");
       }
-      return _memory.ReadByte(_memPtr);
+      return _memory.ReadByte(_addressBus);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -239,10 +257,6 @@ namespace Quill
     {
       switch (operand)
       {
-        case Operand.Indirect:
-          _memPtr = FetchWord();
-          break;
-
         case Operand.Immediate:
           return FetchWord();
 
@@ -253,10 +267,26 @@ namespace Quill
         case Operand.IX: return _ix;
         case Operand.IY: return _iy;
         case Operand.SP: return _sp;
+
+        case Operand.Indirect: 
+          _addressBus = FetchWord();
+          return _memory.ReadByte(_addressBus);
+
         default: throw new Exception($"Invalid word operand: {_instruction}");
       }
-      return _memory.ReadByte(_memPtr);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private byte ReadPort(byte port) => port switch
+    {
+      0x7E => _vdp.VCounter,
+      0x7F => _vdp.HCounter,
+      0xBE => _vdp.Data,
+      0xBF or 0xBD => _vdp.Status,
+      0xDC or 0xC0 => 0xDC, // joypad 1
+      0xDD or 0xC1 => 0xDD, // joypad 2
+      _ => throw new Exception($"Unable to read port: {port}\r\n{this}")
+    };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteByteResult(byte value) => WriteByteResult(value, _instruction.Destination);
@@ -265,7 +295,7 @@ namespace Quill
     private void WriteByteResult(byte value, Operand destination)
     {
       switch (destination)
-      {
+      { 
         case Operand.A: _a = value; return;
         case Operand.B: _b = value; return;
         case Operand.C: _c = value; return;
@@ -273,25 +303,21 @@ namespace Quill
         case Operand.E: _e = value; return;
         case Operand.H: _h = value; return;
         case Operand.L: _l = value; return;
+        case Operand.IXh: _ixh = value; return;
+        case Operand.IXl: _ixl = value; return;
+        case Operand.IYh: _iyh = value; return;
+        case Operand.IYl: _iyl = value; return;
 
-        case Operand.Indirect:  
-          _memPtr = FetchWord();
-          break;
+        case Operand.BCi: _addressBus = _bc; break;
+        case Operand.DEi: _addressBus = _de; break;
+        case Operand.HLi: _addressBus = _hl; break;
+        case Operand.IXd: _addressBus = (byte)(_ix + FetchByte()); break;
+        case Operand.IYd: _addressBus = (byte)(_iy + FetchByte()); break;
+        case Operand.Indirect: _addressBus = FetchWord(); break;
 
-        case Operand.IXd:
-          _memPtr = (byte)(_ix + FetchByte());
-          break;
-
-        case Operand.IYd:
-          _memPtr = (byte)(_iy + FetchByte());
-          break;
-
-        case Operand.BCi: _memPtr = _bc; break;
-        case Operand.DEi: _memPtr = _de; break;
-        case Operand.HLi: _memPtr = _hl; break;
         default: throw new Exception($"Invalid byte destination: {destination}");
       }
-      _memory.WriteByte(_memPtr, value);
+      _memory.WriteByte(_addressBus, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -300,7 +326,7 @@ namespace Quill
       switch (_instruction.Destination)
       {
         case Operand.Indirect:
-          _memory.WriteWord(_memPtr, value);
+          _memory.WriteWord(_addressBus, value);
           return;
 
         case Operand.AF: _af = value; return;
@@ -311,6 +337,30 @@ namespace Quill
         case Operand.IY: _iy = value; return;
         case Operand.SP: _sp = value; return;
         default: throw new Exception($"Invalid word destination: {_instruction}");
+      }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WritePort(byte port, byte value)
+    {
+      switch (port)
+      {
+        case 0x7E:
+        case 0x7F: 
+          // TODO: write to sound chip
+           return;
+
+        case 0xBE:
+          _vdp.Data = value;
+          return;
+
+        case 0xBF:
+        case 0xBD:
+          _vdp.Control = value;
+          return;
+
+        default:
+          throw new Exception($"Unable to write to port {port}\r\n{this}");
       }
     }
 

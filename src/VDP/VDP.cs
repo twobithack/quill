@@ -17,7 +17,13 @@ namespace Quill
     public bool IRQ;
     public byte VCounter;
     public byte HCounter;
+    public byte Control;
     public byte Data;
     public byte Status;
+
+    public void AcknowledgeIRQ()
+    {
+      IRQ = false;
+    }
   }
 }

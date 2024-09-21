@@ -11,40 +11,46 @@ namespace Quill
     private void ADC8()
     {
       var augend = _a;
-      if (_carry) augend++;
-
       var addend = ReadByteOperand(_instruction.Source);
+      if (_carry) addend++;
       var sum = augend + addend;
       
-      _sign = (sum & 0x80) > 0;
-      _zero = (sum == 0);
-      _halfcarry = (augend & 0x0F) + (addend & 0x0F) > 0x0F;
-      _overflow = (augend < 0x80 && addend < 0x80 && _sign) ||
-                  (augend >= 0x80 && addend >= 0x80 && !_sign);
-      _negative = false;
-      _carry = (sum > byte.MaxValue);
+      var flags = (Flags)(sum & 0b_1010_1000);
+      if (sum == 0)
+        flags |= Flags.Zero;
+      if ((augend & 0x0F) + (addend & 0x0F) > 0x0F)
+        flags |= Flags.Halfcarry;
+      if ((augend < 0x80 && addend < 0x80 && _sign) ||
+          (augend >= 0x80 && addend >= 0x80 && !_sign))
+        flags |= Flags.Parity;
+      if (sum > byte.MaxValue)
+        flags |= Flags.Carry;
 
       _a = (byte)sum;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ADC16()
     {
       var augend = _hl;
-      if (_carry) augend++;
-
       var addend = ReadWordOperand(_instruction.Source);
+      if (_carry) addend++;
       var sum = augend + addend;
 
-      _sign = (sum & 0x8000) > 0;
-      _zero = (sum == 0);
-      _halfcarry = (augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF;
-      _overflow = (augend < 0x8000 && addend < 0x8000 && _sign) ||
-                  (augend >= 0x8000 && addend >= 0x8000 && !_sign);
-      _negative = false;
-      _carry = (sum > ushort.MaxValue);
+      var flags = (Flags)((sum >> 8) & 0b_1010_1000);
+      if (sum == 0)
+        flags |= Flags.Zero;
+      if ((augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF)
+        flags |= Flags.Halfcarry;
+      if ((augend < 0x8000 && addend < 0x8000 && _sign) ||
+          (augend >= 0x8000 && addend >= 0x8000 && !_sign))
+        flags |= Flags.Parity;
+      if (sum > ushort.MaxValue)
+        flags |= Flags.Carry;
 
       _hl = (ushort)sum;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,15 +60,19 @@ namespace Quill
       var addend = ReadByteOperand(_instruction.Source);
       var sum = augend + addend;
 
-      _sign = (sum & 0x80) > 0;
-      _zero = (sum == 0);
-      _halfcarry = (augend & 0x0F) + (addend & 0x0F) > 0x0F;
-      _overflow = (augend < 0x80 && addend < 0x80 && _sign) ||
-                  (augend >= 0x80 && addend >= 0x80 && !_sign);
-      _negative = false;
-      _carry = (sum > byte.MaxValue);
+      var flags = (Flags)(sum & 0b_1010_1000);
+      if (sum == 0)
+        flags |= Flags.Zero;
+      if ((augend & 0x0F) + (addend & 0x0F) > 0x0F)
+        flags |= Flags.Halfcarry;
+      if ((augend < 0x80 && addend < 0x80 && _sign) ||
+          (augend >= 0x80 && addend >= 0x80 && !_sign))
+        flags |= Flags.Parity;
+      if (sum > byte.MaxValue)
+        flags |= Flags.Carry;
 
       _a = (byte)sum;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -72,15 +82,19 @@ namespace Quill
       var addend = ReadWordOperand(_instruction.Source);
       var sum = augend + addend;
 
-      _sign = (sum & 0x8000) > 0;
-      _zero = (sum == 0);
-      _halfcarry = (augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF;
-      _overflow = (augend < 0x8000 && addend < 0x8000 && _sign) ||
-                  (augend >= 0x8000 && addend >= 0x8000 && !_sign);
-      _negative = false;
-      _carry = (sum > ushort.MaxValue);
+      var flags = (Flags)((sum >> 8) & 0b_1010_1000);
+      if (sum == 0)
+        flags |= Flags.Zero;
+      if ((augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF)
+        flags |= Flags.Halfcarry;
+      if ((augend < 0x8000 && addend < 0x8000 && _sign) ||
+          (augend >= 0x8000 && addend >= 0x8000 && !_sign))
+        flags |= Flags.Parity;
+      if (sum > ushort.MaxValue)
+        flags |= Flags.Carry;
 
       WriteWordResult((ushort)sum);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -88,120 +102,161 @@ namespace Quill
     {
       var result = _a & ReadByteOperand(_instruction.Source);
 
-      _sign = (result & 0x80) > 0;
-      _zero = (result == 0);
-      _halfcarry = true;
-      _parity = BitOperations.PopCount((byte)result) % 2 == 0;
-      _negative = false;
-      _carry = false;
+      var flags = (Flags)(result & 0b_1010_1000) | Flags.Halfcarry;
+      if (result == 0)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount((byte)result) % 2 == 0)
+        flags |= Flags.Parity;
 
       _a = (byte)result;
+      _flags = flags;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void BIT()
     {
-      var value = ReadByteOperand(_instruction.Destination);
-      var index = (byte)_instruction.Source;
+      var value = ReadByteOperand(_instruction.Source);
+      var index = (byte)_instruction.Destination;
+      var flags = (Flags)(value & 0b_1010_1000);
+      
+      // TODO: Handle undocumented flags for HLi and indexed cases
+      if (!value.TestBit(index))
+        flags |= Flags.Zero;
 
-      _zero = value.TestBit(index);
-      _halfcarry = true;
-      _negative = false;
+      flags |= Flags.Halfcarry;
+
+      if (BitOperations.PopCount((byte)value) % 2 == 0)
+        flags |= Flags.Parity;
+
+      if (_carry)
+        flags |= Flags.Carry;
+
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CALL()
     {
-      _memPtr = FetchWord();
-
+      var address = FetchWord();
       if (!EvaluateCondition())
         return;
 
       _sp -= 2;
       _memory.WriteWord(_sp, _pc);
-      _pc = _memPtr;
+      _pc = address;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CCF()
     {
-      _halfcarry = _carry;
-      _carry = !_carry;
-      _negative = false;
+      var flags = (Flags)((byte)_flags & 0b_1100_0100);
+      if (_carry)
+        flags |= Flags.Halfcarry;
+      else
+        flags |= Flags.Carry;
+      
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CP()
     {
-      var minuend = _a;
       var subtrahend = ReadByteOperand(_instruction.Source);
-      var difference = minuend - subtrahend;
+      var difference = _a - subtrahend;
 
-      _sign = (difference & 0x80) > 0;
-      _zero = (minuend == subtrahend);
-      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
-      _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
-                  (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
-      _negative = true;
-      _carry = (subtrahend > minuend);
+      var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
+      if (difference == 0)
+        flags |= Flags.Zero;
+      if ((_a & 0x0F) - (subtrahend & 0x0F) < 0)
+        flags |= Flags.Halfcarry;
+      if ((_a < 0x80 && subtrahend >= 0x80 && _sign) ||
+          (_a >= 0x80 && subtrahend < 0x80 && !_sign))
+        flags |= Flags.Parity;
+      if (subtrahend > _a)
+        flags |= Flags.Carry;
+
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CPD()
     {
-      var minuend = _a;
       var subtrahend = _memory.ReadByte(_hl);
-      var difference = minuend - subtrahend;
+      var difference = _a - subtrahend;
 
       _hl++;
       _bc--;
+            
+      var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
+      if (difference == 0)
+        flags |= Flags.Zero;
+      if ((_a & 0x0F) - (subtrahend & 0x0F) < 0)
+        flags |= Flags.Halfcarry;
+      if (_bc != 0)
+        flags |= Flags.Parity;
+      if (_carry)
+        flags |= Flags.Carry;
 
-      _sign = (difference & 0x80) > 0;
-      _zero = (minuend == subtrahend);
-      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
-      _overflow = (_bc != 0);
-      _negative = true;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CPDR()
     {
       CPD();
-      if (_overflow && !_zero)
+      if (_parity && !_zero)
         _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CPI()
     {
-      var minuend = _a;
       var subtrahend = _memory.ReadByte(_hl);
-      var difference = minuend - subtrahend;
+      var difference = _a - subtrahend;
 
       _hl--;
       _bc--;
+      
+      var flags = (Flags)(difference & 0b_1010_1000);
+      if (difference == 0)
+        flags |= Flags.Zero;
 
-      _sign = (difference & 0x80) > 0;
-      _zero = (minuend == subtrahend);
-      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
-      _overflow = (_bc != 0);
-      _negative = true;
+      if ((_a & 0x0F) - (subtrahend & 0x0F) < 0)
+        flags |= Flags.Halfcarry;
+
+      if (_bc != 0)
+        flags |= Flags.Parity;
+      
+      flags |= Flags.Negative;
+
+      if (_carry)
+        flags |= Flags.Carry;
+
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CPIR()
     {
       CPI();
-      if (_overflow && !_zero)
+      if (_parity && !_zero)
         _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CPL()
     {
-      _halfcarry = true;
-      _negative = true;
       _a = (byte)~_a;
+      
+      var flags = (Flags)(_a & 0b_0010_1000) | Flags.Halfcarry | Flags.Negative;
+      if (_sign)
+        flags |= Flags.Sign;
+      if (_zero)
+        flags |= Flags.Zero;
+      if (_carry)
+        flags |= Flags.Carry;
+
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -219,13 +274,18 @@ namespace Quill
               ? (byte)(value - 0x60)
               : (byte)(value + 0x60);
 
-      _sign = value.GetMSB();
-      _zero = (value == 0x00);
-      _halfcarry = _a.TestBit(4) ^ value.TestBit(4);
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _carry |= (_a > 0x99);
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0)
+        flags |= Flags.Zero;
+      if (_a.TestBit(4) ^ value.TestBit(4))
+        flags |= Flags.Halfcarry;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (_carry | (_a > 0x99))
+        flags |= Flags.Carry;
 
       _a = value;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -234,13 +294,18 @@ namespace Quill
       var minuend = ReadByteOperand(_instruction.Destination);
       var difference = minuend.Decrement();
 
-      _sign = (difference & 0x80) > 0;
-      _zero = (difference == 0);
-      _halfcarry = (minuend & 0x0F) == 0;
-      _overflow = (minuend >= 0x80 && !_sign);
-      _negative = true;
+      var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
+      if (difference == 0)
+        flags |= Flags.Zero;
+      if ((minuend & 0x0F) == 0)
+        flags |= Flags.Halfcarry;
+      if (minuend >= 0x80 && !_sign)
+        flags |= Flags.Parity;      
+      if (_carry)
+        flags |= Flags.Carry;
 
       WriteByteResult(difference);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -338,18 +403,26 @@ namespace Quill
     {
       _halt = true;
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void IM()
-    {
-      // Not used in Master System
-    }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void IN()
     {
       var port = ReadByteOperand(_instruction.Source);
-      Console.WriteLine($"Attempting to read port {port}");
+      var value = ReadPort(port);
+      WriteByteResult(value);
+
+      if (_instruction.Destination == Operand.A)
+        return;
+      
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0x00)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (_carry)
+        flags |= Flags.Carry;
+
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -358,13 +431,18 @@ namespace Quill
       var augend = ReadByteOperand(_instruction.Destination);
       var sum = augend.Increment();
       
-      _sign = (sum & 0x80) > 0;
-      _zero = (sum == 0);
-      _halfcarry = (augend & 0x0F) == 0x0F;
-      _overflow = (augend < 0x80 && _sign);
-      _negative = false;
+      var flags = (Flags)(sum & 0b_1010_1000);
+      if (sum == 0)
+        flags |= Flags.Zero;
+      if ((augend & 0x0F) == 0x0F)
+        flags |= Flags.Halfcarry;
+      if (augend < 0x80 && _sign)
+        flags |= Flags.Parity;
+      if (_carry)
+        flags |= Flags.Carry;
 
       WriteByteResult(sum);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -377,38 +455,70 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void IND()
     {
-      Console.WriteLine("IND not implemented");
+      var value = ReadPort(_c);
+      _memory.WriteByte(_hl, value);
+
+      _hl--;
+      _b--;
+      
+      var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
+      if (_b == 0)
+        flags |= Flags.Zero;
+      if (_carry)
+        flags |= Flags.Carry;
+
+      _flags = flags;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void INDR()
+    {
+      IND();
+      if (!_zero)
+        _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void INI()
     {
-      Console.WriteLine("INI not implemented");
+      var value = ReadPort(_c);
+      _memory.WriteByte(_hl, value);
+
+      _hl++;
+      _b--;
+      
+      var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
+      if (_b == 0)
+        flags |= Flags.Zero;
+      if (_carry)
+        flags |= Flags.Carry;
+
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void INIR()
     {
-      Console.WriteLine("INIR not implemented");
+      INI();
+      if (!_zero)
+        _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void JP()
     {
-      _memPtr = ReadWordOperand(_instruction.Destination);
-
+      var address = ReadWordOperand(_instruction.Destination);
       if (!EvaluateCondition())
         return;
 
-      _pc = _memPtr;
+      _pc = address;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void JR()
     {
       var displacement = FetchByte();
-
-      if (!EvaluateCondition())
+      if (!EvaluateCondition()) 
         return;
 
       _pc += displacement;
@@ -437,10 +547,12 @@ namespace Quill
       _de--;
       _hl--;
       _bc--;
-
-      _halfcarry = false;
-      _overflow = (_bc != 0);
-      _negative = false;
+      
+      var flags = (Flags)((byte)_flags & 0b_1110_1001);
+      if (_bc != 0) 
+        flags |= Flags.Parity; 
+      
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -454,16 +566,18 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void LDI()
     {
-      var word = _memory.ReadByte(_hl);
-      _memory.WriteByte(_de, word);
+      var value = _memory.ReadByte(_hl);
+      _memory.WriteByte(_de, value);
       
       _de++;
       _hl++;
       _bc--;
 
-      _halfcarry = false;
-      _overflow = (_bc != 0);
-      _negative = false;
+      var flags = (Flags)((byte)_flags & 0b_1110_1001);
+      if (_bc != 0)
+        flags |= Flags.Parity; 
+      
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -477,23 +591,20 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void NEG()
     {
-      var subtrahend = ReadByteOperand(_instruction.Source);
-      var difference = 0x00 - subtrahend;
-
-      _sign = (difference & 0x80) > 0;
-      _zero = (subtrahend == 0);
-      _halfcarry = (subtrahend & 0x0F) > 0;
-      _overflow = (subtrahend >= 0x80 && _sign);
-      _negative = true;
-      _carry = (subtrahend > 0);
+      var difference = 0 - _a;
+      
+      var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
+      if (difference == 0)
+        flags |= Flags.Zero;
+      if ((difference & 0x0F) > 0)
+        flags |= Flags.Halfcarry;
+      if (_a == 0x80)
+        flags |= Flags.Parity;
+      if (_a != 0x00)
+        flags |= Flags.Carry;
 
       _a = (byte)difference;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void NOP()
-    {
-      
+      _flags = flags;   
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -501,26 +612,31 @@ namespace Quill
     {
       var result = _a | ReadByteOperand(_instruction.Source);
 
-      _sign = (result & 0x80) > 0;
-      _zero = (result == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount((byte)result) % 2 == 0;
-      _negative = false;
-      _carry = false;
+      var flags = (Flags)(result & 0b_1010_1000);
+      if (result == 0x00)
+        flags |= Flags.Zero;
+
+      if (BitOperations.PopCount((byte)result) % 2 == 0)
+        flags |= Flags.Parity;
 
       _a = (byte)result;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OTDR()
     {
-      Console.WriteLine("OTDR not implemented");
+      OUTD();
+      if (_b != 0x00)
+        _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OTIR()
     {
-      Console.WriteLine("OTIR not implemented");
+      OUTI();
+      if (_b != 0x00)
+        _pc -= 2;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -528,19 +644,43 @@ namespace Quill
     {
       var value = ReadByteOperand(_instruction.Source);
       var port = ReadByteOperand(_instruction.Destination);
-      Console.WriteLine($"Writing {value.ToHex()} to port {port.ToHex()}");
+      WritePort(port, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OUTD()
     {
-      Console.WriteLine("OUTD not implemented");
+      var value = _memory.ReadByte(_hl);
+      WritePort(_c, value);
+
+      _hl--;
+      _b--;
+      
+      var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
+      if (_b == 0x00)
+        flags |= Flags.Zero;
+      if (_carry)
+        flags |= Flags.Carry;
+
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OUTI()
     {
-      Console.WriteLine("OUTI not implemented");
+      var value = _memory.ReadByte(_hl);
+      WritePort(_c, value);
+
+      _hl++;
+      _b--;
+      
+      var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
+      if (_b == 0x00)
+        flags |= Flags.Zero;
+      if (_carry)
+        flags |= Flags.Carry;
+
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -585,6 +725,7 @@ namespace Quill
       _pc = _memory.ReadWord(_sp);
       _sp += 2;
       _iff1 = _iff2;
+      _vdp.AcknowledgeIRQ();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -603,35 +744,35 @@ namespace Quill
       value = (byte)(value << 1);
 
       if (_carry)
-        value |= 1;
+        value |= 0b_0000_0001;
 
-      _sign = value.GetMSB();
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = msb;
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0x00)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (msb)
+        flags |= Flags.Carry;
 
       WriteByteResult(value);
+      _flags = flags;  
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RLA()
     {
       var value = (byte)(_a << 1);
-      var msb = _a.GetMSB();
-
       if (_carry)
-        value |= 1;
+        value |= 0b_0000_0001;
 
-      _sign = value.GetMSB();
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = msb;
+      var flags = (Flags)(value & 0b_0010_1000) | (Flags)((byte)_flags & 0b_1100_0100);
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (_a.GetMSB())
+        flags |= Flags.Carry;
 
       _a = value;
+      _flags = flags;  
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -643,15 +784,17 @@ namespace Quill
 
       if (msb)
         value |= 0b_0000_0001;
-
-      _sign = value.GetMSB();
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = msb;
+      
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0x00)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (msb)
+        flags |= Flags.Carry;
 
       WriteByteResult(value);
+      _flags = flags;  
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -661,34 +804,37 @@ namespace Quill
       var msb = _a.GetMSB();
 
       if (msb)
-        value |= 1;
+        value |= 0b_0000_0001;
 
-      _sign = value.GetMSB();
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = msb;
+      var flags = (Flags)(value & 0b_0010_1000) | (Flags)((byte)_flags & 0b_1100_0100);
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (msb)
+        flags |= Flags.Carry;
+
+      _a = value;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RLD()
     {
-      _memPtr = _hl;
-      var value = _memory.ReadByte(_memPtr);
+      var address = _hl;
+      var value = _memory.ReadByte(address);
       var lowNibble = _a.GetLowNibble();
       var highNibble = value.GetLowNibble();
 
       _a = (byte)((_a & 0b_1111_0000) + value.GetLowNibble());
       value = (byte)((highNibble << 4) + lowNibble);
 
-      _sign = _a.GetMSB();
-      _zero = (_a == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
+      var flags = (Flags)(_a & 0b_1000_0000);
+      if (_a == 0x00)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
       
-      _memory.WriteByte(_memPtr, value);
+      _memory.WriteByte(address, value);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -701,14 +847,16 @@ namespace Quill
       if (_carry)
         value |= 0b_1000_0000;
 
-      _sign = value.GetMSB();
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = lsb;
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0x00)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (lsb)
+        flags |= Flags.Carry;
 
       WriteByteResult(value);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -719,33 +867,36 @@ namespace Quill
 
       if (_carry)
         _a |= 0b_1000_0000;
+      // - 	- 	+ 	0 	+ 	- 	0 	X
+      var flags = (Flags)(_a & 0b_0010_1000) | (Flags)((byte)_flags & 0b_1100_0100);
+      if (BitOperations.PopCount(_a) % 2 == 0)
+        flags |= Flags.Parity;
+      if (lsb)
+        flags |= Flags.Carry;
 
-      _sign = _a.GetMSB();
-      _zero = (_a == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(_a) % 2 == 0;
-      _negative = false;
-      _carry = lsb;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RRC()
     {
       var value = ReadByteOperand(_instruction.Destination);
-      var lsb = _a.GetLSB();
+      var lsb = value.GetLSB();
       value = (byte)(value >> 1);
-      
-      if (lsb)
+
+      if (lsb) 
         value |= 0b_1000_0000;
 
-      _sign = value.GetMSB();
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = lsb;
-
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (lsb)
+        flags |= Flags.Carry;
+      
       WriteByteResult(value);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -753,36 +904,41 @@ namespace Quill
     {
       var lsb = _a.GetLSB();
       _a = (byte)(_a >> 1);
-
-      if (lsb)
+      
+      if (lsb) 
         _a |= 0b_1000_0000;
-
-      _sign = _a.GetMSB();
-      _zero = (_a == 0x00);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(_a) % 2 == 0;
-      _negative = false;
-      _carry = lsb;
+      
+      var flags = (Flags)(_a & 0b_1010_1000);
+      if (_a == 0)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(_a) % 2 == 0)
+        flags |= Flags.Parity;
+      if (lsb)
+        flags |= Flags.Carry;
+        
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RRD()
     {
-      _memPtr = _hl;
-      var value = _memory.ReadByte(_memPtr);
-      var lowNibble = value.GetHighNibble();
-      var highNibble = _a.GetLowNibble();
+      var value = _memory.ReadByte(_hl);
+      var hlHigh = value.GetHighNibble();
+      var aLow = _a.GetLowNibble();
 
       _a = (byte)((_a & 0b_1111_0000) + value.GetLowNibble());
-      value = (byte)((highNibble << 4) + lowNibble);
+      value = (byte)((aLow << 4) + hlHigh);
 
-      _sign = _a.GetMSB();
-      _zero = (_a == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
+      var flags = (Flags)(_a & 0b_1010_1000);
+      if (_a == 0)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(_a) % 2 == 0)
+        flags |= Flags.Parity;
+      if (_carry)
+        flags |= Flags.Carry;
       
-      _memory.WriteByte(_memPtr, value);
+      _memory.WriteByte(_hl, value);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -796,49 +952,52 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SBC8()
     {
-      var minuend = _a;
       var subtrahend = ReadByteOperand(_instruction.Source);
-
       if (_carry) subtrahend++;
-      var difference = minuend - subtrahend;
+      var difference = _a - subtrahend;
 
-      _sign = (difference & 0x80) > 0;
-      _zero = (minuend == subtrahend);
-      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
-      _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
-                  (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
-      _negative = true;
-      _carry = (subtrahend > minuend);
+      var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
+      if (difference == 0)
+        flags |= Flags.Zero;
+      if ((_a & 0x0F) < (subtrahend & 0x0F))
+        flags |= Flags.Halfcarry;
+      if ((_a < 0x80 && subtrahend >= 0x80 && _sign) ||
+          (_a >= 0x80 && subtrahend < 0x80 && !_sign))
+        flags |= Flags.Parity;
+      if (subtrahend > _a)
+        flags |= Flags.Carry;
 
       _a = (byte)difference;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SBC16()
     {
-      var minuend = _hl;
       var subtrahend = ReadWordOperand(_instruction.Source);
-
       if (_carry) subtrahend++;
-      var difference = minuend - subtrahend;
+      var difference = _hl - subtrahend;
 
-      _sign = (difference & 0x8000) > 0;
-      _zero = (minuend == subtrahend);
-      _halfcarry = (minuend & 0x0FFF) - (subtrahend & 0x0FFF) < 0;
-      _overflow = (minuend < 0x8000 && subtrahend >= 0x8000 && _sign) ||
-                  (minuend >= 0x8000 && subtrahend < 0x8000 && !_sign);
-      _negative = true;
-      _carry = (subtrahend > minuend);
+      var flags = (Flags)((difference >> 8) & 0b_1010_1000) | Flags.Negative;
+      if (difference == 0)
+        flags |= Flags.Zero;
+      if ((_hl & 0x0FFF) < (subtrahend & 0x0FFF))
+        flags |= Flags.Halfcarry;
+      if ((_hl < 0x8000 && subtrahend >= 0x8000 && _sign) ||
+          (_hl >= 0x8000 && subtrahend < 0x8000 && !_sign))
+        flags |= Flags.Parity;
+      if (subtrahend > _hl)
+        flags |= Flags.Carry;
 
       _hl = (ushort)difference;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SCF()
     {
+      var flags = (Flags)((byte)_flags & 0b_1110_1100);
       _carry = true;
-      _halfcarry = false;
-      _negative = false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -854,24 +1013,46 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SLA()
     {
-      var value = ReadByteOperand(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Source);
       var msb = value.GetMSB();
       value = (byte)(value << 1);
 
-      _sign = value.GetMSB();
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = msb;
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (msb)
+        flags |= Flags.Carry;
 
       WriteByteResult(value);
+      _flags = flags; 
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SLL()
+    {
+      var value = ReadByteOperand(_instruction.Source);
+      var msb = value.GetMSB();
+      value = (byte)(value << 1);
+      value++;
+
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (msb)
+        flags |= Flags.Carry;
+
+      WriteByteResult(value);
+      _flags = flags; 
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SRA()
     {
-      var value = ReadByteOperand(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Source);
       var lsb = value.GetLSB();
       var msb = value.GetMSB();
       value = (byte)(value >> 1);
@@ -879,64 +1060,71 @@ namespace Quill
       if (msb)
         value |= 0b_1000_0000;
 
-      _sign = msb;
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = lsb;
+      var flags = (Flags)(value & 0b_1010_1000);
+      if (value == 0)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (lsb)
+        flags |= Flags.Carry;
 
       WriteByteResult(value);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SRL()
     {
-      var value = ReadByteOperand(_instruction.Destination);
+      var value = ReadByteOperand(_instruction.Source);
       var lsb = value.GetLSB();
       value = (byte)(value >> 1);
 
-      _sign = false;
-      _zero = (value == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount(value) % 2 == 0;
-      _negative = false;
-      _carry = lsb;
-
+      var flags = (Flags)(value & 0b_0010_1000);
+      if (value == 0x00)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount(value) % 2 == 0)
+        flags |= Flags.Parity;
+      if (lsb)
+        flags |= Flags.Carry;
+        
       WriteByteResult(value);
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SUB()
     {
-      var minuend = _a;
       var subtrahend = ReadByteOperand(_instruction.Source);
-      var difference = minuend - subtrahend;
+      var difference = _a - subtrahend;
 
-      _sign = (difference & 0x80) > 0;
-      _zero = (minuend == subtrahend);
-      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
-      _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
-                  (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
-      _negative = true;
-      _carry = (subtrahend > minuend);
+      var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
+      if (difference == 0)
+        flags |= Flags.Zero;
+      if ((_a & 0x0F) < (subtrahend & 0x0F))
+        flags |= Flags.Halfcarry;
+      if ((_a < 0x80 && subtrahend >= 0x80 && _sign) ||
+          (_a >= 0x80 && subtrahend < 0x80 && !_sign))
+        flags |= Flags.Parity;
+      if (subtrahend > _a)
+        flags |= Flags.Carry;
 
       _a = (byte)difference;
+      _flags = flags;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void XOR()
     {
       var result = _a ^ ReadByteOperand(_instruction.Source);
-
-      _sign = (result & 0x80) > 0;
-      _zero = (result == 0);
-      _halfcarry = false;
-      _parity = BitOperations.PopCount((byte)result) % 2 == 0;
-      _negative = false;
-      _carry = false;
+      
+      var flags = (Flags)(result & 0b_1010_1000);
+      if (result == 0x00)
+        flags |= Flags.Zero;
+      if (BitOperations.PopCount((byte)result) % 2 == 0)
+        flags |= Flags.Parity;
 
       _a = (byte)result;
+      _flags = flags;
     }
   }
 }

@@ -7,8 +7,10 @@ namespace Quill
 {
   public unsafe sealed partial class CPU
   {
+    private Memory _memory;
     private Flags _flags;
-    
+
+    private bool _halt;
     private bool _iff1;
     private bool _iff2;
 
@@ -19,8 +21,7 @@ namespace Quill
     private byte _e;
     private byte _h;
     private byte _l;
-    private byte _i;
-    private byte _r;   
+    private byte _r;
 
     private ushort _pc;
     private ushort _sp;
@@ -31,9 +32,46 @@ namespace Quill
     private ushort _bcShadow;
     private ushort _deShadow;
     private ushort _hlShadow;
-    private ushort _memPtr;
+    private ushort _addressBus;
 
     private Opcode _instruction;
+    private int _instructionCount;
+
+    private byte _ixh
+    {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      get => _ix.GetHighByte();
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      set => _ix = value.Concat(_ixl);
+    }
+
+    private byte _ixl
+    {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      get => _ix.GetLowByte();
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      set => _ix = _ixh.Concat(value);
+    }
+
+    private byte _iyh
+    {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      get => _iy.GetHighByte();
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      set => _iy = value.Concat(_iyl);
+    }
+
+    private byte _iyl
+    {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      get => _iy.GetLowByte();
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
+      set => _iy = _iyh.Concat(value);
+    }
 
     private ushort _af
     {

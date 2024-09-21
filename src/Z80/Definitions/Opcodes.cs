@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Quill.Definitions
 {
-  public unsafe static class Opcodes
+  public unsafe struct Opcodes
   {
     public readonly struct Opcode
     {
@@ -93,7 +93,7 @@ namespace Quill.Definitions
       new Opcode(Operation.JR,    Operand.Immediate,  Operand.Carry,       7),
       new Opcode(Operation.ADD16, Operand.HL,         Operand.SP,         11),
       new Opcode(Operation.LD8,   Operand.A,          Operand.Indirect,   13),
-      new Opcode(Operation.DEC8,  Operand.SP,         Operand.Implied,     6),
+      new Opcode(Operation.DEC16, Operand.SP,         Operand.Implied,     6),
       new Opcode(Operation.INC8,  Operand.A,          Operand.Implied,     4),
       new Opcode(Operation.DEC8,  Operand.A,          Operand.Implied,     4),
       new Opcode(Operation.LD8,   Operand.A,          Operand.Immediate,   7),
