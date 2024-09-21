@@ -11,7 +11,7 @@ namespace Quill.Core;
 unsafe public class Emulator
 {
   #region Constants
-  private const double FRAME_TIME_MS = 1000d / 60d;
+  private const double FRAME_INTERVAL_MS = 1000d / 60d;
   private const int CYCLES_PER_SCANLINE = 228;
   #endregion
 
@@ -40,13 +40,13 @@ unsafe public class Emulator
     var cpu = new Z80(_rom, _input, _sound, _video);
     var clock = new Stopwatch();
     var lastFrame = 0d;
-
     clock.Start();
+
     _running = true;
     while (_running)
     {
       var currentTime = clock.Elapsed.TotalMilliseconds;
-      if (currentTime < lastFrame + FRAME_TIME_MS)
+      if (currentTime < lastFrame + FRAME_INTERVAL_MS)
         continue;
 
       lastFrame = currentTime;
@@ -55,7 +55,6 @@ unsafe public class Emulator
       {
         cpu.Run(CYCLES_PER_SCANLINE);
         _video.RenderScanline();
-        _sound.UpdateAudioBuffer();
         scanlines--;
       }
 
@@ -73,6 +72,7 @@ unsafe public class Emulator
         _saveRequested = false;
       }
     }
+    _sound.Stop();
   }
 
   public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
