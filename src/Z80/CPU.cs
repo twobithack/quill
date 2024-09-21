@@ -1,18 +1,20 @@
-using static Quill.Definitions.Opcodes;
 using Quill.Definitions;
 using Quill.Extensions;
+using static Quill.Z80.Opcodes;
 
-namespace Quill
+namespace Quill.Z80
 {
   public partial class CPU
   {
-    private Memory _memory;
+    private Memory _mem;
+    private Registers _reg;
     private int _cycleCount;
     private int _instructionCount;
 
     public CPU()
     {
-      _memory = new Memory();
+      _mem = new Memory();
+      _reg = new Registers();
     }
     
     public void Step()
@@ -26,7 +28,7 @@ namespace Quill
     private Instruction _cir = new Opcodes.Instruction();
     private ushort _address = 0x00;
 
-    private byte FetchByte() => _memory[PC++];
+    private byte FetchByte() => _mem[_reg.PC++];
 
     private ushort FetchWord()
     {
@@ -121,15 +123,132 @@ namespace Quill
         case Operation.XOR:   XOR();  break;
       }
     }
-
-    public override String ToString()
+    
+    private byte GetByteOperand(Operand operand)
     {
-      return  $"╒══════════╤════════════╤════════════╤════════════╤════════════╕\r\n" +
-              $"│Registers │  AF: {AF.ToHex()} │  BC: {BC.ToHex()} │  DE: {DE.ToHex()} │  HL: {HL.ToHex()} │\r\n" +
-      //        $"│          │ AF': {AFp.ToHex()} │ BC': {BCp.ToHex()} │ DE': {DEp.ToHex()} │ HL': {HLp.ToHex()} │\r\n" +
-              $"│          │  IX: {IX.ToHex()} │  IY: {IY.ToHex()} │  PC: {PC.ToHex()} │  SP: {SP.ToHex()} │\r\n" +
-              $"╘══════════╧════════════╧════════════╧════════════╧════════════╛\r\n" +
-              $"Flags: {_flags.ToString()}, Instruction Count: {_instructionCount} ";
+      switch (operand)
+      {
+        case Operand.Immediate:
+          return FetchByte();
+
+        case Operand.A:
+        case Operand.B:
+        case Operand.C:
+        case Operand.D:
+        case Operand.E:
+        case Operand.F:
+        case Operand.H:
+        case Operand.L:
+          return _reg.ReadByte(operand);
+
+        case Operand.Indirect:
+          _address = FetchWord();
+          break;
+
+        case Operand.BCi:
+        case Operand.DEi:
+        case Operand.HLi:
+          _address = _reg.ReadWord(operand);
+          break;
+
+        case Operand.IXd:
+        case Operand.IYd:
+          _address = (byte)(_reg.ReadByte(operand) + FetchByte());
+          break;
+        
+        default:
+          return _reg.A;
+      }
+      return _mem[_address];
     }
+
+    private ushort GetWordOperand(Operand operand)
+    {
+      switch (operand)
+      {
+        case Operand.Immediate:
+          return FetchWord();
+
+        case Operand.Indirect:
+          _address = FetchWord();
+          break;
+
+        case Operand.AF:
+        case Operand.BC: 
+        case Operand.DE: 
+        case Operand.HL: 
+        case Operand.IX:  
+        case Operand.IY: 
+        case Operand.PC:
+        case Operand.SP:
+          return _reg.ReadWord(operand);
+
+        default:
+          return 0x00;
+      }
+      return _mem[_address];
+    }
+
+    private void SetByteValue(byte value)
+    {
+      switch (_cir.Destination)
+      {
+        case Operand.A:
+        case Operand.B:
+        case Operand.C:
+        case Operand.D:
+        case Operand.E:
+        case Operand.F:
+        case Operand.H:
+        case Operand.L:
+          _reg.WriteByte(_cir.Destination, value);
+          return;
+
+        case Operand.Indirect:
+          _address = FetchWord();
+          break;
+        
+        case Operand.BCi:
+          _address = _reg.BC;
+          break;
+
+        case Operand.DEi:
+          _address = _reg.DE;
+          break;
+
+        case Operand.HLi:
+          _address = _reg.HL;
+          break;
+
+        case Operand.IXd:
+        case Operand.IYd:
+          _address = (byte)(_reg.ReadByte(_cir.Source) + FetchByte());
+          break;
+      }
+      _mem[_address] = value;
+    }
+
+    private void SetWordValue(ushort value)
+    {
+      switch (_cir.Destination)
+      {
+        case Operand.Indirect:
+          _mem.WriteWord(_address, value);
+          return;
+
+        case Operand.AF:
+        case Operand.BC:
+        case Operand.DE:
+        case Operand.HL:
+        case Operand.IX:
+        case Operand.IY:
+        case Operand.PC:
+        case Operand.SP:
+          _reg.WriteWord(_cir.Destination, value);
+          return;
+      }
+    }
+
+    public override String ToString() => _reg.ToString() + $"\r\nInstruction Count: {_instructionCount} "; 
   }
 }

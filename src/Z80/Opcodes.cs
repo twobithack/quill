@@ -1,4 +1,6 @@
-namespace Quill.Definitions
+using Quill.Definitions;
+
+namespace Quill.Z80
 {
   public static class Opcodes
   {
@@ -24,32 +26,29 @@ namespace Quill.Definitions
 
       public bool IsWordOperation() => _wordOperands.Contains(Source) ||
                                        _wordOperands.Contains(Destination);
+                   
+      private static Operand[] _wordOperands = new Operand[]
+      {      
+        Operand.AF, 
+        Operand.BC, 
+        Operand.DE, 
+        Operand.HL, 
+        Operand.IX,  
+        Operand.IY, 
+        Operand.PC,
+        Operand.SP
+      };
     }
 
     public static Instruction Decode(byte[] op) => GetOpcodeTable(op[0], op[1])[op[2]];
-    public static Instruction Decode(byte[] prefix, byte op) => GetOpcodeTable(prefix[0], prefix[1])[op];
-    public static Instruction Decode(byte p0, byte p1, byte op) => GetOpcodeTable(p0, p1)[op];
     public static bool IsPrefix(byte op) => _opcodePrefixes.Contains(op);
 
-    
     private static readonly byte[] _opcodePrefixes = new byte[]
     { 
       0xCB,
       0xDD, 
       0xED,
       0xFD 
-    };
-    
-    private static Operand[] _wordOperands = new Operand[]
-    {      
-      Operand.AF, 
-      Operand.BC, 
-      Operand.DE, 
-      Operand.HL, 
-      Operand.IX,  
-      Operand.IY, 
-      Operand.PC,
-      Operand.SP
     };
   
     public static Instruction[] GetOpcodeTable(byte prefix0, byte prefix1) => new { prefix0, prefix1 } switch
