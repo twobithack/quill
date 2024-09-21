@@ -1,8 +1,8 @@
 using CommunityToolkit.HighPerformance;
+using Quill.Common;
 using System.Runtime.CompilerServices;
-using Quill.Extensions;
 
-namespace Quill;
+namespace Quill.CPU;
 
 unsafe public ref struct Memory
 {

@@ -1,11 +1,11 @@
+using Quill.Common;
 using System.Text;
-using Quill.Extensions;
 
-namespace Quill;
+namespace Quill.CPU;
 
 // Implementation of SDSC Debug Console Specification from SMS Power
 // https://www.smspower.org/Development/SDSCDebugConsoleSpecification
-unsafe public ref partial struct CPU
+unsafe public ref partial struct Z80
 {
   #if DEBUG
   private char[][] _sdsc = new char[25][];

@@ -1,4 +1,4 @@
-namespace Quill.Definitions;
+namespace Quill.CPU.Definitions;
 
 [FlagsAttribute]
 public enum Flags : byte

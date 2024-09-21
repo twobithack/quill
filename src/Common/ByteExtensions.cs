@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Quill.Extensions;
+namespace Quill.Common;
 
 unsafe static class ByteExtensions
 {

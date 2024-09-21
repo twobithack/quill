@@ -1,11 +1,11 @@
+using Quill.Common;
+using Quill.CPU.Definitions;
+using static Quill.CPU.Definitions.Opcodes;
 using System.Runtime.CompilerServices;
-using Quill.Definitions;
-using static Quill.Definitions.Opcodes;
-using Quill.Extensions;
 
-namespace Quill;
+namespace Quill.CPU;
 
-public unsafe ref partial struct CPU
+public unsafe ref partial struct Z80
 {
   private Flags _flags = Flags.None;
   private Opcode _instruction = new Opcode();

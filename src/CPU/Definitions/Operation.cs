@@ -1,4 +1,4 @@
-namespace Quill.Definitions;
+namespace Quill.CPU.Definitions;
 
 public enum Operation 
 {

@@ -1,13 +1,14 @@
-using Quill.Definitions;
-using Quill.Extensions;
-using static Quill.Definitions.Opcodes;
+using Quill.Common;
+using Quill.CPU.Definitions;
+using Quill.Video;
 using System.Runtime.CompilerServices;
+using static Quill.CPU.Definitions.Opcodes;
 
-namespace Quill;
+namespace Quill.CPU;
 
-unsafe public ref partial struct CPU
+unsafe public ref partial struct Z80
 {
-  public CPU(byte[] rom, VDP vdp)
+  public Z80(byte[] rom, VDP vdp)
   {
     _instruction = new Opcode();
     _memory = new Memory(rom);
