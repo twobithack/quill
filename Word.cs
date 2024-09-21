@@ -5,7 +5,7 @@ namespace Sonic
     public byte High;
     public byte Low;
 
-    public Word();
+    public Word() {}
     public Word(byte lowByte) => Low = lowByte;
 
     public Word(byte highByte, byte lowByte)
