@@ -16,7 +16,6 @@ namespace Quill.Z80
     public CPU()
     {
       _memory = new Memory();
-      ResetRegisters();
     }
 
     public void LoadProgram(byte[] rom)
