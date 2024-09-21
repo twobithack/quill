@@ -18,10 +18,18 @@ namespace Sonic
       set => _flags = new BitArray(new[] { value });
     }
 
+    public bool Get(int index) => _flags[index];
+
+    public Flags Set(int index, bool value)
+    {
+      _flags[index] = value;
+      return _flags;
+    } 
+
     public bool this[int index]
     {
-      get => return _flags.Get(index);
-      set => _flags.Set(index, value);
+      get => _flags[index];
+      set => _flags[index] = value;
     }
   }
 }
