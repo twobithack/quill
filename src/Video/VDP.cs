@@ -273,7 +273,7 @@ unsafe public class VDP
       for (byte i = 0, col = 7; i < 8; i++, col--)
       {
         if (x + i >= _xResolution)
-          return;
+          break;
 
         if (_maskLeftBorder && x + i < 8)
           continue;

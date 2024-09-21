@@ -44,13 +44,17 @@ public class Quill : Game
     var joy1 = GamePad.GetState(0);
     if (joy1.IsConnected)
     {
-      _emulator.Input.Joy1Up = joy1.IsButtonDown(Buttons.DPadUp);
-      _emulator.Input.Joy1Left = joy1.IsButtonDown(Buttons.DPadLeft);
-      _emulator.Input.Joy1Down = joy1.IsButtonDown(Buttons.DPadDown);
-      _emulator.Input.Joy1Right = joy1.IsButtonDown(Buttons.DPadRight);
+      _emulator.Input.Joy1Up = joy1.IsButtonDown(Buttons.DPadUp) ||
+                               joy1.IsButtonDown(Buttons.LeftThumbstickUp);
+      _emulator.Input.Joy1Left = joy1.IsButtonDown(Buttons.DPadLeft) ||
+                                 joy1.IsButtonDown(Buttons.LeftThumbstickLeft);
+      _emulator.Input.Joy1Down = joy1.IsButtonDown(Buttons.DPadDown) ||
+                                 joy1.IsButtonDown(Buttons.LeftThumbstickDown);
+      _emulator.Input.Joy1Right = joy1.IsButtonDown(Buttons.DPadRight) ||
+                                  joy1.IsButtonDown(Buttons.LeftThumbstickRight);
       _emulator.Input.Joy1FireA = joy1.IsButtonDown(Buttons.A) || 
-                                  joy1.IsButtonDown(Buttons.B);
-      _emulator.Input.Joy1FireB = joy1.IsButtonDown(Buttons.X) || 
+                                  joy1.IsButtonDown(Buttons.X);
+      _emulator.Input.Joy1FireB = joy1.IsButtonDown(Buttons.B) || 
                                   joy1.IsButtonDown(Buttons.Y);
     }
     else
@@ -59,12 +63,18 @@ public class Quill : Game
       if (kb.IsKeyDown(Keys.Escape))
         Exit();
 
-      _emulator.Input.Joy1Up = kb.IsKeyDown(Keys.Up) || kb.IsKeyDown(Keys.W);
-      _emulator.Input.Joy1Left = kb.IsKeyDown(Keys.Left) || kb.IsKeyDown(Keys.A);
-      _emulator.Input.Joy1Down = kb.IsKeyDown(Keys.Down) || kb.IsKeyDown(Keys.S);
-      _emulator.Input.Joy1Right = kb.IsKeyDown(Keys.Right) || kb.IsKeyDown(Keys.D);
-      _emulator.Input.Joy1FireA = kb.IsKeyDown(Keys.Z) || kb.IsKeyDown(Keys.OemComma);
-      _emulator.Input.Joy1FireB = kb.IsKeyDown(Keys.X) || kb.IsKeyDown(Keys.OemPeriod);
+      _emulator.Input.Joy1Up = kb.IsKeyDown(Keys.Up) || 
+                               kb.IsKeyDown(Keys.W);
+      _emulator.Input.Joy1Left = kb.IsKeyDown(Keys.Left) || 
+                                 kb.IsKeyDown(Keys.A);
+      _emulator.Input.Joy1Down = kb.IsKeyDown(Keys.Down) || 
+                                 kb.IsKeyDown(Keys.S);
+      _emulator.Input.Joy1Right = kb.IsKeyDown(Keys.Right) || 
+                                  kb.IsKeyDown(Keys.D);
+      _emulator.Input.Joy1FireA = kb.IsKeyDown(Keys.Z) || 
+                                  kb.IsKeyDown(Keys.OemComma);
+      _emulator.Input.Joy1FireB = kb.IsKeyDown(Keys.X) || 
+                                  kb.IsKeyDown(Keys.OemPeriod);
     }
 
     base.Update(gameTime);
