@@ -37,7 +37,7 @@ namespace Quill.Z80
 
     private ushort _af
     {
-      get => _a.Append(_f);
+      get => _a.Concat(_f);
       set
       {
         _a = value.GetHighByte();
@@ -47,7 +47,7 @@ namespace Quill.Z80
 
     private ushort _bc
     {
-      get => _b.Append(_c);
+      get => _b.Concat(_c);
       set
       {
         _b = value.GetHighByte();
@@ -57,7 +57,7 @@ namespace Quill.Z80
 
     private ushort _de
     {
-      get => _d.Append(_e);
+      get => _d.Concat(_e);
       set
       {
         _d = value.GetHighByte();
@@ -67,7 +67,7 @@ namespace Quill.Z80
 
     private ushort _hl
     {
-      get => _h.Append(_l);
+      get => _h.Concat(_l);
       set
       {
         _h = value.GetHighByte();
@@ -77,7 +77,7 @@ namespace Quill.Z80
 
     private ushort _afS
     {
-      get => _aS.Append(_fS);
+      get => _aS.Concat(_fS);
       set
       {
         _aS = value.GetHighByte();
@@ -87,7 +87,7 @@ namespace Quill.Z80
 
     private ushort _bcS
     {
-      get => _bS.Append(_cS);
+      get => _bS.Concat(_cS);
       set
       {
         _bS = value.GetHighByte();
@@ -97,7 +97,7 @@ namespace Quill.Z80
 
     private ushort _deS
     {
-      get => _dS.Append(_eS);
+      get => _dS.Concat(_eS);
       set
       {
         _dS = value.GetHighByte();
@@ -107,7 +107,7 @@ namespace Quill.Z80
 
     private ushort _hlS
     {
-      get => _hS.Append(_lS);
+      get => _hS.Concat(_lS);
       set
       {
         _hS = value.GetHighByte();

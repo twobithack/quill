@@ -13,18 +13,18 @@ namespace Quill.Z80
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte ReadByte(ushort address) => (byte)_memory[At(address)];
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteByte(ushort address, byte value) => _memory[At(address)] = value;
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort ReadWord(ushort address)
     {
       var lowByte = ReadByte(address);
       var highByte = ReadByte(address.Increment());
-      return highByte.Append(lowByte);
+      return highByte.Concat(lowByte);
     }
-
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteByte(ushort address, byte value) => _memory[At(address)] = value;
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteWord(ushort address, ushort word)
     {
@@ -34,9 +34,9 @@ namespace Quill.Z80
 
     public void DumpPage(byte page)
     {
-      var row = "";
-      for (byte col = 0x00; col < byte.MaxValue; col++)
-        row += _memory[At(page.Append(col))].ToHex() + " ";
+      var row = string.Empty;
+      for (byte index = 0; index < byte.MaxValue; index++)
+        row += ReadByte(page.Concat(index)).ToHex() + " ";
       Console.WriteLine(row);
     }
     
