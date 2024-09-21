@@ -35,6 +35,7 @@ public sealed class Client : Game
   private Texture2D _framebuffer;
   private Rectangle _viewport;
   private bool _savesEnabled;
+  private bool _running;
   #endregion
 
   public Client(byte[] rom, 
@@ -55,6 +56,7 @@ public sealed class Client : Game
     _saveDirectory = saveDir;
     _cropBorder = cropBorders;
     _scale = scaleFactor;
+    _running = true;
   }
 
   #region Properties
@@ -84,8 +86,8 @@ public sealed class Client : Game
 
   protected override void UnloadContent()
   {
-    _bufferingThread.Abort();
     _emulator.Stop();
+    _running = false;
   }
 
   protected override void Update(GameTime gameTime)
@@ -125,7 +127,7 @@ public sealed class Client : Game
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void UpdateSound()
   {
-    while (true)
+    while (_running)
     {
       if (_sound.PendingBufferCount < AUDIO_SAMPLE_RATE / 1000)
       {
