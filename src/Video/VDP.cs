@@ -11,40 +11,47 @@ namespace Quill.Video;
 unsafe public class VDP
 {
   private const int FRAMEBUFFER_SIZE = 0x30000;
-  private const ushort VRAM_SIZE = 0x4000;
-  private const byte CRAM_SIZE = 0x20;
-  private const byte REGISTER_COUNT = 0xB;
-  private const ushort HCOUNTER_MAX = 685;
-  private const byte DISABLE_SPRITES = 0xD0;
+  private const int VRAM_SIZE = 0x4000;
+  private const int CRAM_SIZE = 0x20;
+  private const int REGISTER_COUNT = 0xB;
+  private const int HCOUNTER_MAX = 684;
+  private const int SPRITES_DISABLED = 0xD0;
+  private const int TILE_SIZE = 8;
+  private const int BACKGROUND_WIDTH = 32;
 
   public bool IRQ = false;
   public byte VCounter = 0x00;
 
-  private readonly byte[] _vram = new byte[VRAM_SIZE];
-  private readonly byte[] _cram = new byte[CRAM_SIZE];
-  private readonly byte[] _registers = new byte[REGISTER_COUNT];
-  private ushort _controlWord = 0x0000;
-  private byte _dataBuffer = 0x00;
-  private Status _status = 0x00;
-  private bool _controlWritePending = false;
-  private double _cycleCount = 0d;
-  private ushort _hCounter = 0x0000;
-  private bool _vCounterJumped = false;
-  private byte _lineInterrupt = 0x00;
-  private byte _hScroll = 0x00;
-  private byte _vScroll = 0x00;
-  private bool _frameQueued = false;
+  private readonly byte[] _vram;
+  private readonly byte[] _cram;
+  private readonly byte[] _registers;
   private readonly byte[] _framebuffer;
   private readonly byte[] _renderbuffer;
 
+  private double _cycleCount = 0d;
+  private ushort _controlWord = 0x0000;
+  private Status _status = 0x00;
+  private byte _dataBuffer = 0x00;
+  private byte _lineInterrupt = 0x00;
+  private ushort _hCounter = 0x0000;
+  private byte _hScroll = 0x00;
+  private byte _vScroll = 0x00;
+  private bool _controlWritePending = false;
+  private bool _vCounterJumped = false;
+  private bool _frameQueued = false;
+
   // TODO: derive from display mode
-  private readonly byte _hResolution = 255;
-  private readonly byte _vCountActive = 192;
+  private readonly int _backgroundHeight = 28;
+  private readonly int _hResolution = 256;
+  private readonly byte _vResolution = 192;
   private readonly byte _vJumpFrom = 0xDA;
   private readonly byte _vJumpTo = 0xD5;
 
   public VDP()
   {
+    _vram = new byte[VRAM_SIZE];
+    _cram = new byte[CRAM_SIZE];
+    _registers = new byte[REGISTER_COUNT];
     _framebuffer = new byte[FRAMEBUFFER_SIZE];
     _renderbuffer = new byte[FRAMEBUFFER_SIZE];
   }
@@ -156,9 +163,9 @@ unsafe public class VDP
     var cyclesThisUpdate = (int)_cycleCount;
     _hCounter += (ushort)(cyclesThisUpdate * 2);
 
-    if (_hCounter >= HCOUNTER_MAX)
+    if (_hCounter > HCOUNTER_MAX)
     {
-      _hCounter %= HCOUNTER_MAX;
+      _hCounter %= (HCOUNTER_MAX + 1);
       VCounter++;
 
       if (VCounter == byte.MinValue)
@@ -170,13 +177,13 @@ unsafe public class VDP
         VCounter = _vJumpTo;
         _vCounterJumped = true;
       }
-      else if (VCounter == _vCountActive)
+      else if (VCounter == _vResolution)
       {
         VSyncPending = true;
         RenderFrame();
       }
 
-      if (VCounter > _vCountActive)
+      if (VCounter > _vResolution)
         _lineInterrupt = _registers[0xA];
       else if (_lineInterrupt == 0x00)
       {
@@ -188,7 +195,7 @@ unsafe public class VDP
         _lineInterrupt--;
      
 
-      if (VCounter >= _vCountActive)
+      if (VCounter >= _vResolution)
       {
         _hScroll = _registers[0x8];
         _vScroll = _registers[0x9];
@@ -264,7 +271,7 @@ unsafe public class VDP
     for (int sprite = 0; sprite < 64; sprite++)
     {
       ushort y = _vram[baseAddress + sprite];
-      if (y == DISABLE_SPRITES)
+      if (y == SPRITES_DISABLED)
         return;
 
       y++;
@@ -303,7 +310,7 @@ unsafe public class VDP
       var spriteEnd = x + 8;
       for (byte i = 7; x < spriteEnd; x++, i--)
       {
-        if (x >= _hResolution)
+        if (x >= _hResolution - 1)
           break;
 
         if (x < 8 && MaskLeftBorder)
@@ -339,20 +346,22 @@ unsafe public class VDP
   private void RasterizeBackground()
   {
     var baseAddress = GetNameTableAddress();
-    var sourceRow = VCounter + _vScroll;
-    if (sourceRow > 223) sourceRow -= 223;
-    var rowOffset = sourceRow % 8;
-    sourceRow /= 8;
+    var sourceRow = (VCounter + _vScroll) / TILE_SIZE;
+    if (sourceRow >= _backgroundHeight) 
+      sourceRow -= _backgroundHeight;
 
-    for (int targetColumn = 0; targetColumn < 32; targetColumn++)
+    for (int destinationColumn = 0; 
+         destinationColumn < BACKGROUND_WIDTH; 
+         destinationColumn++)
     {
-      var sourceColumn = targetColumn - (_hScroll / 8);
-      sourceColumn %= 32;
+      var sourceColumn = destinationColumn;
+      sourceColumn -= _hScroll / TILE_SIZE;
+      sourceColumn %= BACKGROUND_WIDTH;
       if (sourceColumn < 0) 
-        sourceColumn += 32;
+        sourceColumn += BACKGROUND_WIDTH;
 
       var tileAddress = baseAddress + 
-                        (sourceRow * 64) + 
+                        (sourceRow * BACKGROUND_WIDTH * 2) + 
                         (sourceColumn * 2);
                         
       var tileData = _vram[tileAddress + 1].Concat(_vram[tileAddress]);
@@ -361,22 +370,26 @@ unsafe public class VDP
       var useSpritePalette = tileData.TestBit(11);
       var highPriority = tileData.TestBit(12);
 
-      for (int i = 0; i < 8; i ++)
+      for (int i = 0; i < TILE_SIZE; i ++)
       {
-        var columnOffset = hFlip ? (7 - i) : i;
-        var x = (sourceColumn * 8) + _hScroll + columnOffset;
-        x %= (_hResolution + 1);
+        var columnOffset = i;
+        if (hFlip)
+          columnOffset = 7 - columnOffset;
 
-        if (x > _hResolution)
-          break;
+        var x = (sourceColumn * TILE_SIZE) + _hScroll + columnOffset;
+        x %= _hResolution;
 
-        if (x < 8 && MaskLeftBorder)
+        if (x < TILE_SIZE && MaskLeftBorder)
           continue;
 
         var pixelIndex = GetPixelIndex(x, VCounter);
         if (!highPriority &&
             _renderbuffer[pixelIndex + 3] != 0x00)
           continue;
+
+        var rowOffset = (VCounter + _vScroll) % TILE_SIZE;
+        if (vFlip)
+          rowOffset = 7 - rowOffset;
 
         var patternIndex = tileData & 0b_0000_0001_1111_1111;
         var patternAddress = (patternIndex * 32) + (rowOffset * 4);
