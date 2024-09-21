@@ -1,6 +1,6 @@
 using Quill.Extensions;
 
-namespace Quill.Z80
+namespace Quill
 {
   public class Memory
   {

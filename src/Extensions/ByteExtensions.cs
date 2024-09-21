@@ -2,7 +2,9 @@ namespace Quill.Extensions
 {
   public static class ByteExtensions
   {
-    public static ushort Concatenate(this byte msb, byte lsb) => (ushort)((msb << 8) + lsb);
+    public static ushort Append(this byte msb, byte lsb) => (ushort)((msb << 8) + lsb);
+
+    public static ushort Prepend(this byte lsb, byte msb) => msb.Append(lsb);
     
     public static byte Increment(this byte value) => (byte)(value + 1);
 
