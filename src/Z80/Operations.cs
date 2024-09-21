@@ -308,7 +308,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void DJNZ()
   {
-    var displacement = unchecked((sbyte)FetchByte());
+    var displacement = FetchSignedByte();
     _b--;
 
     if (_b != 0)
@@ -500,7 +500,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void JR()
   {
-    var displacement = unchecked((sbyte)FetchByte());
+    var displacement = FetchSignedByte();
     if (!EvaluateCondition()) 
       return;
     
