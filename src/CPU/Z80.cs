@@ -2,6 +2,7 @@ using Quill.Common;
 using Quill.Core;
 using Quill.CPU.Definitions;
 using Quill.Input;
+using Quill.Sound;
 using Quill.Video;
 using System;
 using System.Numerics;
@@ -13,9 +14,9 @@ unsafe public ref partial struct Z80
 {
   #region Fields
   private readonly IO _input;
+  private readonly PSG _psg;
   private readonly VDP _vdp;
   private Memory _memory;
-  private Flags _flags;
   private byte _a = 0x00;
   private byte _b = 0x00;
   private byte _c = 0x00;
@@ -41,15 +42,17 @@ unsafe public ref partial struct Z80
   private bool _iff1 = true;
   private bool _iff2 = true;
   private Instruction _instruction;
+  private Flags _flags;
   #endregion
 
-  public Z80(byte[] rom, IO input, VDP vdp)
+  public Z80(byte[] rom, IO input, PSG audio, VDP video)
   {
     _flags = Flags.None;
     _instruction = Opcodes.Main[0x00];
     _memory = new Memory(rom);
     _input = input;
-    _vdp = vdp;
+    _psg = audio;
+    _vdp = video;
   }
 
   #region Properties
@@ -631,7 +634,7 @@ unsafe public ref partial struct Z80
     {
       case 0x7E:
       case 0x7F: 
-        // Sound chip
+        _psg.WriteData(value);
         return;
 
       case 0xBD:
