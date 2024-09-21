@@ -1,8 +1,8 @@
-using Sonic.Definitions;
-using Sonic.Extensions;
-using static Sonic.Definitions.Opcodes;
+using static Quill.Definitions.Opcodes;
+using Quill.Definitions;
+using Quill.Extensions;
 
-namespace Sonic
+namespace Quill
 {
   public partial class CPU
   {
@@ -10,7 +10,6 @@ namespace Sonic
     private int _cycleCount;
     private int _instructionCount;
 
-    
     public CPU()
     {
       _memory = new Memory();
@@ -24,8 +23,8 @@ namespace Sonic
       _instructionCount++;
     }
     
-    private Instruction _cir = new Instruction();
-    private ushort _addressBus = 0x00;
+    private Instruction _cir = new Opcodes.Instruction();
+    private ushort _address = 0x00;
 
     private byte FetchByte() => _memory[PC++];
 
@@ -43,7 +42,7 @@ namespace Sonic
 
       if (!Opcodes.IsPrefix(opcode[0]))
       {
-        _cir = Decode(opcode);
+        _cir = Opcodes.Decode(opcode);
         return;
       }
 
@@ -55,7 +54,7 @@ namespace Sonic
         opcode[2] = FetchByte();
       }
  
-        _cir = Decode(opcode);
+        _cir = Opcodes.Decode(opcode);
     }
 
     private void ExecuteInstruction()

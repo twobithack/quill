@@ -1,6 +1,6 @@
-﻿namespace Sonic
+﻿namespace Quill
 {
-  public class Sonic
+  public class Quill
   {
     public static void Main(string[] args)
     {

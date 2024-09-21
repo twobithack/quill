@@ -1,8 +1,8 @@
-using Sonic.Definitions;
-using Sonic.Extensions;
-using static Sonic.Definitions.Opcodes;
+using Quill.Definitions;
+using Quill.Extensions;
+using static Quill.Definitions.Opcodes;
 
-namespace Sonic
+namespace Quill
 {
   public partial class CPU
   {
@@ -319,24 +319,24 @@ namespace Sonic
           return ReadRegister(operand);
 
         case Operand.Indirect:
-          _addressBus = FetchWord();
+          _address = FetchWord();
           break;
 
         case Operand.BCi:
         case Operand.DEi:
         case Operand.HLi:
-          _addressBus = ReadRegisterPair(operand);
+          _address = ReadRegisterPair(operand);
           break;
 
         case Operand.IXd:
         case Operand.IYd:
-          _addressBus = (byte)(ReadRegister(operand) + FetchByte());
+          _address = (byte)(ReadRegister(operand) + FetchByte());
           break;
         
         default:
           return A;
       }
-      return _memory[_addressBus];
+      return _memory[_address];
     }
 
     private ushort GetWordOperand(Operand operand)
@@ -372,7 +372,7 @@ namespace Sonic
       switch (_cir.Destination)
       {
         case Operand.Indirect:
-          _addressBus = FetchWord();
+          _address = FetchWord();
           break;
         
         case Operand.BCi:
@@ -400,13 +400,13 @@ namespace Sonic
 
         case Operand.IXd:
         case Operand.IYd:
-          _addressBus = (byte)(ReadRegister(_cir.Source) + FetchByte());
+          _address = (byte)(ReadRegister(_cir.Source) + FetchByte());
           break;
 
         default:
           return;
       }
-      _memory[_addressBus] = value;
+      _memory[_address] = value;
     }
 
     private void SetWordValue(ushort value)
@@ -414,8 +414,8 @@ namespace Sonic
       switch (_cir.Destination)
       {
         case Operand.Indirect:
-          _memory[_addressBus] = value.LowByte();
-          _memory[_addressBus.Increment()] = value.HighByte();
+          _memory[_address] = value.LowByte();
+          _memory[_address.Increment()] = value.HighByte();
           return;
 
         case Operand.AF: AF = value; return;

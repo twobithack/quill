@@ -1,4 +1,4 @@
-namespace Sonic.Definitions
+namespace Quill.Definitions
 {
   public static class Opcodes
   {
