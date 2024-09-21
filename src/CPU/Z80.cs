@@ -512,7 +512,7 @@ unsafe public ref partial struct Z80
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetFlag(Flags flag, bool value) => _flags = value
-                                                         ? _flags | flag 
-                                                         : _flags & ~flag;
+                                                ? _flags | flag 
+                                                : _flags & ~flag;
   #endregion
 }
