@@ -25,7 +25,7 @@ public sealed class Client : Game
   #region Fields
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
-  private readonly Thread _bufferingThread;
+  private readonly Thread _pollingThread;
   private readonly GraphicsDeviceManager _graphics;
   private readonly DynamicSoundEffectInstance _sound;
   private readonly string _romName;
@@ -47,7 +47,7 @@ public sealed class Client : Game
     var rom = File.ReadAllBytes(romPath);
     _emulator = new Emulator(rom, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
-    _bufferingThread = new Thread(ManageAudioBuffer);
+    _pollingThread = new Thread(PollAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
     _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
                                             AudioChannels.Mono);
@@ -70,7 +70,7 @@ public sealed class Client : Game
 
     _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
     _emulationThread.Start();
-    _bufferingThread.Start();
+    _pollingThread.Start();
     _sound.Play();
 
     base.Initialize();
@@ -123,7 +123,7 @@ public sealed class Client : Game
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void ManageAudioBuffer()
+  private void PollAudioBuffer()
   {
     while (_running)
     {

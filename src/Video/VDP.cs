@@ -10,11 +10,10 @@ public sealed partial class VDP
 {
   public VDP(int extraScanlines)
   {
+    _framebuffer = new Framebuffer(HORIZONTAL_RESOLUTION, _vCounterActive);
+    _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
-    _cram = new Color[CRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
-    _framebuffer = new byte[FRAMEBUFFER_SIZE];
-    _renderbuffer = new byte[FRAMEBUFFER_SIZE];
     _vCounterMax += (_vCounterJumpStart - _vCounterJumpEnd);
     _vCounterMax += extraScanlines;
   }
@@ -79,7 +78,7 @@ public sealed partial class VDP
     if (ControlCode == ControlCode.WriteCRAM)
     {
       var index = _controlWord & 0b_0001_1111;
-      _cram[index].Set(value);
+      _palette[index] = Color.ToRGBA(value);
     }
     else
       _vram[Address] = value;
@@ -95,7 +94,7 @@ public sealed partial class VDP
 
     if (_vCounter == _vCounterActive)
     {
-      EnqueueFrame();
+      _framebuffer.PushFrame();
     }
     else if (_vCounter == _vCounterActive + 1)
     {
@@ -140,29 +139,7 @@ public sealed partial class VDP
     IRQ |= VSyncPending;
   }
 
-  public byte[] ReadFramebuffer()
-  {      
-    if (!_frameQueued)
-      return null;
-
-    lock (_framebuffer)
-    {
-      _frameQueued = false;
-      return _framebuffer;
-    }
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void EnqueueFrame()
-  {
-    lock (_framebuffer)
-    {
-      Buffer.BlockCopy(_renderbuffer, 0, _framebuffer, 0, FRAMEBUFFER_SIZE);
-      _frameQueued = true;
-    }
-
-    Array.Clear(_renderbuffer);
-  }
+  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
@@ -195,7 +172,7 @@ public sealed partial class VDP
       if (y == DISABLE_SPRITES)
       {
         if (!SpriteOverflow)
-          SetLastSpriteIndex(sprite);
+          StoreLastSpriteIndex(sprite);
         return;
       }
 
@@ -221,7 +198,7 @@ public sealed partial class VDP
       spriteCount++;
       if (spriteCount > 4)
       {
-        SetLastSpriteIndex(sprite);
+        StoreLastSpriteIndex(sprite);
         SpriteOverflow = true;
         return;
       }
@@ -231,14 +208,12 @@ public sealed partial class VDP
       var offset = _vCounter - y;
       if (spriteHeight == TILE_SIZE)
       {
-        var legacyColor = Color.GetLegacyColor(color);
         var spriteAddress = sgtAddress + (pattern * 8);
         var data = _vram[spriteAddress + offset];
 
         for (byte i = 0; i < TILE_SIZE; i++)
         {
-          var pixelIndex = GetPixelIndex(x + i, _vCounter);
-          if (_renderbuffer[pixelIndex + 3] == OCCUPIED)
+          if (_framebuffer.CheckCollision(x + i, _vCounter))
           {
             SpriteCollision = true;
             continue;
@@ -246,13 +221,13 @@ public sealed partial class VDP
           
           if (!data.TestBit(7 - i))
             continue;
-          
-          SetPixelColor(pixelIndex, legacyColor, true);
+
+          _framebuffer.SetLegacyPixel(x + i, _vCounter, color, true);
         }
       }
     }
     
-    SetLastSpriteIndex(31);
+    StoreLastSpriteIndex(31);
   }
 
   private void RasterizeSpriteMode2()
@@ -319,15 +294,15 @@ public sealed partial class VDP
         var paletteIndex = patternData.GetPaletteIndex(column);
         if (paletteIndex == TRANSPARENT)
           continue;
+        paletteIndex += 16;
 
-        var pixelIndex = GetPixelIndex(x, _vCounter);
-        if (_renderbuffer[pixelIndex + 3] == OCCUPIED)
+        if (_framebuffer.CheckCollision(x, _vCounter))
         {
           SpriteCollision = true;
           continue;
         }
 
-        SetPixelColor(pixelIndex, paletteIndex + 16, true);
+        SetPixel(x, _vCounter, paletteIndex, true);
       }
     }
   }
@@ -393,49 +368,31 @@ public sealed partial class VDP
         if (x < TILE_SIZE && MaskLeftBorder)
           continue;
 
-        var pixelIndex = GetPixelIndex(x, _vCounter);
         if (!tile.HighPriotity && 
-            _renderbuffer[pixelIndex + 3] == OCCUPIED)
+            _framebuffer.CheckCollision(x, _vCounter))
           continue;
 
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
         if (paletteIndex == TRANSPARENT)
         {
-          if (_renderbuffer[pixelIndex + 3] != OCCUPIED)
-            paletteIndex = BackgroundColor;
-          else
+          if (_framebuffer.CheckCollision(x, _vCounter))
             continue;
+          paletteIndex = BackgroundColor;
         }
         
         if (tile.UseSpritePalette)
           paletteIndex += 16;
 
-        SetPixelColor(pixelIndex, paletteIndex, false);
+        SetPixel(x, _vCounter, paletteIndex, false);
       }
     }
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetPixel(int x, int y, int paletteIndex, bool sprite) => _framebuffer.SetPixel(x, y, _palette[paletteIndex], sprite);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private static int GetPixelIndex(int x, int y) => (x + (y * 256)) * 4;
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixelColor(int pixelIndex, int paletteIndex, bool sprite)
-  {
-    var color = _cram[paletteIndex];
-    SetPixelColor(pixelIndex, color, sprite);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixelColor(int pixelIndex, Color color, bool sprite)
-  {
-    _renderbuffer[pixelIndex] = color.Red;
-    _renderbuffer[pixelIndex + 1] = color.Green;
-    _renderbuffer[pixelIndex + 2] = color.Blue;
-
-    if (sprite)
-      _renderbuffer[pixelIndex + 3] = OCCUPIED;
-  }
+  private void SetLegacyPixel(int x, int y, byte color, bool sprite) => _framebuffer.SetLegacyPixel(x, y, color, sprite);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Pattern GetPatternData(int patternAddress) => new(_vram[patternAddress],
@@ -522,7 +479,7 @@ public sealed partial class VDP
                                                  : _status & ~flag;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLastSpriteIndex(int value)
+  private void StoreLastSpriteIndex(int value)
   {
     _status &= Status.All;
     _status |= (Status)value;
