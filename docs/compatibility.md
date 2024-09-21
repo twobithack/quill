@@ -1,5 +1,6 @@
 # WORKING
 * After Burner
+* Air Rescue
 * Alex Kidd In Miracle World
 * Alex Kidd In Shinobi World
 * Alex Kidd: High Tech World
@@ -15,6 +16,7 @@
 * Bubble Bobble
 * California Games
 * Castelo Rá-Tim-Bum
+* Choplifter
 * Columns
 * Disney's Bonkers: Wax Up!
 * Double Dragon
@@ -32,6 +34,7 @@
 * Master of Darkness
 * Michael Jackson's Moonwalker
 * The NewZealand Story
+* The Ninja
 * Operation Wolf
 * OutRun
 * OutRun Europa
@@ -47,10 +50,13 @@
 * Sonic the Hedgehog
 * Sonic the Hedgehog 2
 * Space Harrier
+* Spellcaster
 * Street Fighter II
 * Streets of Rage
 * Streets of Rage 2
 * Strider
+* Super Space Invaders
+* Super Tetris
 * Teddy Boy
 * Turma da Mônica em: O Resgate
 * Ultima IV: Quest of the Avatar
@@ -58,18 +64,29 @@
 * Zillion II: The Tri-Formation Cycle
 
 # LOGIC ISSUES
+* Ace of Aces (blank screen)
 * Altered Beast (stuck on splash screen)
 * Ninja Gaiden (player clips through floor)
+* Paperboy (blank screen)
+* Penguin Land (gameplay and localization)
 * Prince of Persia (gameplay and graphics)
+* Psycho Fox (blank screen)
+* Turma da Monica em: O Castelo do Dragao (constantly falling)
+* Wonder Boy in Monster World (contantly falling)
 
 # AUDIO ISSUES
 * Sonic Blast (no startup jingle)
 
 # VISUAL ISSUES
-* Astro Warrior (tilemap artifacts)
+* Action Figther (artifacts)
+* Astro Warrior (artifacts)
+* Disney's Aladdin (sprite flicker)
+* Disney's Deep Duck Trouble (palette issues)
+* Disney's Land of Illusion (tilemap issues?)
 * Earthworm Jim (tilemap issues)
 * Ghouls'n Ghosts (tilemap artifacts)
 * Golden Axe Warrior (sprite issues)
+* Hang-On (sprite + palette issues)
 * Kenseiden (sprite issues)
 * Mortal Kombat (tile artifacts?)
 * Mortal Kombat II (palette issues)
@@ -77,6 +94,7 @@
 * Paperboy (tilemap issues)
 * Phantasy Star (tilemap artifacts)
 * Rambo: First Blood Part II (sprite issues)
+* Sapo Xulé: O Mestre do Kung Fu (palette issues)
 * Sapo Xulé: S.O.S. Lagoa Poluida (Astro Warrior clone)
 * Sonic the Hedgehog Spinball (tilemap issues)
 * X-Men: Mojo World (sprite + tilemap issues)
@@ -85,4 +103,5 @@
 
 
 # UNSUPPORTED
-* Galaga (Korean mapper)
+* Korean mapper games
+* Mode 1 or 2 games
