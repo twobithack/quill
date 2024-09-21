@@ -1,7 +1,5 @@
 ﻿using Quill.Common;
 using System;
-using System.Diagnostics;
-using System.ServiceModel.Channels;
 using System.Threading;
 
 namespace Quill.Sound;
@@ -22,7 +20,6 @@ public sealed class PSG
 
   #region Fields
   private readonly Channel[] _channels;
-  private readonly BufferManager _bufferPool;
   private readonly Thread _bufferingThread;
   private readonly short[] _buffer;
   private int _bufferPosition;
@@ -40,10 +37,8 @@ public sealed class PSG
     _channels[TONE2] = new Channel();
     _channels[NOISE] = new Channel();
 
-    _bufferPosition = 0;
     _buffer = new short[BUFFER_SIZE];
-    _bufferPool = BufferManager.CreateBufferManager(BUFFER_SIZE * 2, BUFFER_SIZE * 2);
-    _bufferingThread = new Thread(ManageBuffer);
+    _bufferingThread = new Thread(FillBuffer);
   }
 
   #region Methods
@@ -99,42 +94,37 @@ public sealed class PSG
 
     lock (_buffer)
     {
-      var samples = _bufferPool.TakeBuffer(_bufferPosition * 2);
-      Buffer.BlockCopy(_buffer, 0, samples, 0, samples.Length);
+      var byteBuffer = new byte[_bufferPosition * 2];
+      Buffer.BlockCopy(_buffer, 0, byteBuffer, 0, byteBuffer.Length);
       _bufferPosition = 0;
-      return samples;
+      return byteBuffer;
     }
   }
 
-  private void ManageBuffer()
+  private void FillBuffer()
   {
-    var clock = new Stopwatch();
-    var lastUpdate = 0d;
-    clock.Start();
-
     while (_playing)
     {
       if (_bufferPosition == BUFFER_SIZE)
         continue;
 
-      var currentTime = clock.Elapsed.TotalMilliseconds;
-      if (currentTime < lastUpdate + UPDATE_INTERVAL_MS)
-        continue;
-
       lock (_buffer)
       {
-        for (int i = 0; i < BUFFER_SIZE / 2; i++)
+        var samples = BUFFER_SIZE / 2; // TODO: calculate based on
+        for (var sample = 0; sample < samples; sample++)
         {
           short tone = 0;
-          for (int index = 0; index < NOISE; index++)
-            tone += _channels[index].GenerateTone();
+          for (var channel = 0; channel < NOISE; channel++)
+            tone += _channels[channel].GenerateTone();
 
           tone += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
 
-          if (i % 5 == 0)
+          if (sample % 5 == 0)
             _buffer[_bufferPosition++] = tone;
         }
       }
+
+      Thread.Sleep(UPDATE_INTERVAL_MS);
     }
   }
   #endregion

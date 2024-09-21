@@ -5,8 +5,8 @@ namespace Quill.Sound;
 public struct Channel
 {
   #region Constants
-  private const ushort LFSR_RESET = 0b_1000_0000_0000_0000;
-  private static readonly int[] VOLUME_TABLE = new[]
+  private const ushort INITIAL_LFSR = 0b_1000_0000_0000_0000;
+  private static readonly short[] VOLUME_TABLE = new short[]
   {
     8191, 6507, 5168, 4105,
     3261, 2590, 2057, 1642,
@@ -20,7 +20,7 @@ public struct Channel
   public ushort Tone;
   private ushort _counter;
   private ushort _lfsr;
-  private int _polarity;
+  private bool _polarity;
 
   #endregion
 
@@ -29,8 +29,8 @@ public struct Channel
     Volume = 0xF;
     Tone = 0x0;
     _counter = 0;
-    _polarity = 1;
-    _lfsr = LFSR_RESET;
+    _polarity = true;
+    _lfsr = INITIAL_LFSR;
   }
 
   #region Methods
@@ -44,10 +44,13 @@ public struct Channel
     if (_counter <= 0)
     {
       _counter = Tone;
-      _polarity = -_polarity;
+      _polarity = !_polarity;
     }
 
-    return (short)(VOLUME_TABLE[Volume] * _polarity);
+    if (_polarity)
+      return VOLUME_TABLE[Volume];
+    else
+      return (short)-VOLUME_TABLE[Volume];
   }
 
   public short GenerateNoise(ushort tone2)
@@ -67,8 +70,8 @@ public struct Channel
         0x03 => tone2
       };
 
-      _polarity = -_polarity;
-      if (_polarity == 1)
+      _polarity = !_polarity;
+      if (_polarity)
       {
         var isWhiteNoise = ((Tone >> 2) & 1) > 0;
         var tapped = (byte)(Tone & 0b_1001);
