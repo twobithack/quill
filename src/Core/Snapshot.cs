@@ -1,5 +1,4 @@
-﻿using Quill.Video;
-using Quill.Video.Definitions;
+﻿using Quill.Video.Definitions;
 using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
