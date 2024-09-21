@@ -60,13 +60,13 @@ unsafe public ref struct Memory
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadByte(ushort address)
   {
-    var index = address % PAGE_SIZE;
-
     if (address < PAGING_START)
-      return _rom[0x00, index];
+      return _rom[0x00, address];
 
     if (address < PAGE_SIZE)
-      return _rom[_page0, index];
+      return _rom[_page0, address];
+
+    var index = address % PAGE_SIZE;
 
     if (address < PAGE_SIZE * 2)
       return _rom[_page1, index];
@@ -90,11 +90,11 @@ unsafe public ref struct Memory
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByte(ushort address, byte value)
   {
-    var index = address % PAGE_SIZE;
-
     if (address < PAGE_SIZE * 2)
       return;
-  
+
+    var index = address % PAGE_SIZE;
+
     if (address < PAGE_SIZE * 3)
     {
       if (!_bankEnable)
