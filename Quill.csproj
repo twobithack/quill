@@ -18,6 +18,9 @@
     <EmbeddedResource Include="content/Icon.ico">
       <LogicalName>Icon.ico</LogicalName>
     </EmbeddedResource>
+    <None Update="config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0" />
