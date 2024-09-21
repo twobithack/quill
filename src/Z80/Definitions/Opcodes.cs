@@ -2,7 +2,7 @@ namespace Quill.Z80
 {
   public static class Opcodes
   {
-    public struct Opcode
+    public readonly struct Opcode
     {
       public readonly Operation Operation;
       public readonly Operand Destination;
@@ -311,7 +311,7 @@ namespace Quill.Z80
       new Opcode(Operation.RST,  Operand.Implied,    Operand.RST7),
     };
 
-    public static readonly Opcode[] Bit = new Opcode[]
+    public static readonly Opcode[] CB = new Opcode[]
     {
       // Opcodes 0x00 - 0x0F
       new Opcode(Operation.RLC,  Operand.B,          Operand.Implied),
@@ -602,7 +602,7 @@ namespace Quill.Z80
       new Opcode(Operation.SET,  Operand.Bit7,       Operand.A)
     };
 
-    public static readonly Opcode[] IX = new Opcode[]
+    public static readonly Opcode[] DD = new Opcode[]
     {
       // Opcodes 0x00 - 0x0F
       new Opcode(),
@@ -893,7 +893,7 @@ namespace Quill.Z80
       new Opcode()
     };
     
-    public static readonly Opcode[] BitIX = new Opcode[]
+    public static readonly Opcode[] DDCB = new Opcode[]
     {// Opcodes 0x00 - 0x0F
       new Opcode(),  
       new Opcode(),  
@@ -1183,7 +1183,7 @@ namespace Quill.Z80
       new Opcode()
     };
     
-    public static readonly Opcode[] Misc = new Opcode[]
+    public static readonly Opcode[] ED = new Opcode[]
     {
       // Opcodes 0x00 - 0x0F
       new Opcode(),  
@@ -1402,7 +1402,7 @@ namespace Quill.Z80
       new Opcode()
     };
     
-    public static readonly Opcode[] IY = new Opcode[]
+    public static readonly Opcode[] FD = new Opcode[]
     {
       // Opcodes 0x00 - 0x0F
       new Opcode(),
@@ -1693,7 +1693,7 @@ namespace Quill.Z80
       new Opcode()
     };
     
-    public static readonly Opcode[] BitIY = new Opcode[]
+    public static readonly Opcode[] FDCB = new Opcode[]
     {
       // Opcodes 0x00 - 0x0F
       new Opcode(),  

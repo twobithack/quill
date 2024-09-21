@@ -19,6 +19,8 @@ namespace Quill
         Console.WriteLine(cpu.ToString());
         cycles++;
       }
+
+      cpu.DumpState();
     }
   }
 }

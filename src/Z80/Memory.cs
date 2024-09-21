@@ -1,6 +1,6 @@
 using Quill.Extensions;
 
-namespace Quill
+namespace Quill.Z80
 {
   public class Memory
   {
@@ -24,6 +24,20 @@ namespace Quill
     {
       get => Read(address);
       set => Write(address, value);
+    }
+
+    public void Dump(byte pages)
+    {
+      for (byte page = 0x00; page <= pages; page++)
+        DumpPage(page);
+    }
+
+    public void DumpPage(byte page)
+    {
+      var row = "";
+      for (byte col = 0x00; col < byte.MaxValue; col++)
+        row += _memory[At(page.Append(col))].ToHex() + " ";
+      Console.WriteLine(row);
     }
   }
 }
