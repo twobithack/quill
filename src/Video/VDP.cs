@@ -360,7 +360,7 @@ unsafe public class VDP
       for (int i = 0; i < 8; i++)
       {
         var x = (effectiveCol * 8) + _hScroll + i;
-        x %= _hResolution;
+        x %= (_hResolution + 1);
 
         if (x > _hResolution)
           break;
