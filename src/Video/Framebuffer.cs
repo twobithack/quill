@@ -16,7 +16,6 @@ unsafe public sealed class Framebuffer
   #region Fields
   private readonly int[] _pixelbuffer;
   private readonly bool[] _occupied;
-
   private readonly byte[] _framebuffer;
   private bool _frameQueued;
   #endregion
@@ -38,7 +37,7 @@ unsafe public sealed class Framebuffer
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public bool CheckCollision(int x, int y) => _occupied[GetPixelIndex(x, y)];
+  public bool IsOccupied(int x, int y) => _occupied[GetPixelIndex(x, y)];
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void PushFrame()
@@ -55,7 +54,7 @@ unsafe public sealed class Framebuffer
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte[] PopFrame()
-  {      
+  {
     if (!_frameQueued)
       return null;
 

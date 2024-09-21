@@ -22,10 +22,13 @@ public sealed partial class VDP
   public byte ReadStatus()
   {
     _controlWritePending = false;
+    IRQ = false;
 
     var value = (byte)_status;
-    _status &= ~Status.All;
-    IRQ = false;
+    if (_displayMode4)
+      _status &= ~Status.All;
+    else
+      _status &= ~(Status.Collision | Status.VBlank);
     return value;
   }
 
@@ -212,7 +215,7 @@ public sealed partial class VDP
           continue;
         paletteIndex += 16;
 
-        if (_framebuffer.CheckCollision(x, _vCounter))
+        if (_framebuffer.IsOccupied(x, _vCounter))
         {
           SpriteCollision = true;
           continue;
@@ -252,11 +255,11 @@ public sealed partial class VDP
                         (tilemapColumn * 2);
 
       var tile = GetTileData(tileAddress);
-      var tileRow = tile.VerticalFlip
-                  ? 7 - (tilemapY % TILE_SIZE)
-                  : tilemapY % TILE_SIZE;
+      var offset = tile.VerticalFlip
+                 ? 7 - (tilemapY % TILE_SIZE)
+                 : tilemapY % TILE_SIZE;
 
-      var patternAddress = (tile.PatternIndex * 32) + (tileRow * 4);
+      var patternAddress = (tile.PatternIndex * 32) + (offset * 4);
       var patternData = GetPatternData(patternAddress);
 
       for (int i = 0; i < TILE_SIZE; i ++)
@@ -270,17 +273,18 @@ public sealed partial class VDP
           x += _hScroll;
         x %= HORIZONTAL_RESOLUTION;
 
-        if (x < TILE_SIZE && _maskLeftBorder)
+        if (x < TILE_SIZE && 
+            _maskLeftBorder)
           continue;
 
         if (!tile.HighPriotity && 
-            _framebuffer.CheckCollision(x, _vCounter))
+            _framebuffer.IsOccupied(x, _vCounter))
           continue;
 
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
         if (paletteIndex == TRANSPARENT)
         {
-          if (_framebuffer.CheckCollision(x, _vCounter))
+          if (_framebuffer.IsOccupied(x, _vCounter))
             continue;
           paletteIndex = _backgroundColor;
         }
@@ -342,8 +346,14 @@ public sealed partial class VDP
       var offset = _vCounter - y;
       if (spriteHeight == TILE_SIZE)
       {
-        var address = _spriteGeneratorTableAddress + (pattern * 8);
+        var address = _spriteGeneratorTableAddress + (pattern << 3);
         RasterizeMode2Sprite(address, x, offset, color);
+      }
+      else
+      {
+        var address = _spriteGeneratorTableAddress + ((pattern & 0b_1111_1100) << 3);
+        RasterizeMode2Sprite(address, x, offset, color);
+        RasterizeMode2Sprite(address, x + 8, offset + 16, color);
       }
     }
 
@@ -356,7 +366,7 @@ public sealed partial class VDP
     var data = _vram[address + offset];
     for (byte i = 0; i < TILE_SIZE; i++)
     {
-      if (_framebuffer.CheckCollision(x + i, _vCounter))
+      if (_framebuffer.IsOccupied(x + i, _vCounter))
       {
         SpriteCollision = true;
         continue;
@@ -372,6 +382,64 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeLegacyBackground()
   {
+    var patternGeneratorBase = TestRegisterBit(0x4, 2)
+                             ? 0x2000
+                             : 0;
+    var colorTableBase = TestRegisterBit(0x3, 7)
+                       ? 0x2000
+                       : 0;
+
+    var colorMask = _registers[0x3] << 1;
+    colorMask &= 0b_1111_1110;
+    colorMask |= 1;
+
+    var row = _vCounter / TILE_SIZE;
+    var tileRow = _vCounter % TILE_SIZE;
+
+    var tableSelect = row switch
+    {
+      < 8   => 0,
+      < 16  => TestRegisterBit(0x4, 1) ? 2 : 0,
+      _     => TestRegisterBit(0x4, 0) ? 1 : 0
+    };
+    var tableOffset = tableSelect switch
+    {
+      1 => 256 << 3,
+      2 => 256 << 4,
+      _ => 0
+    };
+
+    for (int backgroundColumn = 0; backgroundColumn < BACKGROUND_COLUMNS; backgroundColumn++)
+    {
+      var pattern = _vram[_nameTableAddress + backgroundColumn + (row * BACKGROUND_COLUMNS)];
+      var address = patternGeneratorBase + (pattern * TILE_SIZE);
+      address += tableOffset;
+      address += tileRow;
+
+      var patternData = _vram[address];
+      var colorIndex = pattern & colorMask;
+      var colorData = _vram[colorTableBase + tableOffset + tileRow + (colorIndex * TILE_SIZE)];
+
+      var x = backgroundColumn * TILE_SIZE;
+      var spriteEnd = x + TILE_SIZE;
+      for (byte column = TILE_SIZE - 1; x < spriteEnd; x++, column--)
+      {
+        if (x > HORIZONTAL_RESOLUTION)
+          continue;
+
+        var color = patternData.TestBit(column)
+                  ? colorData.HighNibble()
+                  : colorData.LowNibble();
+
+        if (color == TRANSPARENT)
+          continue;
+
+        if (_framebuffer.IsOccupied(x, _vCounter))
+          continue;
+
+        SetLegacyPixel(x, _vCounter, color, false);
+      }
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
