@@ -83,6 +83,7 @@
 * Geraldinho
 * Ghostbusters
 * Ghouls'n Ghosts
+* Global Gladiators
 * G-LOC Air Battle
 * Golden Axe
 * Golden Axe Warrior 
@@ -117,6 +118,7 @@
 * Monopoly
 * Montezuma's Revenge featuring Panama Joe
 * Mortal Kombat
+* Mortal Kombat 3
 * Ms. Pac-Man
 * The New Zealand Story
 * The Ninja
@@ -158,6 +160,7 @@
 * Sapo Xulé: S.O.S. Lagoa Poluida
 * SDI - Strategic Defense Initiative
 * Sega World Tournament Golf
+* Sensible Soccer
 * Shanghai
 * Shinobi
 * The Simpsons: Bart vs. the World
@@ -170,7 +173,9 @@
 * Space Harrier
 * Special Criminal Investigation
 * Speedball
+* Speedball 2
 * Spellcaster
+* Spider-Man: Return of the Sinister Six
 * Spider-Man vs. the Kingpin
 * Star Wars
 * Street Fighter II
@@ -187,6 +192,7 @@
 * Taz in Escape from Mars
 * Taz-Mania
 * Teddy Boy
+* Terminator 2
 * Thunder Bladebart vs the space mutants
 * Time Soldiers
 * Tom and Jerry: The Movie
@@ -217,14 +223,13 @@
 * Back to the Future Part III (palette)
 * Basketball Nightmare (palette)
 * Bram Stoker's Dracula (sprite flickering)
-* California Games II ()
+* California Games II
 * Cool Spot (sprite flickering)
 * Dick Tracy (palette)
 * Deep Duck Trouble Starring Donald Duck (palette)
 * Incredible Hulk (palette)
 * Krusty's Fun House (palette)
 * Mortal Kombat II (palette)
-* Mortal Kombat 3 (no splash screen)
 * Teddy Boy Blues (palette)
 * Ren and Stimpy - Quest for the Shaven Yak (palette)
 * The Simpsons: Bart vs. the Space Mutants (palette)
@@ -238,14 +243,9 @@
 * Bank Panic
 * Cosmic Spacehead
 * Desert Speedtrap Starring Roadrunner (nothing after menus)
-* Global Gladiators (stuck on splash screen)
 * Indiana Jones and the Last Crusade
 * Parlour Games 
 * Sega Chess (nothing after splash screen)
-* Sonic's Edusoft
-* Speedball 2 (sound only after splash screen)
-* Spider-Man: Return of the Sinister Six
-* Terminator 2 (nothing after splash screen)
 
 # UNSUPPORTED
 * Alex Kidd BMX Trial (paddle)

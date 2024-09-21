@@ -80,6 +80,9 @@ public sealed partial class VDP
   private bool SpriteOverflow
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    get => _status.HasFlag(Status.Overflow);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Status.Overflow, value);
   }
 
