@@ -20,7 +20,7 @@ namespace Quill
         cycles++;
       }
 
-      cpu.DumpState();
+      cpu.DumpMemory();
     }
   }
 }

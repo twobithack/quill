@@ -17,8 +17,23 @@ namespace Quill.Z80
         Source = src;
       }
 
+      public bool IsWordOperation() => _wordOperands.Contains(Destination) ||
+                                       _wordOperands.Contains(Source);
+
       public override string ToString() => $"{Operation} {Destination},{Source}";
     }
+
+    private static readonly Operand[] _wordOperands = new Operand[]
+    {      
+      Operand.AF, 
+      Operand.BC, 
+      Operand.DE, 
+      Operand.HL, 
+      Operand.IX,  
+      Operand.IY, 
+      Operand.PC,
+      Operand.SP
+    };
 
     public static readonly Opcode[] Main = new Opcode[]
     {

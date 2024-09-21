@@ -5,7 +5,6 @@ namespace Quill.Z80
 {
   public partial class CPU
   {
-    private Registers _registers;
     private Memory _memory;
     private ushort _memPtr;
     private int _cycleCount;
@@ -14,7 +13,6 @@ namespace Quill.Z80
     public CPU()
     {
       _memory = new Memory();
-      _registers = new Registers();
     }
 
     public void LoadProgram(byte[] rom)
@@ -23,7 +21,7 @@ namespace Quill.Z80
         _memory[i] = rom[i];
     }
 
-    private byte FetchByte() => _memory[_registers.PC++];
+    private byte FetchByte() => _memory[_pc++];
 
     private ushort FetchWord()
     {
@@ -31,11 +29,11 @@ namespace Quill.Z80
       var highByte = FetchByte();
       return highByte.Append(lowByte);
     }
-    
+
     public void Step()
     {
       var op = FetchByte();
-      _registers.Instruction = op switch
+      _instruction = op switch
       {
         0xCB  =>  Opcodes.CB[FetchByte()],
         0xDD  =>  DecodeDDInstruction(),
@@ -44,7 +42,7 @@ namespace Quill.Z80
         _     =>  Opcodes.Main[op]
       };
 
-      switch (_registers.Instruction.Operation)
+      switch (_instruction.Operation)
       {
         case Operation.ADC:   ADC();  break;
         case Operation.ADD:   ADD();  break;
@@ -146,12 +144,12 @@ namespace Quill.Z80
         case Operand.BCi:
         case Operand.DEi:
         case Operand.HLi:
-          _memPtr = _registers.ReadPair(operand);
+          _memPtr = ReadRegisterPair(operand);
           break;
 
         case Operand.IXd:
         case Operand.IYd:
-          _memPtr = (byte)(_registers.Read(operand) + FetchByte());
+          _memPtr = (byte)(ReadRegister(operand) + FetchByte());
           break;
 
         case Operand.Immediate:
@@ -165,7 +163,7 @@ namespace Quill.Z80
         case Operand.F:
         case Operand.H:
         case Operand.L:
-          return _registers.Read(operand);
+          return ReadRegister(operand);
         
         default: throw new InvalidOperationException();
       }
@@ -191,7 +189,7 @@ namespace Quill.Z80
         case Operand.IY: 
         case Operand.PC:
         case Operand.SP:
-          return _registers.ReadPair(operand);
+          return ReadRegisterPair(operand);
 
         default:
           return 0x00;
@@ -201,29 +199,32 @@ namespace Quill.Z80
 
     private void WriteByte(byte value)
     {
-      switch (_registers.Instruction.Destination)
+      switch (_instruction.Destination)
       {
-        case Operand.A: _registers.A = value; return;
-        case Operand.B: _registers.B = value; return;
-        case Operand.C: _registers.C = value; return;
-        case Operand.D: _registers.D = value; return;
-        case Operand.E: _registers.E = value; return;
-        case Operand.F: _registers.F = value; return;
-        case Operand.H: _registers.H = value; return;
-        case Operand.L: _registers.L = value; return;
+        case Operand.A: _a = value; return;
+        case Operand.B: _b = value; return;
+        case Operand.C: _c = value; return;
+        case Operand.D: _d = value; return;
+        case Operand.E: _e = value; return;
+        case Operand.F: _f = value; return;
+        case Operand.H: _h = value; return;
+        case Operand.L: _l = value; return;
 
         case Operand.Indirect:  
           _memPtr = FetchWord();
           break;
 
         case Operand.IXd:
-        case Operand.IYd:
-          _memPtr = (byte)(_registers.Read(_registers.Instruction.Source) + FetchByte());
+          _memPtr = (byte)(_ix + FetchByte());
           break;
 
-        case Operand.BCi: _memPtr = _registers.BC; break;
-        case Operand.DEi: _memPtr = _registers.DE; break;
-        case Operand.HLi: _memPtr = _registers.HL; break;
+        case Operand.IYd:
+          _memPtr = (byte)(_iy + FetchByte());
+          break;
+
+        case Operand.BCi: _memPtr = _bc; break;
+        case Operand.DEi: _memPtr = _de; break;
+        case Operand.HLi: _memPtr = _hl; break;
 
         default: throw new InvalidOperationException();
       }
@@ -232,41 +233,28 @@ namespace Quill.Z80
 
     private void WriteWord(ushort value)
     {
-      switch (_registers.Instruction.Destination)
+      switch (_instruction.Destination)
       {
         case Operand.Indirect:
           _memory.WriteWord(_memPtr, value);
           return;
 
-        case Operand.AF: _registers.AF = value; return;
-        case Operand.BC: _registers.BC = value; return;
-        case Operand.DE: _registers.DE = value; return;
-        case Operand.HL: _registers.HL = value; return;
-        case Operand.IX: _registers.IX = value; return;
-        case Operand.IY: _registers.IY = value; return;
-        case Operand.PC: _registers.PC = value; return;
-        case Operand.SP: _registers.SP = value; return;
+        case Operand.AF: _af = value; return;
+        case Operand.BC: _bc = value; return;
+        case Operand.DE: _de = value; return;
+        case Operand.HL: _hl = value; return;
+        case Operand.IX: _ix = value; return;
+        case Operand.IY: _iy = value; return;
+        case Operand.PC: _pc = value; return;
+        case Operand.SP: _sp = value; return;
 
         default: throw new InvalidOperationException();
       }
     }
 
-    private bool IsWordOperation() => _wordOperands.Contains(_registers.Instruction.Destination) ||
-                                      _wordOperands.Contains(_registers.Instruction.Source);
+    public void DumpMemory() => _memory.DumpPage(0x00);
 
-    private static readonly Operand[] _wordOperands = new Operand[]
-    {      
-      Operand.AF, 
-      Operand.BC, 
-      Operand.DE, 
-      Operand.HL, 
-      Operand.IX,  
-      Operand.IY, 
-      Operand.PC,
-      Operand.SP
-    };
-
-    public void DumpState() => _memory.DumpPage(0x00);
-    public override String ToString() => _registers.ToString() + $"Instruction Count: {_instructionCount}";
+    public override String ToString() => DumpRegisters() +
+      $"Flags: {_flags.ToString()} Instruction Count: {_instructionCount}";
   }
 }
