@@ -31,16 +31,38 @@ public sealed partial class VDP
   private readonly int[] _palette;
   private readonly byte[] _vram;
   private readonly byte[] _registers;
-  private ushort _vCounter;
-  private ushort _controlWord;
+
+  private ControlCode _controlCode;
   private Status _status;
+
+  private ushort _addressBus;
+  private ushort _nameTableAddress;
+  private ushort _colorTableAddress;
+  private ushort _patternGeneratorTableAddress;
+  private ushort _spriteAttributeTableAddress;
+  private ushort _spriteGeneratorTableAddress;
+  private ushort _vCounter;
+
   private byte _dataBuffer;
   private byte _lineInterrupt;
   private byte _hScroll;
   private byte _vScroll;
+  private byte _backgroundColor;
+
+  private bool _shiftX;
+  private bool _lineInterruptEnabled;
+  private bool _maskLeftBorder;
+  private bool _limitHScroll;
+  private bool _limitVScroll;
+  private bool _zoomSprites;
+  private bool _stretchSprites;
+  private bool _vSyncEnabled;
+  private bool _displayEnabled;
+  private bool _useSecondPatternTable;
+
   private bool _controlWritePending;
   private bool _vCounterJumped;
-  private bool _frameQueued;
+  private bool _displayMode4;
 
   // TODO: derive from display mode
   private readonly int _backgroundRows = 28;
@@ -53,20 +75,6 @@ public sealed partial class VDP
   #region Properties
   public int ScanlinesPerFrame => _vCounterMax + (_vCounterJumpStart - _vCounterJumpEnd);
   public byte VCounter => (byte)Math.Min(_vCounter, byte.MaxValue);
-
-  private ControlCode ControlCode => (ControlCode)(_controlWord >> 14);
-  private ushort Address => (ushort)(_controlWord & 0b_0011_1111_1111_1111);
-  private bool ShiftX => TestRegisterBit(0x0, 3);
-  private bool LineInterruptEnabled => TestRegisterBit(0x0, 4);
-  private bool MaskLeftBorder => TestRegisterBit(0x0, 5);
-  private bool LimitHScroll => TestRegisterBit(0x0, 6);
-  private bool LimitVScroll => TestRegisterBit(0x0, 7);
-  private bool ZoomSprites => TestRegisterBit(0x1, 0);
-  private bool StretchSprites => TestRegisterBit(0x1, 1);
-  private bool VSyncEnabled => TestRegisterBit(0x1, 5);
-  private bool DisplayEnabled => TestRegisterBit(0x1, 6);
-  private bool UseSecondPatternTable => TestRegisterBit(0x6, 2);
-  private byte BackgroundColor => (byte)(_registers[0x7] & 0b_0011);
 
   private bool SpriteCollision
   {
@@ -92,35 +100,40 @@ public sealed partial class VDP
     set => SetFlag(Status.VBlank, value);
   }
 
-  private bool VSyncPending => VSyncEnabled && VBlank;
+  private bool VSyncPending => _vSyncEnabled && VBlank;
   #endregion
 
   #region Methods
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void LoadState(Snapshot snapshot)
   {
+    for (byte register = 0; register < REGISTER_COUNT; register++)
+      WriteRegister(register, snapshot.VRegisters[register]);
     Array.Copy(snapshot.Palette, _palette, _palette.Length);
     Array.Copy(snapshot.VRAM, _vram, _vram.Length);
-    Array.Copy(snapshot.VRegisters, _registers, _registers.Length);
     _status = snapshot.VDPStatus;
     _dataBuffer = snapshot.DataPort;
     _lineInterrupt = snapshot.LineInterrupt;
     _hScroll = snapshot.HScroll;
     _vScroll = snapshot.VScroll;
-    _controlWord = snapshot.ControlWord;
+    _addressBus = (ushort)(snapshot.ControlWord & 0b_0011_1111_1111_1111);
+    _controlCode = (ControlCode)(snapshot.ControlWord >> 14);
     _controlWritePending = snapshot.ControlWritePending;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SaveState(ref Snapshot snapshot)
   {
+    Array.Copy(_registers, snapshot.VRegisters, _registers.Length);
     Array.Copy(_palette, snapshot.Palette, _palette.Length);
     Array.Copy(_vram, snapshot.VRAM, _vram.Length);
-    Array.Copy(_registers, snapshot.VRegisters, _registers.Length);
     snapshot.VDPStatus = _status;
     snapshot.DataPort = _dataBuffer;
     snapshot.LineInterrupt = _lineInterrupt;
     snapshot.HScroll = _hScroll;
     snapshot.VScroll = _vScroll;
-    snapshot.ControlWord = _controlWord;
+    snapshot.ControlWord = _addressBus;
+    snapshot.ControlWord |= (ushort)((byte)_controlCode << 14);
     snapshot.ControlWritePending = _controlWritePending;
   }
 
@@ -144,7 +157,7 @@ public sealed partial class VDP
 
   public override string ToString()
   {
-    var state = $"VDP | Control: {ControlCode} | Address: {Address.ToHex()} | SAT Address: {GetSpriteAttributeTableAddress().ToHex()}\r\n";
+    var state = $"VDP | Control: {_controlCode} | Address: {_addressBus.ToHex()} | SAT Address: {_spriteAttributeTableAddress.ToHex()}\r\n";
 
     for (byte register = 0; register < REGISTER_COUNT; register++)
       state += $"R{register.ToHex()}:{_registers[register].ToHex()} ";
