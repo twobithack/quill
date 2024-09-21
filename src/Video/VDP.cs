@@ -1,6 +1,5 @@
 using Quill.Common.Extensions;
 using Quill.Video.Definitions;
-using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
