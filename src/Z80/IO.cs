@@ -8,6 +8,5 @@ namespace Quill
       public bool NMI;
       public bool IRQ;
     }
-
   }
 }
