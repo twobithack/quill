@@ -11,7 +11,7 @@ unsafe public ref partial struct Z80
   private void ADC8()
   {
     var addend = ReadByteOperand(_instruction.Source);
-    if (_carry) addend++;
+    if (_carryFlag) addend++;
     var sum = _a + addend;
     
     var flags = (Flags)(sum & 0b_1010_1000);
@@ -33,7 +33,7 @@ unsafe public ref partial struct Z80
   private void ADC16()
   {
     var addend = ReadWordOperand(_instruction.Source);
-    if (_carry) addend++;
+    if (_carryFlag) addend++;
     var sum = _hl + addend;
 
     var flags = (Flags)((sum >> 8) & 0b_1010_1000);
@@ -121,7 +121,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -143,7 +143,7 @@ unsafe public ref partial struct Z80
   private void CCF()
   {
     var flags = (Flags)((byte)_flags & 0b_1110_1100);
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Halfcarry;
     else
       flags |= Flags.Carry;
@@ -187,7 +187,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Halfcarry;
     if (_bc != 0)
       flags |= Flags.Parity;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -197,7 +197,7 @@ unsafe public ref partial struct Z80
   private void CPDR()
   {
     CPD();
-    if (_parity && _zero)
+    if (_parityFlag && _zeroFlag)
       _pc -= 2;
   }
 
@@ -217,7 +217,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Halfcarry;
     if (_bc != 0)
       flags |= Flags.Parity;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -227,7 +227,7 @@ unsafe public ref partial struct Z80
   private void CPIR()
   {
     CPI();
-    if (_parity && !_zero)
+    if (_parityFlag && !_zeroFlag)
       _pc -= 2;
   }
 
@@ -246,13 +246,13 @@ unsafe public ref partial struct Z80
   {
     var value = _a;
 
-    if (_halfcarry || (_a & 0x0f) > 9)
-      value = _negative
+    if (_halfcarryFlag || (_a & 0x0f) > 9)
+      value = _negativeFlag
             ? (byte)(value - 0x06)
             : (byte)(value + 0x06);
 
-    if (_carry || (_a > 0x99))
-      value = _negative
+    if (_carryFlag || (_a > 0x99))
+      value = _negativeFlag
             ? (byte)(value - 0x60)
             : (byte)(value + 0x60);
 
@@ -263,7 +263,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Halfcarry;
     if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
-    if (_carry | (_a > 0x99))
+    if (_carryFlag | (_a > 0x99))
       flags |= Flags.Carry;
 
     _a = value;
@@ -283,7 +283,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Halfcarry;
     if (minuend.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;      
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     WriteByteResult(difference);
@@ -399,7 +399,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -418,7 +418,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Halfcarry;
     if (augend.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     WriteByteResult(sum);
@@ -444,7 +444,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
     if (_b == 0)
       flags |= Flags.Zero;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -454,7 +454,7 @@ unsafe public ref partial struct Z80
   private void INDR()
   {
     IND();
-    if (!_zero)
+    if (!_zeroFlag)
       _pc -= 2;
   }
 
@@ -470,7 +470,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
     if (_b == 0)
       flags |= Flags.Zero;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -480,7 +480,7 @@ unsafe public ref partial struct Z80
   private void INIR()
   {
     INI();
-    if (!_zero)
+    if (!_zeroFlag)
       _pc -= 2;
   }
 
@@ -535,10 +535,10 @@ unsafe public ref partial struct Z80
   private void LDDR()
   {
     LDD();
-    if (_parity)
+    if (_parityFlag)
       _pc -= 2;
     else 
-      _parity = false;
+      _parityFlag = false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -562,10 +562,10 @@ unsafe public ref partial struct Z80
   private void LDIR()
   {
     LDI();
-    if (_parity)
+    if (_parityFlag)
       _pc -= 2;
     else 
-      _parity = false;
+      _parityFlag = false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -623,7 +623,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
     if (_b == 0)
       flags |= Flags.Zero;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -633,7 +633,7 @@ unsafe public ref partial struct Z80
   private void OTDR()
   {
     OUTD();
-    if (!_zero)
+    if (!_zeroFlag)
       _pc -= 2;
   }
 
@@ -649,7 +649,7 @@ unsafe public ref partial struct Z80
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
     if (_b == 0)
       flags |= Flags.Zero;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -659,7 +659,7 @@ unsafe public ref partial struct Z80
   private void OTIR()
   {
     OUTI();
-    if (!_zero)
+    if (!_zeroFlag)
       _pc -= 2;
   }
 
@@ -722,7 +722,7 @@ unsafe public ref partial struct Z80
     var value = ReadByteOperand(_instruction.Destination);
     var msb = value.MSB();
     value = (byte)(value << 1);
-    if (_carry) value++;
+    if (_carryFlag) value++;
 
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
@@ -743,7 +743,7 @@ unsafe public ref partial struct Z80
   private void RLA()
   {
     var value = (byte)(_a << 1);
-    if (_carry) value++;
+    if (_carryFlag) value++;
 
     var flags = (Flags)(0b_1100_0100 & (byte)_flags) | 
                 (Flags)(0b_0010_1000 & value);
@@ -808,7 +808,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (BitOperations.PopCount(_a) % 2 == 0)
       flags |= Flags.Parity;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
 
     _memory.WriteByte(address, value);
@@ -822,7 +822,7 @@ unsafe public ref partial struct Z80
     var lsb = value.LSB();
     value = (byte)(value >> 1);
 
-    if (_carry)
+    if (_carryFlag)
       value |= 0b_1000_0000;
 
     var flags = (Flags)(value & 0b_1010_1000);
@@ -846,7 +846,7 @@ unsafe public ref partial struct Z80
     var lsb = _a.LSB();
     _a = (byte)(_a >> 1);
 
-    if (_carry)
+    if (_carryFlag)
       _a |= 0b_1000_0000;
     
     var flags = (Flags)(0b_1100_0100 & (byte)_flags) | 
@@ -914,7 +914,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (BitOperations.PopCount(_a) % 2 == 0)
       flags |= Flags.Parity;
-    if (_carry)
+    if (_carryFlag)
       flags |= Flags.Carry;
     
     _memory.WriteByte(address, value);
@@ -933,7 +933,7 @@ unsafe public ref partial struct Z80
   private void SBC8()
   {
     var subtrahend = ReadByteOperand(_instruction.Source);
-    if (_carry) subtrahend++;
+    if (_carryFlag) subtrahend++;
     var difference = _a - subtrahend;
 
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
@@ -955,7 +955,7 @@ unsafe public ref partial struct Z80
   private void SBC16()
   {
     var subtrahend = ReadWordOperand(_instruction.Source);
-    if (_carry) subtrahend++;
+    if (_carryFlag) subtrahend++;
     var difference = _hl - subtrahend;
 
     var flags = (Flags)((difference >> 8) & 0b_1010_1000) | Flags.Negative;
@@ -977,7 +977,7 @@ unsafe public ref partial struct Z80
   private void SCF()
   {
     var flags = (Flags)((byte)_flags & 0b_1110_1100);
-    _carry = true;
+    _carryFlag = true;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

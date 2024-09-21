@@ -6,34 +6,41 @@ namespace Quill;
 
 public unsafe sealed class Quill
 {
+  private const double FRAME_TIME_MS = 1000d / 60d;
+  private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d; 
+
   public static void Main(string[] args)
   {
     var rom = ReadROM(@"test/sdsc.sms");
     var vdp = new VDP();
     var z80 = new Z80(rom, vdp);
+    var clock = new Stopwatch();
+    var lastFrame = 0d;
 
     #if DEBUG
     z80.InitializeSDSC();
     #endif
 
-    var instructionCount = 0ul;
-    var sw = new Stopwatch();
-    sw.Start();
-
-    while (instructionCount < 100000000ul)
+    clock.Start();
+    while (true)
     {
-      z80.Step();
-      instructionCount++;
+      var currentTime = clock.Elapsed.TotalMilliseconds;
+      if (currentTime < lastFrame + FRAME_TIME_MS)
+        continue;
+
+      var cyclesThisFrame = 0d;
+      while (cyclesThisFrame <= SYSTEM_CYCLES_PER_FRAME)
+      {
+        var cpuCycles = z80.Step();
+        var systemCycles = cpuCycles * 3;
+        
+        vdp.Update(systemCycles);
+
+        cyclesThisFrame += systemCycles;
+      }
+      
+      lastFrame = currentTime;
     }
-
-    sw.Stop();
-
-    Console.WriteLine(z80.ToString());
-    Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(instructionCount * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");
-
-    #if DEBUG
-    z80.DumpMemory("mem.txt");
-    #endif 
   }
 
   private static byte[] ReadROM(string path) => File.ReadAllBytes(path);
