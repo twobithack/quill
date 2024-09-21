@@ -11,12 +11,23 @@ namespace Sonic.Definitions
     F,
     L,
     HL,
+    AF,
     BC,
     DE, 
     IX,
     IY,
-    NN,
-    Implied,
-    Immediate
+    PC,
+    SP,
+    Ap,
+    Bp,
+    Cp,
+    Dp,
+    Ep,
+    Fp,
+    Lp,
+    HLp,
+    AFp,
+    BCp,
+    DEp
   } 
 }
