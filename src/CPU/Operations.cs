@@ -178,7 +178,7 @@ unsafe public ref partial struct Z80
     var subtrahend = _memory.ReadByte(HL);
     var difference = _a - subtrahend;
 
-    HL++;
+    HL--;
     BC--;
           
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
@@ -198,7 +198,7 @@ unsafe public ref partial struct Z80
   private void CPDR()
   {
     CPD();
-    if (ParityFlag && ZeroFlag)
+    if (ParityFlag && !ZeroFlag)
       _pc -= 2;
   }
 
@@ -350,13 +350,13 @@ unsafe public ref partial struct Z80
         return;
 
       case Operand.IX:
-        _memory.WriteWord(_sp, _ix);
-        _ix = temp;
+        _memory.WriteWord(_sp, IX);
+        IX = temp;
         return;
 
       case Operand.IY:
-        _memory.WriteWord(_sp, _iy);
-        _iy = temp;
+        _memory.WriteWord(_sp, IY);
+        IY = temp;
         return;
     }
   }

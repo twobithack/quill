@@ -3,7 +3,6 @@ using Quill.CPU.Definitions;
 using Quill.Input;
 using Quill.Video;
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using static Quill.CPU.Definitions.Opcodes;
 
@@ -29,11 +28,13 @@ unsafe public ref partial struct Z80
   private byte _l = 0x00;
   private byte _i = 0x00;
   private byte _r = 0x00;
+  private byte _ixh = 0x00;
+  private byte _ixl = 0x00;
+  private byte _iyh = 0x00;
+  private byte _iyl = 0x00;
   private byte _io = 0x00;
   private ushort _pc = 0x0000;
   private ushort _sp = 0x0000;
-  private ushort _ix = 0x0000;
-  private ushort _iy = 0x0000;
   private ushort _afShadow = 0x0000;
   private ushort _bcShadow = 0x0000;
   private ushort _deShadow = 0x0000;
@@ -157,65 +158,54 @@ unsafe public ref partial struct Z80
       _l = value.LowByte();
     }
   }
-  
-  private byte IHh
+
+  private ushort IX
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _ix.HighByte();
+    get => _ixh.Concat(_ixl);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => _ix = value.Concat(IXl);
+    set
+    {
+      _ixh = value.HighByte();
+      _ixl = value.LowByte();
+    }
   }
 
-  private byte IXl
+  private ushort IY
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _ix.LowByte();
+    get => _iyh.Concat(_iyl);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => _ix = IHh.Concat(value);
-  }
-
-  private byte IYh
-  {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _iy.HighByte();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => _iy = value.Concat(IYl);
-  }
-
-  private byte IYl
-  {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _iy.LowByte();
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    set => _iy = IYh.Concat(value);
-  }
+    set
+    {
+      _iyh = value.HighByte();
+      _iyl = value.LowByte();
+    }
+  } 
   #endregion
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int Step()
   {
     HandleInterrupts();
-
     if (_halt)
     {
       _r++;
-      return 4;
+      return NOP_CYCLES;
     }
-
     DecodeInstruction();
     ExecuteInstruction();
     return _instruction.Cycles;
   }
 
-  public void RunFor(int cycles)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Run(int cycles)
   {
     while (cycles > 0)
       cycles -= Step();
   }
-
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void HandleInterrupts()
@@ -277,7 +267,7 @@ unsafe public ref partial struct Z80
     if (op != 0xCB)
       return Opcodes.DD[op];
     
-    _memPtr = (ushort)(_ix + FetchDisplacement());
+    _memPtr = (ushort)(IX + FetchDisplacement());
     return Opcodes.DDCB[FetchByte()];
   }
   
@@ -296,7 +286,7 @@ unsafe public ref partial struct Z80
     if (op != 0xCB)
       return Opcodes.FD[op];
       
-    _memPtr = (ushort)(_iy + FetchDisplacement());
+    _memPtr = (ushort)(IY + FetchDisplacement());
     return Opcodes.FDCB[FetchByte()];
   }
 
@@ -404,9 +394,9 @@ unsafe public ref partial struct Z80
     {
       case Operand.Immediate:
         if (_instruction.Destination == Operand.IXd)
-          _memPtr = (ushort)(_ix + FetchDisplacement());
+          _memPtr = (ushort)(IX + FetchDisplacement());
         else if (_instruction.Destination == Operand.IYd)
-          _memPtr = (ushort)(_iy + FetchDisplacement());
+          _memPtr = (ushort)(IY + FetchDisplacement());
         return FetchByte();
 
       case Operand.A: return _a;
@@ -419,10 +409,10 @@ unsafe public ref partial struct Z80
       case Operand.L: return _l;
       case Operand.I: return _i;
       case Operand.R: return _r;
-      case Operand.IXh: return IHh;
-      case Operand.IXl: return IXl;
-      case Operand.IYh: return IYh;
-      case Operand.IYl: return IYl;
+      case Operand.IXh: return _ixh;
+      case Operand.IXl: return _ixl;
+      case Operand.IYh: return _iyh;
+      case Operand.IYl: return _iyl;
 
       case Operand.Indirect:
         address = FetchWord();
@@ -433,18 +423,16 @@ unsafe public ref partial struct Z80
       case Operand.HLi: address = HL; break;
 
       case Operand.IXd:
-        _memPtr ??= (ushort)(_ix + FetchDisplacement());
+        _memPtr ??= (ushort)(IX + FetchDisplacement());
         address = _memPtr.Value;
         break;
 
       case Operand.IYd:
-        _memPtr ??= (ushort)(_iy + FetchDisplacement());
+        _memPtr ??= (ushort)(IY + FetchDisplacement());
         address = _memPtr.Value;
         break;
 
-      #if DEBUG
       default: throw new Exception($"Invalid byte operand: {_instruction}");
-      #endif
     }
     return _memory.ReadByte(address);
   }
@@ -466,13 +454,11 @@ unsafe public ref partial struct Z80
       case Operand.BC: return BC;
       case Operand.DE: return DE;
       case Operand.HL: return HL;
-      case Operand.IX: return _ix;
-      case Operand.IY: return _iy;
+      case Operand.IX: return IX;
+      case Operand.IY: return IY;
       case Operand.SP: return _sp;
 
-      #if DEBUG
       default: throw new Exception($"Invalid word operand: {_instruction}");
-      #endif
     }
     return _memory.ReadWord(address); 
   }
@@ -519,10 +505,10 @@ unsafe public ref partial struct Z80
       case Operand.L: _l = value; return;
       case Operand.I: _i = value; return;
       case Operand.R: _r = value; return;
-      case Operand.IXh: IHh = value; return;
-      case Operand.IXl: IXl = value; return;
-      case Operand.IYh: IYh = value; return;
-      case Operand.IYl: IYl = value; return;
+      case Operand.IXh: _ixh = value; return;
+      case Operand.IXl: _ixl = value; return;
+      case Operand.IYh: _iyh = value; return;
+      case Operand.IYl: _iyl = value; return;
 
       case Operand.BCi: address = BC; break;
       case Operand.DEi: address = DE; break;
@@ -530,16 +516,14 @@ unsafe public ref partial struct Z80
       case Operand.Indirect: address = FetchWord(); break;
 
       case Operand.IXd:
-        address = _memPtr ?? (ushort)(_ix + FetchDisplacement());
+        address = _memPtr ?? (ushort)(IX + FetchDisplacement());
         break;
 
       case Operand.IYd: 
-        address = _memPtr ?? (ushort)(_iy + FetchDisplacement());
+        address = _memPtr ?? (ushort)(IY + FetchDisplacement());
         break;
 
-      #if DEBUG
       default: throw new Exception($"Invalid byte destination: {destination}");
-      #endif
     }
     _memory.WriteByte(address, value);
   }
@@ -558,13 +542,11 @@ unsafe public ref partial struct Z80
       case Operand.BC: BC = value; return;
       case Operand.DE: DE = value; return;
       case Operand.HL: HL = value; return;
-      case Operand.IX: _ix = value; return;
-      case Operand.IY: _iy = value; return;
+      case Operand.IX: IX = value; return;
+      case Operand.IY: IY = value; return;
       case Operand.SP: _sp = value; return;
       
-      #if DEBUG
       default: throw new Exception($"Invalid word destination: {_instruction}");
-      #endif
     }
   }
 
@@ -593,18 +575,10 @@ unsafe public ref partial struct Z80
                              mirror % 2 != 0):
         _io = value;
         return;
-
+      
       #if DEBUG
-      case 0xFC:
-        ControlSDSC(value);
-        return;
-
-      case 0xFD:
-        WriteSDSC(value);
-        return;
-
-      //default: 
-      //  throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
+      default: 
+       throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
       #endif
     }
   }
@@ -621,10 +595,7 @@ unsafe public ref partial struct Z80
     Operand.Positive  => !SignFlag,
     Operand.Odd       => !ParityFlag,
     Operand.Implied   => true,
-
-    #if DEBUG
     _ => throw new Exception($"Invalid condition: {_instruction}")
-    #endif
   };
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -635,7 +606,7 @@ unsafe public ref partial struct Z80
   public string DumpRegisters()
   {
     return "╒══════════╤══════════╤══════════╤══════════╤═══════════╕\r\n" +
-           $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {_ix.ToHex()} │ IY: {_iy.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
+           $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {IX.ToHex()} │ IY: {IY.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
            $"│ AF: {AF.ToHex()} │ BC: {BC.ToHex()} │ DE: {DE.ToHex()} │ HL: {HL.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
            $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
            "╘══════════╧══════════╧══════════╧══════════╧═══════════╛\r\n";
