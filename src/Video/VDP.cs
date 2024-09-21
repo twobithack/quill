@@ -213,7 +213,7 @@ public sealed partial class VDP
       var patternData = GetPatternData(patternAddress);
 
       var spriteEnd = x + TILE_SIZE;
-      for (byte column = TILE_SIZE - 1; x < spriteEnd; x++, column--)
+      for (byte i = TILE_SIZE - 1; x < spriteEnd; x++, i--)
       {
         if (x >= HORIZONTAL_RESOLUTION)
           break;
@@ -221,7 +221,7 @@ public sealed partial class VDP
         if (x < 8 && _maskLeftBorder)
           continue;
 
-        var paletteIndex = patternData.GetPaletteIndex(column);
+        var paletteIndex = patternData.GetPaletteIndex(i);
         if (paletteIndex == TRANSPARENT)
           continue;
         paletteIndex += 16;
@@ -243,22 +243,20 @@ public sealed partial class VDP
     var allowHScroll = !_limitHScroll ||
                        _vCounter / TILE_SIZE > HSCROLL_LIMIT;
 
-    for (int column = 0; column < BACKGROUND_COLUMNS; column++)
+    for (int backgroundColumn = 0; backgroundColumn < BACKGROUND_COLUMNS; backgroundColumn++)
     {
       int tilemapY = _vCounter;
       if (!_limitVScroll ||
-          column < VSCROLL_LIMIT)
+          backgroundColumn < VSCROLL_LIMIT)
         tilemapY += _vScroll;
 
       var tilemapRow = tilemapY / TILE_SIZE;
       if (tilemapRow >= _backgroundRows) 
         tilemapRow -= _backgroundRows;
                     
-      var tilemapColumn = column;
+      var tilemapColumn = backgroundColumn;
       if (allowHScroll)
-        tilemapColumn -= _hScroll / TILE_SIZE;
-      if (tilemapColumn < 0)
-        tilemapColumn += BACKGROUND_COLUMNS;
+        tilemapColumn += BACKGROUND_COLUMNS - (_hScroll / TILE_SIZE);
       tilemapColumn %= BACKGROUND_COLUMNS;
 
       var tileAddress = _nameTableAddress + 
@@ -273,11 +271,11 @@ public sealed partial class VDP
       var patternAddress = (tile.PatternIndex * 32) + (offset * 4);
       var patternData = GetPatternData(patternAddress);
 
-      for (int i = 0; i < TILE_SIZE; i ++)
+      for (int i = 0; i < TILE_SIZE; i++)
       {
-        var columnOffset = i;
-        if (tile.HorizontalFlip)
-          columnOffset = 7 - columnOffset;
+        var columnOffset = tile.HorizontalFlip
+                         ? 7 - i
+                         : i;
 
         var x = (tilemapColumn * TILE_SIZE) + columnOffset;
         if (allowHScroll)
@@ -396,53 +394,47 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeLegacyBackground()
   {
-    var colorMask = _registers[0x3] << 1;
-    colorMask &= 0b_1111_1110;
-    colorMask |= 1;
+    var colorMask = (_registers[0x3] << 1) | 1;
 
     var row = _vCounter / TILE_SIZE;
-    var tileRow = _vCounter % TILE_SIZE;
+    var rowOffset = _vCounter % TILE_SIZE;
 
-    var tableSelect = row switch
+    var tableAddressOffset = row switch
     {
       < 8   => 0,
-      < 16  => TestRegisterBit(0x4, 1) ? 1 : 0,
-      _     => TestRegisterBit(0x4, 0) ? 2 : 0
-    };
-    var tableOffset = tableSelect switch
-    {
-      1 => 256 << 3,
-      2 => 256 << 4,
-      _ => 0
+      < 16  => TestRegisterBit(0x4, 1) ? 0x800 : 0,
+      _     => TestRegisterBit(0x4, 0) ? 0x1000 : 0
     };
 
-    for (int backgroundColumn = 0; backgroundColumn < BACKGROUND_COLUMNS; backgroundColumn++)
+    for (int column = 0; column < BACKGROUND_COLUMNS; column++)
     {
-      var pattern = _vram[_nameTableAddress + backgroundColumn + (row * BACKGROUND_COLUMNS)];
-      var address = _patternGeneratorTableAddress + (pattern * TILE_SIZE);
-      address += tableOffset;
-      address += tileRow;
+      var patternIndex = _vram[_nameTableAddress + column + (row * BACKGROUND_COLUMNS)];
+      var patternAddress = _patternGeneratorTableAddress + tableAddressOffset;
+      patternAddress += rowOffset + (patternIndex * TILE_SIZE);
 
-      var patternData = _vram[address];
-      var colorIndex = pattern & colorMask;
-      var colorData = _vram[_colorTableAddress + tableOffset + tileRow + (colorIndex * TILE_SIZE)];
+      var colorIndex = patternIndex & colorMask;
+      var colorAddress = _colorTableAddress + tableAddressOffset;
+      colorAddress += rowOffset + (colorIndex * TILE_SIZE);
+      
+      var patternData = _vram[patternAddress];
+      var colorData = _vram[colorAddress];
 
-      var x = backgroundColumn * TILE_SIZE;
-      var spriteEnd = x + TILE_SIZE;
-      for (byte column = TILE_SIZE - 1; x < spriteEnd; x++, column--)
+      var x = column * TILE_SIZE;
+      var tileEnd = x + TILE_SIZE;
+      for (byte i = TILE_SIZE - 1; x < tileEnd; x++, i--)
       {
         if (x >= HORIZONTAL_RESOLUTION)
           return;
 
-        var color = patternData.TestBit(column)
+        var color = patternData.TestBit(i)
                   ? colorData.HighNibble()
                   : colorData.LowNibble();
-
-        if (color == TRANSPARENT)
-          continue;
-
+        
         if (_framebuffer.IsOccupied(x, _vCounter))
           continue;
+        
+        if (color == TRANSPARENT)
+          color = _backgroundColor;
 
         SetLegacyPixel(x, _vCounter, color, false);
       }
@@ -556,7 +548,7 @@ public sealed partial class VDP
         return;
 
       case 0x7:
-        _backgroundColor = (byte)(value & 0b_0011);
+        _backgroundColor = (byte)(value & 0b_1111);
         return;
     };
   }
