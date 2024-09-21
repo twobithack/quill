@@ -24,7 +24,9 @@ namespace Sonic
       _instructionCount++;
     }
     
-    private Instruction _instruction = new Instruction();
+    private Instruction _cir = new Instruction();
+    private ushort _addressBus = 0x00;
+
     private byte FetchByte() => _memory[PC++];
 
     private ushort FetchWord()
@@ -41,7 +43,7 @@ namespace Sonic
 
       if (!Opcodes.IsPrefix(opcode[0]))
       {
-        _instruction = Decode(opcode);
+        _cir = Decode(opcode);
         return;
       }
 
@@ -53,12 +55,12 @@ namespace Sonic
         opcode[2] = FetchByte();
       }
  
-        _instruction = Decode(opcode);
+        _cir = Decode(opcode);
     }
 
     private void ExecuteInstruction()
     {
-      switch (_instruction.Operation)
+      switch (_cir.Operation)
       {
         case Operation.ADC:   ADC();  break;
         case Operation.ADD:   ADD();  break;
@@ -125,7 +127,7 @@ namespace Sonic
     {
       return  $"╒══════════╤════════════╤════════════╤════════════╤════════════╕\r\n" +
               $"│Registers │  AF: {AF.ToHex()} │  BC: {BC.ToHex()} │  DE: {DE.ToHex()} │  HL: {HL.ToHex()} │\r\n" +
-              $"│          │ AF': {AFp.ToHex()} │ BC': {BCp.ToHex()} │ DE': {DEp.ToHex()} │ HL': {HLp.ToHex()} │\r\n" +
+      //        $"│          │ AF': {AFp.ToHex()} │ BC': {BCp.ToHex()} │ DE': {DEp.ToHex()} │ HL': {HLp.ToHex()} │\r\n" +
               $"│          │  IX: {IX.ToHex()} │  IY: {IY.ToHex()} │  PC: {PC.ToHex()} │  SP: {SP.ToHex()} │\r\n" +
               $"╘══════════╧════════════╧════════════╧════════════╧════════════╛\r\n" +
               $"Flags: {_flags.ToString()}, Instruction Count: {_instructionCount} ";

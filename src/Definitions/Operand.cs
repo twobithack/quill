@@ -5,7 +5,6 @@ namespace Sonic.Definitions
     Implied,
     Immediate,
     Indirect,
-    Relative,
 
     // 8-bit registers
     A, 
@@ -31,10 +30,8 @@ namespace Sonic.Definitions
     BCi,
     DEi,
     HLi,
-    IXi,
-    IYi,
 
-    // displacement index
+    // indexed
     IXd,
     IYd,
 
@@ -47,17 +44,6 @@ namespace Sonic.Definitions
     Odd,
     Negative,
     Positive,
-
-    // shadow registers
-    Ap,
-    Bp,
-    Cp,
-    Dp,
-    Ep,
-    Fp,
-    AFp,
-    BCp, 
-    DEp,
 
     // bit indexes
     Bit0,
