@@ -14,14 +14,15 @@ namespace Quill
 
       var sw = new Stopwatch();
       sw.Start();
-      while (cycles < 1000000000ul)
+      while (cycles < 100000000ul)
       {
         cpu.Step();
         cycles++;
       }
       sw.Stop();
 
-      cpu.DumpMemory("mem.txt");
+      // cpu.DumpMemory("mem.txt");
+      // cpu.DumpROM("rom.txt");
 
       Console.WriteLine(cpu);
       Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(cycles * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");
