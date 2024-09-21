@@ -10,18 +10,17 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ADC8()
   {
-    var augend = _a;
     var addend = ReadByteOperand(_instruction.Source);
     if (_carry) addend++;
-    var sum = augend + addend;
+    var sum = _a + addend;
     
     var flags = (Flags)(sum & 0b_1010_1000);
-    if (sum == 0)
+    if ((byte)sum == 0)
       flags |= Flags.Zero;
-    if ((augend & 0x0F) + (addend & 0x0F) > 0x0F)
+    if (_a.LowNibble() + addend.LowNibble() > 0xF)
       flags |= Flags.Halfcarry;
-    if ((augend < 0x80 && addend < 0x80 && _sign) ||
-        (augend >= 0x80 && addend >= 0x80 && !_sign))
+    if (_a.Sign() == addend.Sign() && 
+        _a.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;
     if (sum > byte.MaxValue)
       flags |= Flags.Carry;
@@ -33,18 +32,17 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ADC16()
   {
-    var augend = _hl;
     var addend = ReadWordOperand(_instruction.Source);
     if (_carry) addend++;
-    var sum = augend + addend;
+    var sum = _hl + addend;
 
     var flags = (Flags)((sum >> 8) & 0b_1010_1000);
-    if (sum == 0)
+    if ((ushort)sum == 0)
       flags |= Flags.Zero;
-    if ((augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF)
+    if ((_hl & 0xFFF) + (addend & 0xFFF) > 0xFFF)
       flags |= Flags.Halfcarry;
-    if ((augend < 0x8000 && addend < 0x8000 && _sign) ||
-        (augend >= 0x8000 && addend >= 0x8000 && !_sign))
+    if (_hl.Sign() == addend.Sign() && 
+        _hl.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;
     if (sum > ushort.MaxValue)
       flags |= Flags.Carry;
@@ -56,17 +54,16 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ADD8()
   {
-    var augend = _a;
     var addend = ReadByteOperand(_instruction.Source);
-    var sum = augend + addend;
+    var sum = _a + addend;
 
     var flags = (Flags)(sum & 0b_1010_1000);
-    if (sum == 0)
+    if ((byte)sum == 0)
       flags |= Flags.Zero;
-    if ((augend & 0x0F) + (addend & 0x0F) > 0x0F)
+    if (_a.LowNibble() + addend.LowNibble() > 0xF)
       flags |= Flags.Halfcarry;
-    if ((augend < 0x80 && addend < 0x80 && _sign) ||
-        (augend >= 0x80 && addend >= 0x80 && !_sign))
+    if (_a.Sign() == addend.Sign() && 
+        _a.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;
     if (sum > byte.MaxValue)
       flags |= Flags.Carry;
@@ -83,12 +80,12 @@ unsafe public ref partial struct CPU
     var sum = augend + addend;
 
     var flags = (Flags)((sum >> 8) & 0b_1010_1000);
-    if (sum == 0)
+    if ((ushort)sum == 0)
       flags |= Flags.Zero;
-    if ((augend & 0x0FFF) + (addend & 0x0FFF) > 0x0FFF)
+    if ((augend & 0xFFF) + (addend & 0xFFF) > 0xFFF)
       flags |= Flags.Halfcarry;
-    if ((augend < 0x8000 && addend < 0x8000 && _sign) ||
-        (augend >= 0x8000 && addend >= 0x8000 && !_sign))
+    if (augend.Sign() == addend.Sign() && 
+        augend.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;
     if (sum > ushort.MaxValue)
       flags |= Flags.Carry;
@@ -100,15 +97,15 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void AND()
   {
-    var result = _a & ReadByteOperand(_instruction.Source);
+    var result = (byte)(_a & ReadByteOperand(_instruction.Source));
 
     var flags = (Flags)(result & 0b_1010_1000) | Flags.Halfcarry;
     if (result == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount((byte)result) % 2 == 0)
+    if (BitOperations.PopCount(result) % 2 == 0)
       flags |= Flags.Parity;
 
-    _a = (byte)result;
+    _a = result;
     _flags = flags;
   }
   
@@ -117,17 +114,13 @@ unsafe public ref partial struct CPU
   {
     var value = ReadByteOperand(_instruction.Source);
     var index = (byte)_instruction.Destination;
-    var flags = (Flags)(value & 0b_1010_1000);
     
     // TODO: Handle undocumented flags for HLi and indexed cases
+    var flags = (Flags)(value & 0b_1010_1000) | Flags.Halfcarry;
     if (!value.TestBit(index))
       flags |= Flags.Zero;
-
-    flags |= Flags.Halfcarry;
-
-    if (BitOperations.PopCount((byte)value) % 2 == 0)
+    if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
-
     if (_carry)
       flags |= Flags.Carry;
 
@@ -149,7 +142,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void CCF()
   {
-    var flags = (Flags)((byte)_flags & 0b_1100_0100);
+    var flags = (Flags)((byte)_flags & 0b_1110_1100);
     if (_carry)
       flags |= Flags.Halfcarry;
     else
@@ -165,14 +158,14 @@ unsafe public ref partial struct CPU
     var difference = _a - subtrahend;
 
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
-    if (difference == 0)
+    if (_a == subtrahend)
       flags |= Flags.Zero;
-    if ((_a & 0x0F) - (subtrahend & 0x0F) < 0)
+    if (_a.LowNibble() < subtrahend.LowNibble())
       flags |= Flags.Halfcarry;
-    if ((_a < 0x80 && subtrahend >= 0x80 && _sign) ||
-        (_a >= 0x80 && subtrahend < 0x80 && !_sign))
+    if (_a.Sign() != subtrahend.Sign() &&
+        _a.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;
-    if (subtrahend > _a)
+    if (difference < 0)
       flags |= Flags.Carry;
 
     _flags = flags;
@@ -188,9 +181,9 @@ unsafe public ref partial struct CPU
     _bc--;
           
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
-    if (difference == 0)
+    if (_a == subtrahend)
       flags |= Flags.Zero;
-    if ((_a & 0x0F) - (subtrahend & 0x0F) < 0)
+    if (_a.LowNibble() < subtrahend.LowNibble())
       flags |= Flags.Halfcarry;
     if (_bc != 0)
       flags |= Flags.Parity;
@@ -204,7 +197,7 @@ unsafe public ref partial struct CPU
   private void CPDR()
   {
     CPD();
-    if (_parity && !_zero)
+    if (_parity && _zero)
       _pc -= 2;
   }
 
@@ -214,21 +207,16 @@ unsafe public ref partial struct CPU
     var subtrahend = _memory.ReadByte(_hl);
     var difference = _a - subtrahend;
 
-    _hl--;
+    _hl++;
     _bc--;
     
-    var flags = (Flags)(difference & 0b_1010_1000);
-    if (difference == 0)
+    var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
+    if (_a == subtrahend)
       flags |= Flags.Zero;
-
-    if ((_a & 0x0F) - (subtrahend & 0x0F) < 0)
+    if (_a.LowNibble() < subtrahend.LowNibble())
       flags |= Flags.Halfcarry;
-
     if (_bc != 0)
       flags |= Flags.Parity;
-    
-    flags |= Flags.Negative;
-
     if (_carry)
       flags |= Flags.Carry;
 
@@ -248,15 +236,10 @@ unsafe public ref partial struct CPU
   {
     _a = (byte)~_a;
     
-    var flags = (Flags)(_a & 0b_0010_1000) | Flags.Halfcarry | Flags.Negative;
-    if (_sign)
-      flags |= Flags.Sign;
-    if (_zero)
-      flags |= Flags.Zero;
-    if (_carry)
-      flags |= Flags.Carry;
-
-    _flags = flags;
+    _flags = (Flags)(0b_1100_0101 & (byte)_flags) | 
+             (Flags)(0b_0010_1000 & _a) | 
+              Flags.Halfcarry | 
+              Flags.Negative;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -297,9 +280,9 @@ unsafe public ref partial struct CPU
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
     if (difference == 0)
       flags |= Flags.Zero;
-    if ((minuend & 0x0F) == 0)
+    if (minuend.LowNibble() == 0)
       flags |= Flags.Halfcarry;
-    if (minuend >= 0x80 && !_sign)
+    if (minuend.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;      
     if (_carry)
       flags |= Flags.Carry;
@@ -311,8 +294,8 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void DEC16()
   {
-    var value = ReadWordOperand(_instruction.Destination).Decrement();
-    WriteWordResult(value);
+    var value = ReadWordOperand(_instruction.Destination);
+    WriteWordResult(value.Decrement());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -415,7 +398,7 @@ unsafe public ref partial struct CPU
       return;
     
     var flags = (Flags)(value & 0b_1010_1000);
-    if (value == 0x00)
+    if (value == 0)
       flags |= Flags.Zero;
     if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
@@ -434,9 +417,9 @@ unsafe public ref partial struct CPU
     var flags = (Flags)(sum & 0b_1010_1000);
     if (sum == 0)
       flags |= Flags.Zero;
-    if ((augend & 0x0F) == 0x0F)
+    if (augend.LowNibble() == 0xF)
       flags |= Flags.Halfcarry;
-    if (augend < 0x80 && _sign)
+    if (augend.Sign() != flags.HasFlag(Flags.Sign))
       flags |= Flags.Parity;
     if (_carry)
       flags |= Flags.Carry;
@@ -448,8 +431,8 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void INC16()
   {
-    var value = ReadWordOperand(_instruction.Destination).Increment();
-    WriteWordResult(value);
+    var value = ReadWordOperand(_instruction.Destination);
+    WriteWordResult(value.Increment());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -525,18 +508,10 @@ unsafe public ref partial struct CPU
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void LD8()
-  {
-    var value = ReadByteOperand(_instruction.Source);
-    WriteByteResult(value);
-  }
+  private void LD8() => WriteByteResult(ReadByteOperand(_instruction.Source));
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void LD16()
-  {
-    var value = ReadWordOperand(_instruction.Source);
-    WriteWordResult(value);
-  }
+  private void LD16() => WriteWordResult(ReadWordOperand(_instruction.Source));
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void LDD()
@@ -559,7 +534,7 @@ unsafe public ref partial struct CPU
   private void LDDR()
   {
     LDD();
-    if (_overflow)
+    if (!_parity)
       _pc -= 2;
   }
 
@@ -584,7 +559,7 @@ unsafe public ref partial struct CPU
   private void LDIR()
   {
     LDI();
-    if (_overflow)
+    if (_parity)
       _pc -= 2;
   }
 
@@ -596,7 +571,7 @@ unsafe public ref partial struct CPU
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
     if (difference == 0)
       flags |= Flags.Zero;
-    if ((difference & 0x0F) > 0)
+    if (_a.LowNibble() > 0)
       flags |= Flags.Halfcarry;
     if (_a == 0x80)
       flags |= Flags.Parity;
@@ -624,26 +599,10 @@ unsafe public ref partial struct CPU
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void OTDR()
-  {
-    OUTD();
-    if (_b != 0x00)
-      _pc -= 2;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void OTIR()
-  {
-    OUTI();
-    if (_b != 0x00)
-      _pc -= 2;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void OUT()
   {
-    var value = ReadByteOperand(_instruction.Source);
     var port = ReadByteOperand(_instruction.Destination);
+    var value = ReadByteOperand(_instruction.Source);
     WritePort(port, value);
   }
 
@@ -657,12 +616,20 @@ unsafe public ref partial struct CPU
     _b--;
     
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
-    if (_b == 0x00)
+    if (_b == 0)
       flags |= Flags.Zero;
     if (_carry)
       flags |= Flags.Carry;
 
     _flags = flags;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void OTDR()
+  {
+    OUTD();
+    if (!_zero)
+      _pc -= 2;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -675,7 +642,7 @@ unsafe public ref partial struct CPU
     _b--;
     
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
-    if (_b == 0x00)
+    if (_b == 0)
       flags |= Flags.Zero;
     if (_carry)
       flags |= Flags.Carry;
@@ -684,10 +651,18 @@ unsafe public ref partial struct CPU
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void OTIR()
+  {
+    OUTI();
+    if (!_zero)
+      _pc -= 2;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void POP()
   {
-    _sp -= 2;
     var word = _memory.ReadWord(_sp);
+    _sp += 2;
     WriteWordResult(word);
   }
 
@@ -695,8 +670,8 @@ unsafe public ref partial struct CPU
   private void PUSH()
   {
     var word = ReadWordOperand(_instruction.Source);
+    _sp -= 2;
     _memory.WriteWord(_sp, word);
-    _sp += 2;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -740,14 +715,12 @@ unsafe public ref partial struct CPU
   private void RL()
   {
     var value = ReadByteOperand(_instruction.Destination);
-    var msb = value.GetMSB();
+    var msb = value.MSB();
     value = (byte)(value << 1);
-
-    if (_carry)
-      value |= 0b_0000_0001;
+    if (_carry) value++;
 
     var flags = (Flags)(value & 0b_1010_1000);
-    if (value == 0x00)
+    if (value == 0)
       flags |= Flags.Zero;
     if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
@@ -762,13 +735,11 @@ unsafe public ref partial struct CPU
   private void RLA()
   {
     var value = (byte)(_a << 1);
-    if (_carry)
-      value |= 0b_0000_0001;
+    if (_carry) value++;
 
-    var flags = (Flags)(value & 0b_0010_1000) | (Flags)((byte)_flags & 0b_1100_0100);
-    if (BitOperations.PopCount(value) % 2 == 0)
-      flags |= Flags.Parity;
-    if (_a.GetMSB())
+    var flags = (Flags)(0b_1100_0100 & (byte)_flags) | 
+                (Flags)(0b_0010_1000 & value);
+    if (_a.MSB())
       flags |= Flags.Carry;
 
     _a = value;
@@ -779,14 +750,12 @@ unsafe public ref partial struct CPU
   private void RLC()
   {
     var value = ReadByteOperand(_instruction.Destination);
-    var msb = value.GetMSB();
+    var msb = value.MSB();
     value = (byte)(value << 1);
-
-    if (msb)
-      value |= 0b_0000_0001;
+    if (msb) value++;
     
     var flags = (Flags)(value & 0b_1010_1000);
-    if (value == 0x00)
+    if (value == 0)
       flags |= Flags.Zero;
     if (BitOperations.PopCount(value) % 2 == 0)
       flags |= Flags.Parity;
@@ -801,14 +770,11 @@ unsafe public ref partial struct CPU
   private void RLCA()
   {
     var value = (byte)(_a << 1);
-    var msb = _a.GetMSB();
+    var msb = _a.MSB();
+    if (msb) value++;
 
-    if (msb)
-      value |= 0b_0000_0001;
-
-    var flags = (Flags)(value & 0b_0010_1000) | (Flags)((byte)_flags & 0b_1100_0100);
-    if (BitOperations.PopCount(value) % 2 == 0)
-      flags |= Flags.Parity;
+    var flags = (Flags)(0b_1100_0100 & (byte)_flags) |
+                (Flags)(0b_0010_1000 & value);
     if (msb)
       flags |= Flags.Carry;
 
@@ -821,17 +787,18 @@ unsafe public ref partial struct CPU
   {
     var address = _hl;
     var value = _memory.ReadByte(address);
-    var lowNibble = _a.GetLowNibble();
-    var highNibble = value.GetLowNibble();
+    var highNibble = value.HighNibble();
 
-    _a = (byte)((_a & 0b_1111_0000) + value.GetLowNibble());
-    value = (byte)((highNibble << 4) + lowNibble);
+    value = (byte)((value.LowNibble() << 4) + _a.LowNibble());
+    _a = (byte)((_a & 0b_1111_0000) + highNibble);
 
     var flags = (Flags)(_a & 0b_1000_0000);
-    if (_a == 0x00)
+    if (_a == 0)
       flags |= Flags.Zero;
-    if (BitOperations.PopCount(value) % 2 == 0)
+    if (BitOperations.PopCount(_a) % 2 == 0)
       flags |= Flags.Parity;
+    if (_carry)
+      flags |= Flags.Carry;
     
     _memory.WriteByte(address, value);
     _flags = flags;
@@ -841,7 +808,7 @@ unsafe public ref partial struct CPU
   private void RR()
   {
     var value = ReadByteOperand(_instruction.Destination);
-    var lsb = value.GetLSB();
+    var lsb = value.LSB();
     value = (byte)(value >> 1);
 
     if (_carry)
@@ -862,7 +829,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RRA()
   {
-    var lsb = _a.GetLSB();
+    var lsb = _a.LSB();
     _a = (byte)(_a >> 1);
 
     if (_carry)
@@ -881,7 +848,7 @@ unsafe public ref partial struct CPU
   private void RRC()
   {
     var value = ReadByteOperand(_instruction.Destination);
-    var lsb = value.GetLSB();
+    var lsb = value.LSB();
     value = (byte)(value >> 1);
 
     if (lsb) 
@@ -902,7 +869,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RRCA()
   {
-    var lsb = _a.GetLSB();
+    var lsb = _a.LSB();
     _a = (byte)(_a >> 1);
     
     if (lsb) 
@@ -923,10 +890,10 @@ unsafe public ref partial struct CPU
   private void RRD()
   {
     var value = _memory.ReadByte(_hl);
-    var hlHigh = value.GetHighNibble();
-    var aLow = _a.GetLowNibble();
+    var hlHigh = value.HighNibble();
+    var aLow = _a.LowNibble();
 
-    _a = (byte)((_a & 0b_1111_0000) + value.GetLowNibble());
+    _a = (byte)((_a & 0b_1111_0000) + value.LowNibble());
     value = (byte)((aLow << 4) + hlHigh);
 
     var flags = (Flags)(_a & 0b_1010_1000);
@@ -1014,7 +981,7 @@ unsafe public ref partial struct CPU
   private void SLA()
   {
     var value = ReadByteOperand(_instruction.Source);
-    var msb = value.GetMSB();
+    var msb = value.Sign();
     value = (byte)(value << 1);
 
     var flags = (Flags)(value & 0b_1010_1000);
@@ -1033,7 +1000,7 @@ unsafe public ref partial struct CPU
   private void SLL()
   {
     var value = ReadByteOperand(_instruction.Source);
-    var msb = value.GetMSB();
+    var msb = value.Sign();
     value = (byte)(value << 1);
     value++;
 
@@ -1053,8 +1020,8 @@ unsafe public ref partial struct CPU
   private void SRA()
   {
     var value = ReadByteOperand(_instruction.Source);
-    var lsb = value.GetLSB();
-    var msb = value.GetMSB();
+    var lsb = value.LSB();
+    var msb = value.Sign();
     value = (byte)(value >> 1);
 
     if (msb)
@@ -1076,7 +1043,7 @@ unsafe public ref partial struct CPU
   private void SRL()
   {
     var value = ReadByteOperand(_instruction.Source);
-    var lsb = value.GetLSB();
+    var lsb = value.LSB();
     value = (byte)(value >> 1);
 
     var flags = (Flags)(value & 0b_0010_1000);

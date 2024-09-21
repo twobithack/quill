@@ -11,10 +11,13 @@ unsafe static class WordExtensions
   public static ushort Decrement(this ushort word) => (ushort)word--;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static byte GetLowByte(this ushort word) => (byte)word;
+  public static byte LowByte(this ushort word) => (byte)word;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static byte GetHighByte(this ushort word) => (byte)(word >> 8);
+  public static byte HighByte(this ushort word) => (byte)(word >> 8);
 
-  public static string ToHex(this ushort word) => $"{word.GetHighByte().ToHex()}-{word.GetLowByte().ToHex()}";
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static bool Sign(this ushort value) => (value & 0b_1000_0000_0000_0000) > 0;
+
+  public static string ToHex(this ushort word) => $"{word.HighByte().ToHex()}-{word.LowByte().ToHex()}";
 }

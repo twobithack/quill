@@ -7,10 +7,10 @@ namespace Quill;
 
 public unsafe ref partial struct CPU
 {
+  private Flags _flags = Flags.None;
+  private Opcode _instruction = new Opcode();
   private Memory _memory;
   private VDP _vdp;
-  private Flags _flags = Flags.None;
-  private Opcode _instruction;
 
   private bool _halt = false;
   private bool _iff1 = true;
@@ -35,12 +35,12 @@ public unsafe ref partial struct CPU
   private ushort _deShadow = 0x0000;
   private ushort _hlShadow = 0x0000;
 
-  private int _cycleCount = 0;
+  private ulong _cycleCount = 0;
 
   private byte _ixh
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _ix.GetHighByte();
+    get => _ix.HighByte();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => _ix = value.Concat(_ixl);
@@ -49,7 +49,7 @@ public unsafe ref partial struct CPU
   private byte _ixl
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _ix.GetLowByte();
+    get => _ix.LowByte();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => _ix = _ixh.Concat(value);
@@ -58,7 +58,7 @@ public unsafe ref partial struct CPU
   private byte _iyh
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _iy.GetHighByte();
+    get => _iy.HighByte();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => _iy = value.Concat(_iyl);
@@ -67,7 +67,7 @@ public unsafe ref partial struct CPU
   private byte _iyl
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _iy.GetLowByte();
+    get => _iy.LowByte();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => _iy = _iyh.Concat(value);
@@ -81,8 +81,8 @@ public unsafe ref partial struct CPU
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
     {
-      _a = value.GetHighByte();
-      _flags = (Flags)value.GetLowByte();
+      _a = value.HighByte();
+      _flags = (Flags)value.LowByte();
     }
   }
 
@@ -94,8 +94,8 @@ public unsafe ref partial struct CPU
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
     {
-      _b = value.GetHighByte();
-      _c = value.GetLowByte();
+      _b = value.HighByte();
+      _c = value.LowByte();
     }
   }
 
@@ -107,8 +107,8 @@ public unsafe ref partial struct CPU
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
     {
-      _d = value.GetHighByte();
-      _e = value.GetLowByte();
+      _d = value.HighByte();
+      _e = value.LowByte();
     }
   }
 
@@ -120,8 +120,8 @@ public unsafe ref partial struct CPU
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
     {
-      _h = value.GetHighByte();
-      _l = value.GetLowByte();
+      _h = value.HighByte();
+      _l = value.LowByte();
     }
   }
 

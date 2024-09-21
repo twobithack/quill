@@ -155,6 +155,8 @@ unsafe public ref partial struct CPU
       case Operation.LD16:  LD16();   return;
       case Operation.LDD:   LDD();    return;
       case Operation.LDDR:  LDDR();   return;
+      case Operation.LDI:   LDI();    return;
+      case Operation.LDIR:  LDIR();   return;
       case Operation.NEG:   NEG();    return;
       case Operation.NOP:   return;
       case Operation.OR:    OR();     return;
@@ -204,7 +206,7 @@ unsafe public ref partial struct CPU
       case Operation.SRL:   SRL();    return;
       case Operation.SUB:   SUB();    return;
       case Operation.XOR:   XOR();    return;
-      // default: throw new Exception($"Not found: {_instruction}");
+      default: throw new Exception($"Not found: {_instruction}");
     }
   }
 
