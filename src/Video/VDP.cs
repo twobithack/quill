@@ -57,7 +57,7 @@ public sealed partial class VDP
       _registers[register] = _controlWord.LowByte();
 
       if (register == 0x1)
-        IRQ = VSyncEnabled && VSyncPending;
+        IRQ = VSyncPending;
     }
   }
 
@@ -107,7 +107,7 @@ public sealed partial class VDP
     }
     else if (_vCounter == _vCounterActive + 1)
     {
-      VSyncPending = true;
+      VBlank = true;
     }
 
     if (_vCounter > _vCounterActive)
@@ -117,8 +117,7 @@ public sealed partial class VDP
     else if (_lineInterrupt == 0x00)
     {
       _lineInterrupt = _registers[0xA];
-      if (LineInterruptEnabled)
-        IRQ = true;
+      IRQ = LineInterruptEnabled;
     }
     else
     {
@@ -135,19 +134,16 @@ public sealed partial class VDP
       RasterizeScanline();
     }
 
-    if (!IRQ &&
-        VSyncEnabled && 
-        VSyncPending)
-      IRQ = true;
+    IRQ |= VSyncPending;
   }
 
   public byte[] ReadFramebuffer()
-  {
+  {      
+    if (!_frameQueued)
+      return null;
+
     lock (_framebuffer)
     {
-      if (!_frameQueued)
-        return null;
-
       _frameQueued = false;
       return _framebuffer;
     }
@@ -168,21 +164,107 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   {
-    // TODO: Mode 1+2 support
-    RasterizeSprites();
-    RasterizeBackground();
+    var mode = GetDisplayMode();
+    if (mode == DisplayMode.Graphic_2)
+    {
+      RasterizeSpritesMode2();
+      RasterizeBackgroundMode2();
+    }
+    else
+    {
+      RasterizeSpritesMode4();
+      RasterizeBackgroundMode4();
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeSprites()
+  private void RasterizeSpritesMode2()
   {
-    var spriteHeight = (StretchSprites || ZoomSprites) ? 16 : 8;
-    var spriteCount = 0;
+    var spriteHeight = StretchSprites ? 16 : TILE_SIZE;
+    var satAddress = GetSpriteAttributeTableAddress();
+    var sgtAddress = GetSpriteGeneratorTableAddress();
 
-    var baseAddress = GetSpriteAttributeTableAddress();
+    var spriteCount = 0;
+    for (int sprite = 0; sprite < 32; sprite++)
+    {
+      var baseAddress = satAddress + (sprite * 4);
+      ushort y = _vram[baseAddress];
+      if (y == DISABLE_SPRITES)
+      {
+        StoreIllegalSpriteIndex(sprite);
+        return;
+      }
+
+      y++;
+      if (y >= DISABLE_SPRITES)
+        y -= 0x100;
+
+      if (y > _vCounter ||
+          y + spriteHeight <= _vCounter)
+        continue;
+
+      var x = _vram[baseAddress + 1];
+      var pattern = _vram[baseAddress + 2];
+      var color = _vram[baseAddress + 3];
+
+      if (color.TestBit(7))
+        x -= 32;
+
+      color &= 0b_0000_1111;
+      if (color == TRANSPARENT)
+        continue;
+
+      spriteCount++;
+      if (spriteCount > 4)
+      {
+        StoreIllegalSpriteIndex(sprite);
+        Overflow = true;
+        return;
+      }
+      else
+        Overflow = false;
+
+      var offset = _vCounter - y;
+      if (spriteHeight == TILE_SIZE)
+      {
+        var legacyColor = Color.GetLegacyColor(color);
+        var spriteAddress = sgtAddress + (pattern * 8);
+        var data = _vram[spriteAddress + offset];
+
+        var spriteEnd = x + TILE_SIZE;
+        for (byte column = TILE_SIZE - 1; x < spriteEnd; x++, column--)
+        {
+          var pixelIndex = GetPixelIndex(x, _vCounter);
+          if (_renderbuffer[pixelIndex + 3] == OCCUPIED)
+          {
+            Collision = true;
+            continue;
+          }
+          
+          if (!data.TestBit(column))
+            continue;
+
+          SetPixelColor(pixelIndex, legacyColor, true);
+        }
+      }
+    }
+  }
+
+  private void RasterizeSpriteMode2()
+  {
+
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void RasterizeSpritesMode4()
+  {
+    var spriteHeight = (StretchSprites || ZoomSprites) ? 16 : TILE_SIZE;
+    var satAddress = GetSpriteAttributeTableAddress();
+
+    var spriteCount = 0;
     for (int sprite = 0; sprite < 64; sprite++)
     {
-      ushort y = _vram[baseAddress + sprite];
+      ushort y = _vram[satAddress + sprite];
       if (y == DISABLE_SPRITES)
       {
         // var mode = GetDisplayMode();
@@ -204,8 +286,8 @@ public sealed partial class VDP
         _status |= Status.Overflow;
 
       var offset = 0x80 + (sprite * 2);
-      int x = _vram[baseAddress + offset];
-      int patternIndex = _vram[baseAddress + offset + 1];
+      int x = _vram[satAddress + offset];
+      int patternIndex = _vram[satAddress + offset + 1];
 
       if (ShiftX)
         x -= TILE_SIZE;
@@ -221,7 +303,7 @@ public sealed partial class VDP
       var patternData = GetPatternData(patternAddress);
 
       var spriteEnd = x + TILE_SIZE;
-      for (byte i = TILE_SIZE - 1; x < spriteEnd; x++, i--)
+      for (byte column = TILE_SIZE - 1; x < spriteEnd; x++, column--)
       {
         if (x >= HORIZONTAL_RESOLUTION)
           break;
@@ -229,7 +311,7 @@ public sealed partial class VDP
         if (x < 8 && MaskLeftBorder)
           continue;
 
-        var paletteIndex = patternData.GetPaletteIndex(i);
+        var paletteIndex = patternData.GetPaletteIndex(column);
         if (paletteIndex == TRANSPARENT)
           continue;
 
@@ -245,8 +327,13 @@ public sealed partial class VDP
     }
   }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void RasterizeBackgroundMode2()
+  {
+  }
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeBackground()
+  private void RasterizeBackgroundMode4()
   {
     var baseAddress = GetNameTableAddress();
     var allowHScroll = !LimitHScroll ||
@@ -322,6 +409,28 @@ public sealed partial class VDP
     }
   }
 
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private static int GetPixelIndex(int x, int y) => (x + (y * 256)) * 4;
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetPixelColor(int pixelIndex, int paletteIndex, bool sprite)
+  {
+    var color = _cram[paletteIndex];
+    SetPixelColor(pixelIndex, color, sprite);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetPixelColor(int pixelIndex, Color color, bool sprite)
+  {
+    _renderbuffer[pixelIndex] = color.Red;
+    _renderbuffer[pixelIndex + 1] = color.Green;
+    _renderbuffer[pixelIndex + 2] = color.Blue;
+
+    if (sprite)
+      _renderbuffer[pixelIndex + 3] = OCCUPIED;
+  }
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Pattern GetPatternData(int patternAddress) => new(_vram[patternAddress],
                                                             _vram[patternAddress + 1],
@@ -333,27 +442,6 @@ public sealed partial class VDP
   {
     var data = _vram[tileAddress + 1].Concat(_vram[tileAddress]);
     return new Tile(data);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixelColor(int pixelIndex, int paletteIndex, bool sprite)
-  {
-    var color = _cram[paletteIndex];
-    _renderbuffer[pixelIndex] = color.Red;
-    _renderbuffer[pixelIndex + 1] = color.Green;
-    _renderbuffer[pixelIndex + 2] = color.Blue;
-
-    if (sprite)
-      _renderbuffer[pixelIndex + 3] = OCCUPIED;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void IncrementAddress()
-  {
-    if (Address + 1 == VRAM_SIZE)
-      _controlWord &= 0b_1100_0000_0000_0000;
-    else
-      _controlWord++;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -373,19 +461,6 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private static int GetPixelIndex(int x, int y) => (x + (y * 256)) * 4;
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private ushort GetSpriteAttributeTableAddress()
-  {
-    var address = _registers[0x5] & 0b_0111_1110;
-    return (ushort)(address << 7);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort GetNameTableAddress()
   {
     var addressMask = 0b_0000_1110;
@@ -397,6 +472,49 @@ public sealed partial class VDP
 
     var address = _registers[0x2] & addressMask;
     return (ushort)(address << 10);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort GetColorTableAddress() => (ushort)(_registers[0x3] << 6);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort GetPatternGeneratorTableAddress()
+  {
+    var address = _registers[0x4] & 0b_0000_0111;
+    return (ushort)(address << 11);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort GetSpriteAttributeTableAddress()
+  {
+    var address = _registers[0x5] & 0b_0111_1110;
+    return (ushort)(address << 7);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort GetSpriteGeneratorTableAddress()
+  {
+    var address = _registers[0x6] & 0b_0000_0111;
+    return (ushort)(address << 11);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void StoreIllegalSpriteIndex(int value)
+  {
+    _status &= Status.All;
+    _status |= (Status)value;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void IncrementAddress()
+  {
+    if (Address + 1 == VRAM_SIZE)
+      _controlWord &= 0b_1100_0000_0000_0000;
+    else
+      _controlWord++;
   }
   #endregion
 }

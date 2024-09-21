@@ -20,7 +20,7 @@ public sealed partial class VDP
   private const int BACKGROUND_COLUMNS = 32;
   private const int HSCROLL_LIMIT = 1;
   private const int VSCROLL_LIMIT = 24;
-  private const int DISABLE_SPRITES = 0xD0;
+  private const byte DISABLE_SPRITES = 0xD0;
   private const byte OCCUPIED = 0xFF;
   private const byte TRANSPARENT = 0x00;
   #endregion
@@ -71,20 +71,52 @@ public sealed partial class VDP
   private bool UseSecondPatternTable => TestRegisterBit(0x6, 2);
   private byte BackgroundColor => (byte)(_registers[0x7] & 0b_0011);
 
-  private bool VSyncPending
+  private bool Collision
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _status.HasFlag(Status.VSync);
+    get => _status.HasFlag(Status.Collision);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
     {
       if (value)
-        _status |= Status.VSync;
+        _status |= Status.Collision;
       else
-        _status &= ~Status.VSync;
+        _status &= ~Status.Collision;
     }
   }
+
+  private bool Overflow
+  {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    get => _status.HasFlag(Status.Overflow);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    set
+    {
+      if (value)
+        _status |= Status.Overflow;
+      else
+        _status &= ~Status.Overflow;
+    }
+  }
+
+  private bool VBlank
+  {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    get => _status.HasFlag(Status.VBlank);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    set
+    {
+      if (value)
+        _status |= Status.VBlank;
+      else
+        _status &= ~Status.VBlank;
+    }
+  }
+
+  private bool VSyncPending => VSyncEnabled && VBlank;
   #endregion
 
   #region Methods

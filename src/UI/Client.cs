@@ -210,6 +210,7 @@ public sealed class Client : Game
     );
 
     _emulator.FastForward = kb.IsKeyDown(Keys.LeftControl);
+    _emulator.Rewind = kb.IsKeyDown(Keys.R);
     _emulator.SetResetButtonState(kb.IsKeyDown(Keys.Escape));
     HandleSnapshotRequest(loadRequested: kb.IsKeyDown(Keys.Back),
                           saveRequested: kb.IsKeyDown(Keys.Enter));

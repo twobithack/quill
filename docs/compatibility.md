@@ -172,6 +172,7 @@
 * Speedball
 * Spellcaster
 * Spider-Man vs. the Kingpin
+* Star Wars
 * Street Fighter II
 * Streets of Rage
 * Streets of Rage 2
@@ -206,7 +207,6 @@
 # BUGGED
 * Mônica no Castelo do Dragão (Wonder Boy in Monster Land clone)
 * Penguin Land (region detection)
-* Star Wars (collision detection)
 * Wonder Boy in Monster Land (region detection)
 
 # AUDIO ISSUES
