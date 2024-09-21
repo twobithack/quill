@@ -1,6 +1,6 @@
 ﻿namespace Sonic
 {
-  public class Program
+  public class Sonic
   {
     public static void Main(string[] args)
     {
