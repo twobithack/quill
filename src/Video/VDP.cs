@@ -342,7 +342,7 @@ unsafe public class VDP
     var sourceRow = VCounter + _vScroll;
     if (sourceRow > 223) sourceRow -= 223;
     var rowOffset = sourceRow % 8;
-    sourceRow >>= 3;
+    sourceRow /= 8;
 
     for (int targetColumn = 0; targetColumn < 32; targetColumn++)
     {
@@ -361,9 +361,10 @@ unsafe public class VDP
       var useSpritePalette = tileData.TestBit(11);
       var highPriority = tileData.TestBit(12);
 
-      for (int i = 0; i < 8; i++)
+      for (int i = 0; i < 8; i ++)
       {
-        var x = (sourceColumn * 8) + _hScroll + i;
+        var columnOffset = hFlip ? (7 - i) : i;
+        var x = (sourceColumn * 8) + _hScroll + columnOffset;
         x %= (_hResolution + 1);
 
         if (x > _hResolution)
