@@ -12,8 +12,8 @@ namespace Quill.Z80
 
     public void WriteWord(ushort address, ushort word)
     {
-      _memory[address] = word.LowByte();
-      _memory[address.Increment()] = word.HighByte();
+      _memory[address] = word.GetLowByte();
+      _memory[address.Increment()] = word.GetHighByte();
     }
 
     private ushort At(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
