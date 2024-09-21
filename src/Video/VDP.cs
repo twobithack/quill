@@ -86,7 +86,7 @@ unsafe public class VDP
   private bool UseSecondPatternTable => TestRegisterBit(0x6, 2);
   private byte BackgroundColor => (byte)(_registers[0x7] & 0b_0011);
 
-  private bool VSyncPending
+  private bool VBlank
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _status.HasFlag(Status.VSync);
@@ -164,7 +164,7 @@ unsafe public class VDP
 
       if (register == 0x0 &&
           VSyncEnabled && 
-          VSyncPending)
+          VBlank)
         IRQ = true;
     }
   }
@@ -212,7 +212,7 @@ unsafe public class VDP
     else if (_vCounter == _vCounterActive)
     {
       RenderFrame();
-      VSyncPending = true;
+      VBlank = true;
     }
 
     if (_vCounter > _vCounterActive)
@@ -242,7 +242,7 @@ unsafe public class VDP
 
     if (!IRQ &&
         VSyncEnabled && 
-        VSyncPending)
+        VBlank)
       IRQ = true;
   }
 
@@ -289,7 +289,12 @@ unsafe public class VDP
     {
       ushort y = _vram[baseAddress + sprite];
       if (y == DISABLE_SPRITES)
-        return;
+      {
+        var mode = GetDisplayMode();
+        if (mode != DisplayMode.Mode_4_224 &&
+            mode != DisplayMode.Mode_4_240)
+          return;
+      }
 
       y++;
       if (y >= 0xD0)
@@ -313,7 +318,7 @@ unsafe public class VDP
       if (UseSecondPatternTable)
         patternIndex += 0x100;
 
-      if (StretchSprites && y <= _vCounter + TILE_SIZE)
+      if (StretchSprites)
         patternIndex &= 0b_1111_1111_1111_1110;
 
       var patternAddress = patternIndex * 32;
@@ -464,7 +469,7 @@ unsafe public class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private byte GetDisplayMode()
+  private DisplayMode GetDisplayMode()
   {
     byte mode = 0x00;
     if (TestRegisterBit(0x0, 2))
@@ -476,17 +481,7 @@ unsafe public class VDP
     if (TestRegisterBit(0x1, 4))
       mode |= 0b_0001;
 
-    #if DEBUG
-    var supportedModes = new byte[]
-    {
-      0b_1000,  0b_1010,
-      0b_1011,  0b_1100,
-      0b_1110,  0b_1111
-    };
-    Debug.WriteLineIf(!supportedModes.Contains(mode), $"Unsupported video mode: {mode.ToHex()}");
-    #endif
-
-    return mode;
+    return (DisplayMode)mode;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
