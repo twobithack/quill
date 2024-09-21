@@ -984,7 +984,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SCF()
   {
-    var flags = (Flags)((byte)_flags & 0b_1110_1100);
+    _flags = (Flags)((byte)_flags & 0b_1110_1100);
     _carryFlag = true;
   }
 
