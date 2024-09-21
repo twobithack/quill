@@ -24,7 +24,7 @@ unsafe public ref struct Memory
   {
     var headerOffset = (program.Length % PageSize == 512) ? 512 : 0;
     var rom = new byte[PageCount, PageSize];
-    
+
     for (int i = 0; i < program.Length; i++)
     {
       var page = (i / PageSize) + headerOffset;
@@ -57,8 +57,8 @@ unsafe public ref struct Memory
     {
       if (_bankEnable)
         return _bankSelect
-              ? _bank0[index]
-              : _bank1[index];
+             ? _bank0[index]
+             : _bank1[index];
 
       return _rom[_page2, index];
     }
@@ -83,7 +83,6 @@ unsafe public ref struct Memory
       if (!_bankEnable)
         return;
 
-      // Console.WriteLine($"Writing to {value.ToHex()} to {address.ToHex()}");
       if (_bankSelect)
         _bank0[index] = value;
       else
@@ -92,7 +91,6 @@ unsafe public ref struct Memory
       return;
     }
     
-    // Console.WriteLine($"Writing {value.ToHex()} to {address.ToHex()}");
     if (address == 0xFFFC)
     {
       _bankEnable = value.TestBit(3);
@@ -159,9 +157,7 @@ unsafe public ref struct Memory
 
   public override string ToString()
   {
-    var banking = (_bankEnable 
-                ? $"enabled (Bank {_bankSelect.ToBit()})"
-                : "disabled");
+    var banking = (_bankEnable ? $"enabled (Bank {_bankSelect.ToBit()})" : "disabled");
     return $"Memory: RAM banking {banking} | P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
   }
 }

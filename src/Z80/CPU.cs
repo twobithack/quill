@@ -63,7 +63,7 @@ unsafe public ref partial struct CPU
   private void DecodeInstruction()
   {
     var op = FetchByte();
-    _r++;
+    _memPtr = 0x0000;
     _instruction = op switch
     {
       0xCB  =>  DecodeCBInstruction(),
@@ -72,6 +72,7 @@ unsafe public ref partial struct CPU
       0xFD  =>  DecodeFDInstruction(),
       _     =>  Opcodes.Main[op]
     };
+    _r++;
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,8 +92,8 @@ unsafe public ref partial struct CPU
     if (op != 0xCB)
       return Opcodes.DD[op];
     
-    op = FetchByte();
-    return Opcodes.DDCB[op];
+    _memPtr = (ushort)(_ix + FetchSignedByte());
+    return Opcodes.DDCB[FetchByte()];
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -112,8 +113,8 @@ unsafe public ref partial struct CPU
     if (op != 0xCB)
       return Opcodes.FD[op];
       
-    op = FetchByte();
-    return Opcodes.FDCB[op];
+    _memPtr = (ushort)(_iy + FetchSignedByte());
+    return Opcodes.FDCB[FetchByte()];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -144,7 +145,7 @@ unsafe public ref partial struct CPU
       case Operation.EX:    EX();     return;
       case Operation.EXX:   EXX();    return;
       case Operation.HALT:  HALT();   return;
-      case Operation.IM:    return;
+      case Operation.IM:              return;
       case Operation.IN:    IN();     return;
       case Operation.INC8:  INC8();   return;
       case Operation.INC16: INC16();  return;
@@ -161,7 +162,7 @@ unsafe public ref partial struct CPU
       case Operation.LDI:   LDI();    return;
       case Operation.LDIR:  LDIR();   return;
       case Operation.NEG:   NEG();    return;
-      case Operation.NOP:   return;
+      case Operation.NOP:             return;
       case Operation.OR:    OR();     return;
       case Operation.OTDR:  OTDR();   return;
       case Operation.OTIR:  OTIR();   return;
@@ -246,16 +247,16 @@ unsafe public ref partial struct CPU
       case Operand.DEi: address = _de; break;
       case Operand.HLi: address = _hl; break;
 
-      case Operand.IXd: 
-        address = (ushort)(_ix + FetchSignedByte());
-        if (_instruction.Destination == Operand.IXd)
-          _pc--;
+      case Operand.IXd:
+        if (_memPtr == 0x0000)
+          _memPtr = (ushort)(_ix + FetchSignedByte());
+        address = _memPtr;
         break;
 
       case Operand.IYd:
-        address = (ushort)(_iy + FetchSignedByte());
-        if (_instruction.Destination == Operand.IYd)
-          _pc--;
+        if (_memPtr == 0x0000)
+          _memPtr = (ushort)(_iy + FetchSignedByte());
+        address = _memPtr;
         break;
 
       default: throw new Exception($"Invalid byte operand: {_instruction}");
@@ -326,17 +327,17 @@ unsafe public ref partial struct CPU
       case Operand.HLi: address = _hl; break;
       case Operand.Indirect: address = FetchWord(); break;
 
-      case Operand.IXd: 
-        address = _instruction.Source != Operand.Immediate
+      case Operand.IXd:
+        address = _memPtr == 0x0000
                 ? (ushort)(_ix + FetchSignedByte())
-                : _memPtr; 
-                break;
+                : _memPtr;
+        break;
 
-      case Operand.IYd:
-        address = _instruction.Source != Operand.Immediate
+      case Operand.IYd: 
+        address = _memPtr == 0x0000
                 ? (ushort)(_iy + FetchSignedByte())
-                : _memPtr; 
-                break;
+                : _memPtr;
+        break;
 
       default: throw new Exception($"Invalid byte destination: {destination}");
     }
