@@ -1,16 +1,20 @@
 ﻿using System;
+using System.IO;
 
 namespace Quill;
 
-unsafe public static class Program
+public static class Program
 {
-  [STAThread]
   static void Main(string[] args)
   {
-    if (args == null || args.Length == 0)
-      return;
-    
-    using var game = new Quill(args[0], maskBorder: true);
+    string romPath = @"test\zexdoc.sms";
+    if (args != null && args.Length > 0)
+      romPath = args[0];
+
+    var rom = ReadROM(romPath);
+    using var game = new Quill(rom, cropBorders: true, scalingFactor: 5);
     game.Run();
   }
+
+  private static byte[] ReadROM(string path) => File.ReadAllBytes(path);
 }

@@ -164,7 +164,7 @@ unsafe public class VDP
   public void AcknowledgeIRQ() => IRQ = false;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Update(double cyclesElapsed)
+  public void Step(double cyclesElapsed)
   {
     IRQ = false;
 

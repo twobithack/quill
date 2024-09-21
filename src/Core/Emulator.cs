@@ -2,29 +2,28 @@ using Quill.CPU;
 using Quill.Input;
 using Quill.Video;
 using System.Diagnostics;
-using System.IO;
 
 namespace Quill;
 
 unsafe public class Emulator
 {
   private const double FRAME_TIME_MS = 1000d / 60d;
-  private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d; 
+  private const double SYSTEM_CYCLES_PER_FRAME = 10738580d / 60d;
 
-  public Joypads Input;
-  private VDP _vdp;
-  private byte[] _rom; 
+  private readonly byte[] _rom;
+  private readonly Joypads _io;
+  private readonly VDP _vdp;
 
-  public Emulator(string romPath)
+  public Emulator(byte[] rom)
   {
-    Input = new Joypads();
+    _io = new Joypads();
     _vdp = new VDP();
-    _rom = ReadROM(romPath);
+    _rom = rom;
   }
 
   public void Run()
   {
-    var cpu = new Z80(_rom, _vdp, Input);
+    var cpu = new Z80(_rom, _vdp, _io);
     var clock = new Stopwatch();
     var lastFrameTime = 0d;
     
@@ -46,7 +45,7 @@ unsafe public class Emulator
         var systemCycles = cpuCycles * 3;
         var vdpCycles = (double)systemCycles / 2d;
         
-        _vdp.Update(vdpCycles);
+        _vdp.Step(vdpCycles);
 
         cyclesThisFrame += systemCycles;
       }
@@ -56,5 +55,18 @@ unsafe public class Emulator
   }
 
   public byte[] ReadFramebuffer() => _vdp.ReadFramebuffer();
-  private static byte[] ReadROM(string path) => File.ReadAllBytes(path);
+
+  public void SetJoypadState(int joypad,
+                             bool up, 
+                             bool down, 
+                             bool left, 
+                             bool right, 
+                             bool fireA, 
+                             bool fireB)
+  {
+    if (joypad == 0)
+      _io.SetJoypad1State(up, down, left, right, fireA, fireB);
+    else
+      _io.SetJoypad2State(up, down, left, right, fireA, fireB);
+  }
 }

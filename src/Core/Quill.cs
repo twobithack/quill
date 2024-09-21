@@ -10,6 +10,8 @@ public class Quill : Game
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 192;
   private const int BORDER_MASK_WIDTH = 8;
+  private const int PLAYER_1 = 0;
+  private const int PLAYER_2 = 1;
 
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
@@ -18,30 +20,29 @@ public class Quill : Game
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
   private Rectangle _viewport;
-  private bool _maskBorders;
-  private int _scale;
+  private readonly bool _cropBorder;
+  private readonly int _scale;
   
-  public Quill(string romPath, bool maskBorder, int scale = 4)
+  public Quill(byte[] rom, bool cropBorders, int scalingFactor = 4)
   {
-    _emulator = new Emulator(romPath);
+    Content.RootDirectory = "content";
+    _emulator = new Emulator(rom);
     _emulationThread = new Thread(_emulator.Run);
     _graphics = new GraphicsDeviceManager(this);
-    _maskBorders = maskBorder;
-    _scale = scale;
-
-    Content.RootDirectory = "content";
-    IsMouseVisible = true;
+    _cropBorder = cropBorders;
+    _scale = scalingFactor;
   }
 
   protected override void Initialize()
   {
+    Window.Title = "Quill";
     _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
     _graphics.PreferredBackBufferHeight = _scale * FRAMEBUFFER_HEIGHT;
     _graphics.PreferredBackBufferWidth = _scale * FRAMEBUFFER_WIDTH;
     _graphics.ApplyChanges();    
 
     _viewport = GraphicsDevice.Viewport.Bounds;
-    if (_maskBorders)
+    if (_cropBorder)
     {
       var offset = _scale * BORDER_MASK_WIDTH;
       _viewport.X -= offset;
@@ -61,9 +62,7 @@ public class Quill : Game
 
   protected override void Update(GameTime gameTime)
   {
-    if (!ReadJoystickInput())
-      ReadKeyboardInput();
-
+    ReadInput();
     base.Update(gameTime);
   }
 
@@ -82,24 +81,35 @@ public class Quill : Game
     base.Draw(gameTime);
   }
 
-  private bool ReadJoystickInput()
+  private void ReadInput()
   {
-    var joy1 = GamePad.GetState(0);
-    if (!joy1.IsConnected)
+    if (ReadJoypadInput(PLAYER_1))
+      ReadJoypadInput(PLAYER_2);
+    else
+      ReadKeyboardInput();
+  }
+
+  private bool ReadJoypadInput(int player)
+  {
+    var joypad = GamePad.GetState(player);
+    if (!joypad.IsConnected)
       return false;
 
-    _emulator.Input.Joy1Up    = joy1.IsButtonDown(Buttons.DPadUp) ||
-                                joy1.IsButtonDown(Buttons.LeftThumbstickUp);
-    _emulator.Input.Joy1Left  = joy1.IsButtonDown(Buttons.DPadLeft) ||
-                                joy1.IsButtonDown(Buttons.LeftThumbstickLeft);
-    _emulator.Input.Joy1Down  = joy1.IsButtonDown(Buttons.DPadDown) ||
-                                joy1.IsButtonDown(Buttons.LeftThumbstickDown);
-    _emulator.Input.Joy1Right = joy1.IsButtonDown(Buttons.DPadRight) ||
-                                joy1.IsButtonDown(Buttons.LeftThumbstickRight);
-    _emulator.Input.Joy1FireA = joy1.IsButtonDown(Buttons.A) ||
-                                joy1.IsButtonDown(Buttons.X);
-    _emulator.Input.Joy1FireB = joy1.IsButtonDown(Buttons.B) ||
-                                joy1.IsButtonDown(Buttons.Y);
+    _emulator.SetJoypadState(
+      joypad: player,
+      up:     joypad.IsButtonDown(Buttons.DPadUp) ||
+              joypad.IsButtonDown(Buttons.LeftThumbstickUp),
+      down:   joypad.IsButtonDown(Buttons.DPadDown) ||
+              joypad.IsButtonDown(Buttons.LeftThumbstickDown),
+      left:   joypad.IsButtonDown(Buttons.DPadLeft) ||
+              joypad.IsButtonDown(Buttons.LeftThumbstickLeft),
+      right:  joypad.IsButtonDown(Buttons.DPadRight) ||
+              joypad.IsButtonDown(Buttons.LeftThumbstickRight),
+      fireA:  joypad.IsButtonDown(Buttons.A) ||
+              joypad.IsButtonDown(Buttons.X),
+      fireB:  joypad.IsButtonDown(Buttons.B) ||
+              joypad.IsButtonDown(Buttons.Y)
+    );
     return true;
   }
 
@@ -108,18 +118,21 @@ public class Quill : Game
     var kb = Keyboard.GetState();
     if (kb.IsKeyDown(Keys.Escape))
       Exit();
-      
-    _emulator.Input.Joy1Up    = kb.IsKeyDown(Keys.Up) ||
-                                kb.IsKeyDown(Keys.W);
-    _emulator.Input.Joy1Left  = kb.IsKeyDown(Keys.Left) ||
-                                kb.IsKeyDown(Keys.A);
-    _emulator.Input.Joy1Down  = kb.IsKeyDown(Keys.Down) ||
-                                kb.IsKeyDown(Keys.S);
-    _emulator.Input.Joy1Right = kb.IsKeyDown(Keys.Right) ||
-                                kb.IsKeyDown(Keys.D);
-    _emulator.Input.Joy1FireA = kb.IsKeyDown(Keys.Z) ||
-                                kb.IsKeyDown(Keys.OemComma);
-    _emulator.Input.Joy1FireB = kb.IsKeyDown(Keys.X) ||
-                                kb.IsKeyDown(Keys.OemPeriod);
+
+    _emulator.SetJoypadState(
+      joypad: PLAYER_1,
+      up:     kb.IsKeyDown(Keys.Up) ||
+              kb.IsKeyDown(Keys.W),
+      down:   kb.IsKeyDown(Keys.Down) ||
+              kb.IsKeyDown(Keys.S),
+      left:   kb.IsKeyDown(Keys.Left) ||
+              kb.IsKeyDown(Keys.A),
+      right:  kb.IsKeyDown(Keys.Right) ||
+              kb.IsKeyDown(Keys.D),
+      fireA:  kb.IsKeyDown(Keys.Z) ||
+              kb.IsKeyDown(Keys.OemComma),
+      fireB:  kb.IsKeyDown(Keys.X) ||
+              kb.IsKeyDown(Keys.OemPeriod)
+    );
   }
 }
