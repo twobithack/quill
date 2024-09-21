@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Quill.Core;
+using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -46,7 +47,7 @@ public sealed class Client : Game
     var rom = File.ReadAllBytes(romPath);
     _emulator = new Emulator(rom, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
-    _bufferingThread = new Thread(UpdateAudioBuffer);
+    _bufferingThread = new Thread(ManageAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
     _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
                                             AudioChannels.Mono);
@@ -122,7 +123,7 @@ public sealed class Client : Game
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateAudioBuffer()
+  private void ManageAudioBuffer()
   {
     while (_running)
     {
@@ -234,6 +235,16 @@ public sealed class Client : Game
       _emulator.SaveState(SnapshotFilepath);
       _savesEnabled = false;
     }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void GenerateStatic()
+  {
+    var random = new Random();
+    var buffer = new byte[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT * 4];
+    for (int index = 0; index < buffer.Length; index += 4)
+      buffer[index] = buffer[index + 1] = buffer[index + 2] = (byte)(byte.MaxValue * random.NextSingle());
+    _framebuffer.SetData(buffer);
   }
   #endregion
 }
