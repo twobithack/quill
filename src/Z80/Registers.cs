@@ -149,7 +149,7 @@ namespace Quill.Z80
     private Flags _flags
     {
       get => (Flags) _f;
-      set => _f = (byte) value;
+      set => _f = (byte)value;
     }
 
     private void ResetRegisters()
