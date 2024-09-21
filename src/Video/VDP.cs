@@ -61,7 +61,7 @@ unsafe public class VDP
     _renderbuffer = new byte[FRAMEBUFFER_SIZE];
     _vCounterMax += (_vCounterJumpStart - _vCounterJumpEnd);
     _vCounterMax += extraScanlines;
-    _hCounter = 0x50;
+    _hCounter = 0x00;
   }
   #endregion
 
@@ -82,7 +82,8 @@ unsafe public class VDP
   private bool VSyncEnabled => TestRegisterBit(0x1, 5);
   private bool DisplayEnabled => TestRegisterBit(0x1, 6);
   private bool UseSecondPatternTable => TestRegisterBit(0x6, 2);
-  
+  private int BackgroundColor => _registers[0x7] & 0b_0011;
+
   private bool VSyncPending
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,7 +101,7 @@ unsafe public class VDP
   #endregion
 
   #region Methods
-    public void LoadState(Snapshot snapshot)
+  public void LoadState(Snapshot snapshot)
   {
     Array.Copy(snapshot.CRAM, _cram, _cram.Length);
     Array.Copy(snapshot.VRAM, _vram, _vram.Length);
@@ -260,7 +261,7 @@ unsafe public class VDP
   {
     lock (_framebuffer)
     {
-      Array.Copy(_renderbuffer, _framebuffer, FRAMEBUFFER_SIZE);
+      Buffer.BlockCopy(_renderbuffer, 0, _framebuffer, 0, FRAMEBUFFER_SIZE);
       _frameQueued = true;
     }
 
@@ -270,9 +271,8 @@ unsafe public class VDP
       return;
     }
 
-    var bgColor = _registers[0x7] & 0b_0011;
     for (var pixelIndex = 0; pixelIndex < FRAMEBUFFER_SIZE; pixelIndex += 4)
-      SetPixelColor(pixelIndex, bgColor,  0x00);
+      SetPixelColor(pixelIndex, BackgroundColor, 0x00);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -341,11 +341,11 @@ unsafe public class VDP
           continue;
         }
 
-        byte palette = patternData.GetPaletteIndex(i);
-        if (palette == 0x00)
+        var paletteIndex = patternData.GetPaletteIndex(i);
+        if (paletteIndex == 0x00)
           continue;
 
-        SetPixelColor(pixelIndex, palette + 16, 0xFF);
+        SetPixelColor(pixelIndex, paletteIndex + 16, 0xFF);
       }
     }
   }

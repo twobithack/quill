@@ -1,6 +1,7 @@
 ﻿using Quill.Common;
 using System;
 using System.Diagnostics;
+using System.ServiceModel.Channels;
 using System.Threading;
 
 namespace Quill.Sound;
@@ -8,26 +9,21 @@ namespace Quill.Sound;
 public sealed class PSG
 {
   #region Constants
+  private const int CLOCK_RATE = 224000;
   private const int SAMPLE_RATE = 44100;
-  private const double UPDATE_INTERVAL_MS = 1d;
+  private const int UPDATE_INTERVAL_MS = 1;
   private const int BUFFER_SIZE = 1000;
   private const int CHANNEL_COUNT = 4;
   private const int PULSE0 = 0b_00;
   private const int PULSE1 = 0b_01;
   private const int PULSE2 = 0b_10;
   private const int NOISE = 0b_11;
-  private static readonly short[] VOLUMES = new short[] 
-  { 
-    32767,  26028,  20675,  16422, 
-    13045,  10362,  8231,   6568,
-    5193,   4125,   3277,   2603,  
-    2067,   1642,   1304,   0 
-  };
   #endregion
 
   #region Fields
   private readonly Thread _bufferThread;
-  private readonly byte[] _buffer;
+  private readonly BufferManager _pool;
+  private readonly short[] _buffer;
   private int _bufferPosition;
 
   private readonly Channel[] _channels;
@@ -45,8 +41,9 @@ public sealed class PSG
     _channels[NOISE] = new Channel();
 
     _bufferPosition = 0;
-    _buffer = new byte[BUFFER_SIZE];
+    _buffer = new short[BUFFER_SIZE];
     _bufferThread = new Thread(UpdateBuffer);
+    _pool = BufferManager.CreateBufferManager(BUFFER_SIZE * 2, BUFFER_SIZE * 2);
   }
 
   #region Methods
@@ -95,14 +92,17 @@ public sealed class PSG
     }
   }
 
-  public byte[] ReadAudioBuffer()
+  public byte[] ReadBuffer()
   {
+    if (_bufferPosition == 0)
+      return null;
+
     lock (_buffer)
     {
-      var buffer = new byte[_bufferPosition];
-      Array.Copy(_buffer, buffer, _bufferPosition);
+      var samples = _pool.TakeBuffer(_bufferPosition * 2);
+      Buffer.BlockCopy(_buffer, 0, samples, 0, samples.Length);
       _bufferPosition = 0;
-      return buffer;
+      return samples;
     }
   }
 
@@ -126,36 +126,12 @@ public sealed class PSG
         for (int i = 0; i < BUFFER_SIZE / 2; i++)
         {
           short tone = 0;
-          for (int index = 0; index < CHANNEL_COUNT; index++)
-          {
-            if (index == NOISE)
-              break; // TODO
-
-            var pulse = _channels[index];
-            if (pulse.Tone == 0)
-              continue;
-
-            pulse.Counter--;
-
-            if (pulse.Counter == 0)
-            {
-              pulse.Counter = pulse.Tone;
-              pulse.Polarity = !pulse.Polarity;
-            }
-
-            if (pulse.Polarity)
-              tone += (short)(VOLUMES[pulse.Volume] / 4);
-            else
-              tone -= (short)(VOLUMES[pulse.Volume] / 4);
-
-            _channels[index] = pulse;
-          }
+          for (int index = 0; index < NOISE; index++)
+            tone += _channels[index].GenerateTone(); 
 
           if (i % 5 == 0)
           {
-            tone /= 4;
-            _buffer[_bufferPosition++] = (byte)tone;
-            _buffer[_bufferPosition++] = (byte)(tone >> 8);
+            _buffer[_bufferPosition++] = tone;
           }
         }
       }
