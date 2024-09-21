@@ -45,7 +45,6 @@ public sealed class Client : Game
                 int extraScanlines = 0,
                 bool cropBorders = true)
   {
-    Content.RootDirectory = "content";
     _emulator = new Emulator(rom, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
     _bufferingThread = new Thread(UpdateAudioBuffer);
