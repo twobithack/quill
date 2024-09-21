@@ -1,9 +1,11 @@
 # Z80
+https://wikiti.brandonw.net/index.php?title=Z80_Instruction_Set
 https://www.smspower.org/Development/Z80-Index
 https://clrhome.org/table
 http://www.z80.info/z80syntx.htm
+http://www.z80.info/z80code.htm
 https://www.zilog.com/docs/z80/um0080.pdf
-https://wikiti.brandonw.net/index.php?title=Z80_Instruction_Set
+https://tutorials.eeems.ca/ASMin28Days/ref/z80is.html
 
 # VDP
 https://www.smspower.org/Development/VDPRegisters
