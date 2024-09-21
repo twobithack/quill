@@ -12,7 +12,7 @@ namespace Quill.Z80
     public Memory() => _memory = new byte[MaxAddress + 1];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public byte ReadByte(ushort address) => (byte)_memory[At(address)];
+    public byte ReadByte(ushort address) => (byte)_memory[Resolve(address)];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort ReadWord(ushort address)
@@ -23,7 +23,7 @@ namespace Quill.Z80
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteByte(ushort address, byte value) => _memory[At(address)] = value;
+    public void WriteByte(ushort address, byte value) => _memory[Resolve(address)] = value;
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteWord(ushort address, ushort word)
@@ -41,6 +41,6 @@ namespace Quill.Z80
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort At(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
+    private ushort Resolve(ushort address) => (address > MaxAddress) ? (ushort)(address - Unusable) : address;
   }
 }

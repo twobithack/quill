@@ -261,7 +261,7 @@ namespace Quill.Z80
       new Opcode(Operation.CALL, Operand.NonZero,    Operand.Immediate),  
       new Opcode(Operation.PUSH, Operand.Implied,    Operand.BC),  
       new Opcode(Operation.ADD,  Operand.A,          Operand.Immediate),  
-      new Opcode(Operation.RST,  Operand.Implied,    Operand.RST0),  
+      new Opcode(Operation.RST,  Operand.RST0,       Operand.Implied),  
       new Opcode(Operation.RET,  Operand.Zero,       Operand.Implied),  
       new Opcode(Operation.RET,  Operand.Implied,    Operand.Implied),  
       new Opcode(Operation.JP,   Operand.Zero,       Operand.Immediate),  
@@ -269,7 +269,7 @@ namespace Quill.Z80
       new Opcode(Operation.CALL, Operand.Zero,       Operand.Immediate),  
       new Opcode(Operation.CALL, Operand.Implied,    Operand.Immediate),  
       new Opcode(Operation.ADC,  Operand.A,          Operand.Immediate),  
-      new Opcode(Operation.RST,  Operand.Implied,    Operand.RST1),
+      new Opcode(Operation.RST,  Operand.RST1,       Operand.Implied),
 
       // Opcodes 0xD0 - 0xDF  
       new Opcode(Operation.RET,  Operand.NonCarry,   Operand.Implied),  
@@ -279,7 +279,7 @@ namespace Quill.Z80
       new Opcode(Operation.CALL, Operand.NonCarry,   Operand.Immediate),  
       new Opcode(Operation.PUSH, Operand.Implied,    Operand.DE),  
       new Opcode(Operation.SUB,  Operand.Implied,    Operand.Immediate),  
-      new Opcode(Operation.RST,  Operand.Implied,    Operand.RST2),
+      new Opcode(Operation.RST,  Operand.RST2,       Operand.Implied),  
       new Opcode(Operation.RET,  Operand.Carry,      Operand.Implied),  
       new Opcode(Operation.EXX,  Operand.Implied,    Operand.Implied),  
       new Opcode(Operation.JP,   Operand.Carry,      Operand.Immediate),  
@@ -287,7 +287,7 @@ namespace Quill.Z80
       new Opcode(Operation.CALL, Operand.Carry,      Operand.Immediate),  
       new Opcode(Operation.NOP,  Operand.Implied,    Operand.Implied),  
       new Opcode(Operation.SBC,  Operand.A,          Operand.Immediate),  
-      new Opcode(Operation.RST,  Operand.Implied,    Operand.RST3),
+      new Opcode(Operation.RST,  Operand.RST3,       Operand.Implied),  
 
       // Opcodes 0xE0 - 0xEF  
       new Opcode(Operation.RET,  Operand.Even,       Operand.Implied),  
@@ -297,7 +297,7 @@ namespace Quill.Z80
       new Opcode(Operation.CALL, Operand.Even,       Operand.Immediate),  
       new Opcode(Operation.PUSH, Operand.Implied,    Operand.HL),  
       new Opcode(Operation.AND,  Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.RST,  Operand.Implied,    Operand.RST4),
+      new Opcode(Operation.RST,  Operand.RST4,       Operand.Implied),  
       new Opcode(Operation.RET,  Operand.Implied,    Operand.Implied),  
       new Opcode(Operation.JP,   Operand.Implied,    Operand.Implied),  
       new Opcode(Operation.JP,   Operand.Even,       Operand.Immediate),  
@@ -305,7 +305,7 @@ namespace Quill.Z80
       new Opcode(Operation.CALL, Operand.Even,       Operand.Immediate),  
       new Opcode(Operation.NOP,  Operand.Implied,    Operand.Implied),  
       new Opcode(Operation.XOR,  Operand.Implied,    Operand.Immediate),  
-      new Opcode(Operation.RST,  Operand.Implied,    Operand.RST5),
+      new Opcode(Operation.RST,  Operand.RST5,       Operand.Implied),  
 
       // Opcodes 0xF0 - 0xFF  
       new Opcode(Operation.RET,  Operand.Positive,   Operand.Implied),  
@@ -315,7 +315,7 @@ namespace Quill.Z80
       new Opcode(Operation.CALL, Operand.Positive,   Operand.Immediate),  
       new Opcode(Operation.PUSH, Operand.Implied,    Operand.AF),  
       new Opcode(Operation.OR,   Operand.Implied,    Operand.Immediate),  
-      new Opcode(Operation.RST,  Operand.Implied,    Operand.RST6), 
+      new Opcode(Operation.RST,  Operand.RST6,       Operand.Implied),  
       new Opcode(Operation.RET,  Operand.Negative,   Operand.Implied),  
       new Opcode(Operation.LD,   Operand.SP,         Operand.HL),  
       new Opcode(Operation.JP,   Operand.Negative,   Operand.Implied),  
@@ -323,7 +323,7 @@ namespace Quill.Z80
       new Opcode(Operation.CALL, Operand.Negative,   Operand.Immediate),  
       new Opcode(Operation.NOP,  Operand.Implied,    Operand.Implied),  
       new Opcode(Operation.CP,   Operand.Implied,    Operand.Immediate),  
-      new Opcode(Operation.RST,  Operand.Implied,    Operand.RST7),
+      new Opcode(Operation.RST,  Operand.RST7,       Operand.Implied),  
     };
 
     public static readonly Opcode[] CB = new Opcode[]
