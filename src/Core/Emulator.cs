@@ -14,16 +14,16 @@ unsafe public class Emulator
   #endregion
 
   #region Fields
-  private readonly IO _io;
-  private readonly VDP _vdp;
+  private readonly IO _input;
+  private readonly VDP _video;
   private readonly byte[] _rom;
   private bool _running;
   #endregion
 
   public Emulator(byte[] rom, bool fixSlowdown)
   {
-    _io = new IO();
-    _vdp = new VDP(fixSlowdown);
+    _input = new IO();
+    _video = new VDP(fixSlowdown);
     _rom = rom;
     _running = false;
   }
@@ -32,7 +32,7 @@ unsafe public class Emulator
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Run()
   {
-    var cpu = new Z80(_rom, _vdp, _io);
+    var cpu = new Z80(_rom, _input, _video);
     var clock = new Stopwatch();
     var lastFrameTime = 0d;
     clock.Start();
@@ -44,11 +44,11 @@ unsafe public class Emulator
       if (currentTime < lastFrameTime + FRAME_TIME_MS)
         continue;
 
-      var scanlines = _vdp.ScanlinesPerFrame;
+      var scanlines = _video.ScanlinesPerFrame;
       while (scanlines > 0)
       {
         cpu.Run(CYCLES_PER_SCANLINE);
-        _vdp.RenderScanline();
+        _video.RenderScanline();
         scanlines--;
       }
 
@@ -57,7 +57,7 @@ unsafe public class Emulator
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public byte[] ReadFramebuffer() => _vdp.ReadFramebuffer();
+  public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetJoypadState(int joypad,
@@ -69,9 +69,9 @@ unsafe public class Emulator
                              bool fireB)
   {
     if (joypad == 0)
-      _io.SetJoypad1State(up, down, left, right, fireA, fireB);
+      _input.SetJoypad1State(up, down, left, right, fireA, fireB);
     else
-      _io.SetJoypad2State(up, down, left, right, fireA, fireB);
+      _input.SetJoypad2State(up, down, left, right, fireA, fireB);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

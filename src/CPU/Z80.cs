@@ -38,7 +38,7 @@ unsafe public ref partial struct Z80
   private byte _iyl = 0x00;
   private byte _io = 0x00;
   private ushort _pc = 0x0000;
-  private ushort _sp = 0x0000;
+  private ushort _sp = 0xFFFF;
   private ushort _afShadow = 0x0000;
   private ushort _bcShadow = 0x0000;
   private ushort _deShadow = 0x0000;
@@ -47,13 +47,13 @@ unsafe public ref partial struct Z80
   private Opcode _instruction;
   #endregion
 
-  public Z80(byte[] rom, VDP vdp, IO input)
+  public Z80(byte[] rom, IO input, VDP vdp)
   {
     _flags = Flags.None;
-    _instruction = new Opcode();
+    _instruction = Opcodes.Main[0x00];
     _memory = new Memory(rom);
-    _vdp = vdp;
     _input = input;
+    _vdp = vdp;
   }
 
   #region Properties
@@ -217,8 +217,7 @@ unsafe public ref partial struct Z80
   {
     if (_iff1 && _vdp.IRQ)
     {
-      _sp -= 2;
-      _memory.WriteWord(_sp, _pc);
+      PushToStack(_pc);
       _pc = 0x38;
       _halt = false;
       _iff1 = false;
@@ -239,6 +238,21 @@ unsafe public ref partial struct Z80
     var lowByte = FetchByte();
     var highByte = FetchByte();
     return highByte.Concat(lowByte);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void PushToStack(ushort value)
+  {
+    _sp -= 2;
+    _memory.WriteWord(_sp, value);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort PopFromStack()
+  {
+    var value = _memory.ReadWord(_sp);
+    _sp += 2;
+    return value;
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -608,11 +622,20 @@ unsafe public ref partial struct Z80
   };
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private static bool CheckOverflow(int a, int b, int result)
+  private static bool CheckByteOverflow(int a, int b, int result)
   {
     var carry = a ^ b ^ result;
-    var carryIn = ((carry >> 7) & 1) > 0;
-    var carryOut = ((carry >> 8) & 1) > 0;
+    var carryIn = (carry >> 7) & 1;
+    var carryOut = (carry >> 8) & 1;
+    return carryIn != carryOut;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private static bool CheckWordOverflow(int a, int b, int result)
+  {
+    var carry = a ^ b ^ result;
+    var carryIn = (carry >> 15) & 1;
+    var carryOut = (carry >> 16) & 1;
     return carryIn != carryOut;
   }
 

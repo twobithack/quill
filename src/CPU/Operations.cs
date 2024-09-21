@@ -12,15 +12,15 @@ unsafe public ref partial struct Z80
   private void ADC8()
   {
     var addend = ReadByteOperand(_instruction.Source);
-    if (CarryFlag) addend++;
-    var sum = _a + addend;
+    var carry = CarryFlag ? 1 : 0;
+    var sum = _a + addend + carry;
     
     var flags = (Flags)(sum & 0b_1010_1000);
     if ((byte)sum == 0)
       flags |= Flags.Zero;
-    if (_a.LowNibble() + addend.LowNibble() > 0xF)
+    if (_a.LowNibble() + addend.LowNibble() + carry > 0xF)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(_a, addend, sum))
+    if (CheckByteOverflow(_a, addend, sum))
       flags |= Flags.Parity;
     if (sum > byte.MaxValue)
       flags |= Flags.Carry;
@@ -33,15 +33,15 @@ unsafe public ref partial struct Z80
   private void ADC16()
   {
     var addend = ReadWordOperand(_instruction.Source);
-    if (CarryFlag) addend++;
-    var sum = HL + addend;
+    var carry = CarryFlag ? 1 : 0;
+    var sum = HL + addend + carry;
 
     var flags = (Flags)((sum >> 8) & 0b_1010_1000);
     if ((ushort)sum == 0)
       flags |= Flags.Zero;
-    if ((HL & 0xFFF) + (addend & 0xFFF) > 0xFFF)
+    if ((HL & 0xFFF) + (addend & 0xFFF) + carry > 0xFFF)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(HL, addend, sum))
+    if (CheckWordOverflow(HL, addend, sum))
       flags |= Flags.Parity;
     if (sum > ushort.MaxValue)
       flags |= Flags.Carry;
@@ -61,7 +61,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (_a.LowNibble() + addend.LowNibble() > 0xF)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(_a, addend, sum))
+    if (CheckByteOverflow(_a, addend, sum))
       flags |= Flags.Parity;
     if (sum > byte.MaxValue)
       flags |= Flags.Carry;
@@ -82,7 +82,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if ((augend & 0xFFF) + (addend & 0xFFF) > 0xFFF)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(augend, addend, sum))
+    if (CheckWordOverflow(augend, addend, sum))
       flags |= Flags.Parity;
     if (sum > ushort.MaxValue)
       flags |= Flags.Carry;
@@ -138,8 +138,7 @@ unsafe public ref partial struct Z80
     if (!EvaluateCondition())
       return;
 
-    _sp -= 2;
-    _memory.WriteWord(_sp, _pc);
+    PushToStack(_pc);
     _pc = address;
   }
 
@@ -166,7 +165,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (_a.LowNibble() < subtrahend.LowNibble())
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(_a, subtrahend, difference))
+    if (CheckByteOverflow(_a, ~subtrahend, difference))
       flags |= Flags.Parity;
     if (_a < subtrahend)
       flags |= Flags.Carry;
@@ -284,7 +283,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (minuend.LowNibble() == 0)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(minuend, 1, difference))
+    if (CheckByteOverflow(minuend, ~1, difference))
       flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
@@ -399,7 +398,9 @@ unsafe public ref partial struct Z80
   {
     var port = ReadByteOperand(_instruction.Source);
     var value = ReadPort(port);
-    WriteByteResult(value);
+
+    if (_instruction.Destination != Operand.Implied)
+      WriteByteResult(value);
 
     if (_instruction.Destination == Operand.A)
       return;
@@ -426,7 +427,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (augend.LowNibble() == 0xF)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(augend, 1, sum))
+    if (CheckByteOverflow(augend, 1, sum))
       flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
@@ -676,8 +677,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void POP()
   {
-    var value = _memory.ReadWord(_sp);
-    _sp += 2;
+    var value = PopFromStack();
     WriteWordResult(value);
   }
 
@@ -685,8 +685,7 @@ unsafe public ref partial struct Z80
   private void PUSH()
   {
     var value = ReadWordOperand(_instruction.Source);
-    _sp -= 2;
-    _memory.WriteWord(_sp, value);
+    PushToStack(value);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -705,23 +704,20 @@ unsafe public ref partial struct Z80
     if (!EvaluateCondition())
       return;
   
-    _pc = _memory.ReadWord(_sp);
-    _sp += 2;
+    _pc = PopFromStack();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RETI()
   {
-    _pc = _memory.ReadWord(_sp);
-    _sp += 2;
+    _pc = PopFromStack();
     _iff1 = _iff2;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RETN()
   {
-    _pc = _memory.ReadWord(_sp);
-    _sp += 2;
+    _pc = PopFromStack();
     _iff1 = _iff2;
   }
 
@@ -933,8 +929,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RST()
   {
-    _sp -= 2;
-    _memory.WriteWord(_sp, _pc);
+    PushToStack(_pc);
     _pc = (ushort)_instruction.Destination;
   }
 
@@ -942,15 +937,15 @@ unsafe public ref partial struct Z80
   private void SBC8()
   {
     var subtrahend = ReadByteOperand(_instruction.Source);
-    if (CarryFlag) subtrahend++;
-    var difference = _a - subtrahend;
+    var borrow = CarryFlag ? 1: 0;
+    var difference = (_a - subtrahend) - borrow;
 
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
     if ((byte)difference == 0)
       flags |= Flags.Zero;
-    if (_a.LowNibble() < subtrahend.LowNibble())
+    if (_a.LowNibble() < subtrahend.LowNibble() + borrow)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(_a, subtrahend, difference))
+    if (CheckByteOverflow(_a, ~subtrahend, difference))
       flags |= Flags.Parity;
     if (difference < 0)
       flags |= Flags.Carry;
@@ -963,15 +958,15 @@ unsafe public ref partial struct Z80
   private void SBC16()
   {
     var subtrahend = ReadWordOperand(_instruction.Source);
-    if (CarryFlag) subtrahend++;
-    var difference = HL - subtrahend;
+    var borrow = CarryFlag ? 1 : 0;
+    var difference = (HL - subtrahend) - borrow;
 
     var flags = (Flags)((difference >> 8) & 0b_1010_1000) | Flags.Negative;
     if ((ushort)difference == 0)
       flags |= Flags.Zero;
-    if ((HL & 0xFFF) < (subtrahend & 0xFFF))
+    if ((HL & 0xFFF) < (subtrahend & 0xFFF) + borrow)
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(HL, subtrahend, difference))
+    if (CheckWordOverflow(HL, ~subtrahend, difference))
       flags |= Flags.Parity;
     if (difference < 0)
       flags |= Flags.Carry;
@@ -1101,7 +1096,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Zero;
     if (_a.LowNibble() < subtrahend.LowNibble())
       flags |= Flags.Halfcarry;
-    if (CheckOverflow(_a, subtrahend, difference))
+    if (CheckByteOverflow(_a, ~subtrahend, difference))
       flags |= Flags.Parity;
     if (difference < 0)
       flags |= Flags.Carry;
