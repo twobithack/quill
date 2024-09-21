@@ -18,6 +18,7 @@
 * Castelo Rá-Tim-Bum
 * Choplifter
 * Columns
+* Disney's Aladdin 
 * Disney's Bonkers: Wax Up!
 * Double Dragon
 * Dragon Crystal
@@ -41,6 +42,7 @@
 * Pac-Mania
 * Power Strike
 * Power Strike II
+* Psycho Fox
 * Rastan
 * Road Rash
 * R-Type
@@ -69,7 +71,6 @@
 * Paperboy (blank screen)
 * Penguin Land (gameplay and localization)
 * Prince of Persia (gameplay and graphics)
-* Psycho Fox (blank screen)
 * Turma da Monica em: O Castelo do Dragao (constantly falling)
 * Wonder Boy in Monster World (contantly falling)
 
@@ -80,7 +81,6 @@
 * Action Figther (artifacts)
 * Altered Beast (palette issues)
 * Astro Warrior (artifacts)
-* Disney's Aladdin (sprite flicker)
 * Disney's Deep Duck Trouble (palette issues)
 * Disney's Land of Illusion (tilemap issues?)
 * Earthworm Jim (tilemap issues)
@@ -91,7 +91,6 @@
 * Mortal Kombat (tile artifacts?)
 * Mortal Kombat II (palette issues)
 * Mortal Kombat 3 (sprite + tilemap issues)
-* Paperboy (tilemap issues)
 * Phantasy Star (tilemap artifacts)
 * Rambo: First Blood Part II (sprite issues)
 * Sapo Xulé: O Mestre do Kung Fu (palette issues)
