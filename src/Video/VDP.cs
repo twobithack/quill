@@ -1,7 +1,6 @@
 using Quill.Common;
 using Quill.Video.Definitions;
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Quill.Video;

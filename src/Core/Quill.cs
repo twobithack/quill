@@ -39,8 +39,18 @@ public class Quill : Game
 
   protected override void Update(GameTime gameTime)
   {
-    if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+    var input = Keyboard.GetState();
+    if (input.IsKeyDown(Keys.Escape))
       Exit();
+    
+    _emulator.Input.Joy1Up    = input.IsKeyDown(Keys.Up);
+    _emulator.Input.Joy1Down  = input.IsKeyDown(Keys.Down);
+    _emulator.Input.Joy1Left  = input.IsKeyDown(Keys.Left);
+    _emulator.Input.Joy1Right = input.IsKeyDown(Keys.Right);
+    _emulator.Input.Joy1FireA = input.IsKeyDown(Keys.Z);
+    _emulator.Input.Joy1FireB = input.IsKeyDown(Keys.X);
+
+    // TODO: Joypad 2
 
     var buffer = _emulator.GetFramebuffer();
     _display.SetData<byte>(buffer);
