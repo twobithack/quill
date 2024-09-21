@@ -40,7 +40,9 @@ unsafe public class Emulator
     var cpu = new Z80(_rom, _input, _sound, _video);
     var clock = new Stopwatch();
     var lastFrame = 0d;
+
     clock.Start();
+    _sound.Start();
 
     _running = true;
     while (_running)
@@ -75,6 +77,8 @@ unsafe public class Emulator
     _sound.Stop();
   }
 
+  public void Stop() => _running = false;
+
   public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
 
   public byte[] ReadAudioBuffer() => _sound.ReadAudioBuffer();
@@ -107,8 +111,6 @@ unsafe public class Emulator
     _snapshotPath = path;
     _saveRequested = true;
   }
-
-  public void Stop() => _running = false;
 
   #pragma warning disable SYSLIB0011
   private Snapshot LoadSnapshot()

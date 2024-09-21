@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Quill.Core;
-using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -14,6 +13,7 @@ public sealed class Client : Game
 {
   #region Constants
   private const int AUDIO_SAMPLE_RATE = 44100;
+  private const int MIN_AUDIO_SAMPLES = 20;
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 192;
   private const int BORDER_MASK_WIDTH = 8;
@@ -51,7 +51,7 @@ public sealed class Client : Game
     _bufferingThread = new Thread(UpdateSound);
     _graphics = new GraphicsDeviceManager(this);
     _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
-                                            AudioChannels.Stereo);
+                                            AudioChannels.Mono);
     _romName = romName;
     _saveDirectory = saveDir;
     _cropBorder = cropBorders;
@@ -129,7 +129,7 @@ public sealed class Client : Game
   {
     while (_running)
     {
-      if (_sound.PendingBufferCount < AUDIO_SAMPLE_RATE / 1000)
+      if (_sound.PendingBufferCount < MIN_AUDIO_SAMPLES)
       {
         var buffer = _emulator.ReadAudioBuffer();
         if (buffer.Length != 0)
