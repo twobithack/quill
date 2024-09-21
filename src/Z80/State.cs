@@ -195,10 +195,10 @@ public unsafe ref partial struct CPU
 
   public string DumpRegisters()
   {
-    return $"╒═══════════╤═══════════╤═══════════╤═══════════╤═══════════╕\r\n" +
+    return $"╒══════════╤══════════╤══════════╤══════════╤═══════════╕\r\n" +
             $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {_ix.ToHex()} │ IY: {_iy.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
             $"│ AF: {_af.ToHex()} │ BC: {_bc.ToHex()} │ DE: {_de.ToHex()} │ HL: {_hl.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
             $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
-            $"╘═══════════╧═══════════╧═══════════╧═══════════╧═══════════╛\r\n";
+            $"╘══════════╧══════════╧══════════╧══════════╧═══════════╛\r\n";
   }
 }

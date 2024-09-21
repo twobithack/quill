@@ -2,7 +2,6 @@ using Quill.Definitions;
 using Quill.Extensions;
 using static Quill.Definitions.Opcodes;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Quill;
 
@@ -13,25 +12,20 @@ unsafe public ref partial struct CPU
     _instruction = new Opcode();
     _memory = new Memory(rom);
     _vdp = vdp;
+    InitializeSDSC();
   }
 
   public void Step()
   {
     HandleInterrupts();
 
-    // if (_halt)
-    // {
-    //   _r++;
-    //   return;
-    // }
+    if (_halt)
+    {
+      _r++;
+      return;
+    }
 
     DecodeInstruction();
-
-    #if DEBUG
-    Console.WriteLine(ToString());
-    Console.Read();
-    #endif
-
     ExecuteInstruction();
     _cycleCount += _instruction.Cycles;
   }
@@ -46,8 +40,8 @@ unsafe public ref partial struct CPU
       _iff2 = false;
       _r++;
 
+      _sp -= 2;
       _memory.WriteWord(_sp, _pc);
-      _sp += 2;
       _pc = 0x38;
     }
   }
@@ -68,7 +62,6 @@ unsafe public ref partial struct CPU
   {
     var op = FetchByte();
     _r++;
-
     _instruction = op switch
     {
       0xCB  =>  DecodeCBInstruction(),
@@ -84,7 +77,6 @@ unsafe public ref partial struct CPU
   {
     var op = FetchByte();
     _r++;
-
     return Opcodes.CB[op];
   }
   
@@ -106,7 +98,6 @@ unsafe public ref partial struct CPU
   {
     var op = FetchByte();
     _r++;
-    
     return Opcodes.ED[op];
   }
   
@@ -216,7 +207,6 @@ unsafe public ref partial struct CPU
       case Operation.SRL:   SRL();    return;
       case Operation.SUB:   SUB();    return;
       case Operation.XOR:   XOR();    return;
-      default: throw new Exception($"Not found: {_instruction}");
     }
   }
 
@@ -277,7 +267,7 @@ unsafe public ref partial struct CPU
 
       case Operand.Indirect: 
         address = FetchWord();
-        return _memory.ReadByte(address);
+        return _memory.ReadWord(address);
 
       default: throw new Exception($"Invalid word operand: {_instruction}");
     }
@@ -345,7 +335,7 @@ unsafe public ref partial struct CPU
       case Operand.IX: _ix = value; return;
       case Operand.IY: _iy = value; return;
       case Operand.SP: _sp = value; return;
-      //default: throw new Exception($"Invalid word destination: {_instruction}");
+      default: throw new Exception($"Invalid word destination: {_instruction}");
     }
   }
 
@@ -356,21 +346,28 @@ unsafe public ref partial struct CPU
     {
       case 0x7E:
       case 0x7F: 
-        // TODO: write to sound chip
+        // Sound chip
+        return;
+
+      case 0xBD:
+      case 0xBF:
+        _vdp.Control = value;
         return;
 
       case 0xBE:
         _vdp.Data = value;
         return;
 
-      case 0xBF:
-      case 0xBD:
-        _vdp.Control = value;
+      case 0x3E:
+        // IO controller
         return;
 
       case 0xFC:
+        ControlSDSC(value);
+        return;
+
       case 0xFD:
-        Console.Write(value);
+        WriteSDSC(value);
         return;
 
       default:

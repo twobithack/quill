@@ -308,11 +308,11 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void DJNZ()
   {
-    var displacement = FetchByte();
+    var displacement = unchecked((sbyte)FetchByte());
     _b--;
 
     if (_b != 0)
-      _pc += displacement;
+      _pc = (ushort)(_pc + displacement);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -500,11 +500,11 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void JR()
   {
-    var displacement = FetchByte();
+    var displacement = unchecked((sbyte)FetchByte());
     if (!EvaluateCondition()) 
       return;
-
-    _pc += displacement;
+    
+    _pc = (ushort)(_pc + displacement);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -661,17 +661,17 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void POP()
   {
-    var word = _memory.ReadWord(_sp);
+    var value = _memory.ReadWord(_sp);
     _sp += 2;
-    WriteWordResult(word);
+    WriteWordResult(value);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void PUSH()
   {
-    var word = ReadWordOperand(_instruction.Source);
+    var value = ReadWordOperand(_instruction.Source);
     _sp -= 2;
-    _memory.WriteWord(_sp, word);
+    _memory.WriteWord(_sp, value);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -689,7 +689,7 @@ unsafe public ref partial struct CPU
   {
     if (!EvaluateCondition())
       return;
-
+  
     _pc = _memory.ReadWord(_sp);
     _sp += 2;
   }
