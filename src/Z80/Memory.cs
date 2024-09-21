@@ -1,44 +1,42 @@
+using CommunityToolkit.HighPerformance;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Quill.Extensions;
 
 namespace Quill
 {
-  public unsafe struct Memory
+  unsafe public ref struct Memory
   {
     private const ushort PageCount = 0x40;
     private const ushort PageSize = 0x4000;
-    private readonly byte[] _ram;
-    private readonly byte[] _bank0;
-    private readonly byte[] _bank1;
-    private readonly byte[][] _rom;
 
-    private byte _page0 = 0x00;
-    private byte _page1 = 0x01;
-    private byte _page2 = 0x02;
+    private readonly Span<byte> _ram;
+    private readonly Span<byte> _bank0;
+    private readonly Span<byte> _bank1;
     private bool _bankEnable;
     private bool _bankSelect;
 
-    public Memory()
-    {
-      _bankEnable = _bankSelect = false;
-      _ram = new byte[PageSize]; //GC.AllocateArray<byte>(PageSize, pinned: true);
-      _bank0 = new byte[PageSize]; //GC.AllocateArray<byte>(PageSize, pinned: true);
-      _bank1 = new byte[PageSize]; //GC.AllocateArray<byte>(PageSize, pinned: true);
+    private readonly ReadOnlySpan2D<byte> _rom;
+    private byte _page0 = 0x00;
+    private byte _page1 = 0x01;
+    private byte _page2 = 0x02;
 
-      _rom = new byte[PageCount][];
-      for (int i = 0; i < 0x40; i++)
-        _rom[i] = new byte[PageSize]; //GC.AllocateArray<byte>(PageSize, pinned: true);
-    }
-    public void LoadROM(byte[] program)
+    public Memory(byte[] program)
     {
       var headerOffset = program.Length % PageSize;
+      var rom = new byte[PageCount, PageSize];
+
       for (int i = 0; i < program.Length; i++)
       {
         var page = (i / PageSize) + headerOffset;
         var index = (i % PageSize) + headerOffset;
-        _rom[page][index] = program[i];
+        rom[page, index] = program[i];
       }
+      _rom = new ReadOnlySpan2D<byte>(rom);
+
+      _ram = new Span<byte>(new byte[PageSize]);
+      _bank0 = new Span<byte>(new byte[PageSize]);
+      _bank1 = new Span<byte>(new byte[PageSize]);
+      _bankEnable = _bankSelect = false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,13 +45,13 @@ namespace Quill
       var index = address % PageSize;
 
       if (address < 0x400)
-        return _rom[0x00][index];
+        return _rom[0x00, index];
 
       if (address < PageSize)
-        return _rom[_page0][index];
+        return _rom[_page0, index];
 
       if (address < PageSize * 2)
-        return _rom[_page1][index];
+        return _rom[_page1, index];
         
       if (address < PageSize * 3)
       {
@@ -62,7 +60,7 @@ namespace Quill
                ? _bank0[index]
                : _bank1[index];
 
-        return _rom[_page2][index];
+        return _rom[_page2, index];
       }
 
       return _ram[index];
@@ -133,7 +131,7 @@ namespace Quill
         for (byte lo = 0; lo < byte.MaxValue; lo++)
         {
           temp0 += _ram[hi.Concat(lo)].ToHex();
-          temp1 += this._bank0[hi.Concat(lo)].ToHex();
+          temp1 += _bank0[hi.Concat(lo)].ToHex();
           temp2 += _bank1[hi.Concat(lo)].ToHex();
         }
         memory.Add(temp0);
@@ -156,7 +154,7 @@ namespace Quill
         {
           var row = string.Empty;
           for (byte lo = 0; lo < byte.MaxValue; lo++)
-            row += _rom[page][hi.Concat(lo)].ToHex();
+            row += _rom[page,hi.Concat(lo)].ToHex();
           dump.Add(row);
         }
       }
@@ -169,8 +167,7 @@ namespace Quill
       var banking = (_bankEnable 
                   ? $"enabled (Bank {_bankSelect.ToBit()})"
                   : "disabled");
-      return $"Memory: RAM banking {banking} | " + 
-             $"P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
+      return $"Memory: RAM banking {banking} | P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
     }
   }
 }

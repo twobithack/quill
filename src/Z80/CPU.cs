@@ -2,41 +2,34 @@ using Quill.Definitions;
 using Quill.Extensions;
 using static Quill.Definitions.Opcodes;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Quill
 {
-  public unsafe sealed partial class CPU
+  unsafe public ref partial struct CPU
   {
-    private VDP _vdp;
-
-    public CPU(VDP vdp)
+    public CPU(byte[] rom, VDP vdp)
     {
       _instruction = new Opcode();
-      _memory = new Memory();
+      _memory = new Memory(rom);
       _vdp = vdp;
     }
-
-    public void LoadROM(byte[] rom) => _memory.LoadROM(rom);
 
     public void Step()
     {
       HandleInterrupts();
       DecodeInstruction();
-#if DEBUG
-        Console.WriteLine(this);
-        Console.Read();
-#endif
       ExecuteInstruction();
-      _instructionCount++;
+      _cycleCount += _instruction.Cycles;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void HandleInterrupts()
     {
-      if (_halt) 
-        throw new Exception($"Halted\r\n{this}");
+      if (_halt)
+        throw new Exception($"Halted\r\n{this.ToString()}");
 
-      if (_vdp.IRQ && _iff1)
+      if (_iff1 && _vdp.IRQ)
       {
         _halt = false;
         _iff1 = false;
@@ -211,7 +204,7 @@ namespace Quill
         case Operation.SRL:   SRL();    return;
         case Operation.SUB:   SUB();    return;
         case Operation.XOR:   XOR();    return;
-        default: throw new Exception($"Not found: {_instruction}");
+        // default: throw new Exception($"Not found: {_instruction}");
       }
     }
 
@@ -247,7 +240,7 @@ namespace Quill
         case Operand.IXd: _addressBus = (ushort)(_ix + FetchByte()); break;
         case Operand.IYd: _addressBus = (ushort)(_iy + FetchByte()); break;
 
-        default: throw new Exception($"Invalid byte operand: {_instruction}");
+        //default: throw new Exception($"Invalid byte operand: {_instruction}");
       }
       return _memory.ReadByte(_addressBus);
     }
@@ -285,7 +278,7 @@ namespace Quill
       0xBF or 0xBD => _vdp.Status,
       0xDC or 0xC0 => 0xDC, // joypad 1
       0xDD or 0xC1 => 0xDD, // joypad 2
-      _ => throw new Exception($"Unable to read port: {port}\r\n{this}")
+      _ => throw new Exception($"Unable to read port: {port}\r\n{this.ToString()}")
     };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -315,7 +308,7 @@ namespace Quill
         case Operand.IYd: _addressBus = (byte)(_iy + FetchByte()); break;
         case Operand.Indirect: _addressBus = FetchWord(); break;
 
-        default: throw new Exception($"Invalid byte destination: {destination}");
+        //default: throw new Exception($"Invalid byte destination: {destination}");
       }
       _memory.WriteByte(_addressBus, value);
     }
@@ -336,7 +329,7 @@ namespace Quill
         case Operand.IX: _ix = value; return;
         case Operand.IY: _iy = value; return;
         case Operand.SP: _sp = value; return;
-        default: throw new Exception($"Invalid word destination: {_instruction}");
+        //default: throw new Exception($"Invalid word destination: {_instruction}");
       }
     }
 
@@ -360,7 +353,7 @@ namespace Quill
           return;
 
         default:
-          throw new Exception($"Unable to write to port {port}\r\n{this}");
+          throw new Exception($"Unable to write to port {port}\r\n{this.ToString()}");
       }
     }
 
@@ -376,12 +369,12 @@ namespace Quill
       Operand.Positive  => !_sign,
       Operand.Odd       => !_parity,
       Operand.Implied   => true,
-      _ => throw new Exception($"Invalid condition: {_instruction}")
+      //_ => throw new Exception($"Invalid condition: {_instruction}")
     };
 
     public void DumpMemory(string path) => _memory.DumpRAM(path);
     public void DumpROM(string path) => _memory.DumpROM(path);
 
-    public override String ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction} | Cycle: {_instructionCount}\r\n{_memory}";
+    public override String ToString() => $"{DumpRegisters()}Flags: {_flags} | CIR: {_instruction} | Cycle: {_cycleCount}\r\n{_memory.ToString()}";
   }
 }

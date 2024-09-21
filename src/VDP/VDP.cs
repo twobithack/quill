@@ -2,7 +2,7 @@ using Quill.Extensions;
 
 namespace Quill
 {
-  public unsafe sealed class VDP
+  unsafe public ref struct VDP
   {
     private readonly byte[] _vram = new byte[0x4000];
     private readonly byte[] _cram = new byte[0x20];
