@@ -169,9 +169,6 @@ unsafe public class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void AcknowledgeIRQ() => IRQ = false;
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void RenderScanline()
   {
     IRQ = false;
