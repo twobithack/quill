@@ -14,6 +14,7 @@ public enum PortA : byte
   Joy1FireB = 0b_0010_0000,
   Joy2Up    = 0b_0100_0000,
   Joy2Down  = 0b_1000_0000,
+  All       = 0b_1111_1111,
   Joy1      = Joy1Up | Joy1Down | Joy1Left | Joy1Right | Joy1FireA | Joy1FireB,
   Joy2      = Joy2Up | Joy2Down
 }
