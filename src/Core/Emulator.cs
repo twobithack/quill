@@ -17,8 +17,8 @@ unsafe public class Emulator
   #endregion
 
   #region Fields
-  public bool FastForward;
-  public bool Rewind;
+  public bool FastForwarding;
+  public bool Rewinding;
 
   private readonly RingBuffer<Snapshot> _history;
   private readonly IO _input;
@@ -31,11 +31,11 @@ unsafe public class Emulator
   private bool _running;
   #endregion
 
-  public Emulator(byte[] rom, int extraScanlines)
+  public Emulator(byte[] rom, int sampleRate, int extraScanlines)
   {
     _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
     _input = new IO();
-    _audio = new PSG();
+    _audio = new PSG(sampleRate);
     _video = new VDP(extraScanlines);
     _rom = rom;
   }
@@ -47,18 +47,18 @@ unsafe public class Emulator
     _running = true;
     _audio.Play();
 
-    var frameCounter = 0;
-    var frameTimer = new Stopwatch();
-    frameTimer.Start();
+    var frameCount = 0;
+    var frameTime = new Stopwatch();
+    frameTime.Start();
 
     while (_running)
     {
-      if (!FastForward && 
-          frameTimer.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
+      if (!FastForwarding && 
+          frameTime.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
         continue;
 
-      frameTimer.Restart();
-      frameCounter++;
+      frameTime.Restart();
+      frameCount++;
 
       var scanlines = _video.ScanlinesPerFrame;
       while (scanlines > 0)
@@ -68,7 +68,7 @@ unsafe public class Emulator
         scanlines--;
       }
 
-      if (Rewind)
+      if (Rewinding)
       {
         var state = _history.Pop();
         cpu.LoadState(state);
@@ -85,11 +85,11 @@ unsafe public class Emulator
         SaveSnapshot(state);
         _saveRequested = false;
       }
-      else if (frameCounter >= FRAMES_PER_REWIND)
+      else if (frameCount >= FRAMES_PER_REWIND)
       {
         var state = cpu.SaveState();
         _history.Push(state);
-        frameCounter = 0;
+        frameCount = 0;
       }
     }
 

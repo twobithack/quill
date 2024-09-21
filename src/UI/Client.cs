@@ -13,12 +13,14 @@ namespace Quill.UI;
 public sealed class Client : Game
 {
   #region Constants
-  private const int AUDIO_SAMPLE_RATE = 44100;
-  private const int MIN_AUDIO_SAMPLES = 5;
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 240;
   private const int BOTTOM_BORDER_HEIGHT = 48;
   private const int LEFT_BORDER_WIDTH = 8;
+
+  private const int AUDIO_SAMPLE_RATE = 44100;
+  private const int MIN_AUDIO_SAMPLES = 5;
+
   private const int PLAYER_1 = 0;
   private const int PLAYER_2 = 1;
   #endregion
@@ -49,7 +51,7 @@ public sealed class Client : Game
                 bool cropBorders = true)
   {
     var rom = File.ReadAllBytes(romPath);
-    _emulator = new Emulator(rom, extraScanlines);
+    _emulator = new Emulator(rom, AUDIO_SAMPLE_RATE, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
     _pollingThread = new Thread(PollAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
@@ -178,8 +180,8 @@ public sealed class Client : Game
     
     if (player == PLAYER_1)
     {
-      _emulator.FastForward = joypad.IsButtonDown(Buttons.RightTrigger);
-      _emulator.Rewind = joypad.IsButtonDown(Buttons.LeftTrigger);
+      _emulator.FastForwarding = joypad.IsButtonDown(Buttons.RightTrigger);
+      _emulator.Rewinding = joypad.IsButtonDown(Buttons.LeftTrigger);
       _emulator.SetResetButtonState(joypad.IsButtonDown(Buttons.Back));
       HandleSnapshotRequest(loadRequested: joypad.IsButtonDown(Buttons.LeftShoulder),
                             saveRequested: joypad.IsButtonDown(Buttons.RightShoulder));
@@ -215,8 +217,8 @@ public sealed class Client : Game
       pause:  kb.IsKeyDown(Keys.Space)
     );
 
-    _emulator.FastForward = kb.IsKeyDown(Keys.LeftControl);
-    _emulator.Rewind = kb.IsKeyDown(Keys.R);
+    _emulator.FastForwarding = kb.IsKeyDown(Keys.LeftControl);
+    _emulator.Rewinding = kb.IsKeyDown(Keys.R);
     _emulator.SetResetButtonState(kb.IsKeyDown(Keys.Escape));
     HandleSnapshotRequest(loadRequested: kb.IsKeyDown(Keys.Back),
                           saveRequested: kb.IsKeyDown(Keys.Enter));
