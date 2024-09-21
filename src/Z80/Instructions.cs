@@ -1,4 +1,3 @@
-using static Quill.Definitions.Constants;
 using Quill.Definitions;
 using Quill.Extensions;
 
@@ -57,13 +56,12 @@ namespace Quill.Z80
         var b = GetWordOperand(_cir.Source);
         var result = a + b;
 
-        _reg.Sign = (result & (1 << 15)) != 0;
+        _reg.Sign = ((result >> 15) & 1) != 0;
         _reg.Zero = (result == 0);
         _reg.Halfcarry = (a & 0x0FFF) + (b & 0x0FFF) > 0x0FFF;
         _reg.Negative = false;
         _reg.Carry = (result > ushort.MaxValue);
-        _reg.Overflow = _reg.Carry ^ 
-                        (a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue;
+        _reg.Overflow = _reg.Carry ^ ((a & short.MaxValue) + (b & short.MaxValue) > short.MaxValue);
 
         SetWordValue((ushort)(result & ushort.MaxValue));
       }
@@ -73,12 +71,12 @@ namespace Quill.Z80
         var b = GetByteOperand(_cir.Source);
         var result = a + b;
 
-        _reg.Sign = (result & (1 << 7)) != 0;
+        _reg.Sign = ((result >> 7) & 1) != 0;
         _reg.Zero = (result == 0);
         _reg.Halfcarry = (a & 0x0F) + (b & 0x0F) > 0x0F;
         _reg.Negative = false;
         _reg.Carry = (result > byte.MaxValue);
-        _reg.Overflow = _reg.Carry ^ (a & 0x7F) + (b & 0x7F) > 0x7F;
+        _reg.Overflow = _reg.Carry ^ (a & sbyte.MaxValue) + (b & sbyte.MaxValue) > sbyte.MaxValue;
         _reg.A = (byte)(result & byte.MaxValue);
 
         
