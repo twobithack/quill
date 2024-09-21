@@ -47,7 +47,7 @@ public sealed partial class VDP
   private byte _lineInterrupt;
   private byte _hScroll;
   private byte _vScroll;
-  private byte _backgroundColor;
+  private byte _blankColor;
 
   private bool _shiftX;
   private bool _lineInterruptEnabled;

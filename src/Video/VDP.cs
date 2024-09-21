@@ -286,18 +286,12 @@ public sealed partial class VDP
             _maskLeftBorder)
           continue;
 
-        if (!tile.HighPriotity && 
-            _framebuffer.IsOccupied(x, _vCounter))
+        var paletteIndex = patternData.GetPaletteIndex(7 - i);
+
+        if (_framebuffer.IsOccupied(x, _vCounter) &&
+            (!tile.HighPriotity || paletteIndex == TRANSPARENT))
           continue;
 
-        var paletteIndex = patternData.GetPaletteIndex(7 - i);
-        if (paletteIndex == TRANSPARENT)
-        {
-          if (_framebuffer.IsOccupied(x, _vCounter))
-            continue;
-          paletteIndex = _backgroundColor;
-        }
-        
         if (tile.UseSpritePalette)
           paletteIndex += 16;
 
@@ -434,7 +428,7 @@ public sealed partial class VDP
           continue;
         
         if (color == TRANSPARENT)
-          color = _backgroundColor;
+          color = _blankColor;
 
         SetLegacyPixel(x, _vCounter, color, false);
       }
@@ -548,7 +542,7 @@ public sealed partial class VDP
         return;
 
       case 0x7:
-        _backgroundColor = (byte)(value & 0b_1111);
+        _blankColor = (byte)(value & 0b_1111);
         return;
     };
   }
