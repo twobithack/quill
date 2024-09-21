@@ -8,10 +8,10 @@ unsafe static class ByteExtensions
   public static ushort Concat(this byte msb, byte lsb) => (ushort)((msb << 8) + lsb);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static byte Increment(this byte value) => (byte)value++;
+  public static byte Increment(this byte value) => (byte)(value + 1);
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static byte Decrement(this byte value) => (byte)value--;
+  public static byte Decrement(this byte value) => (byte)(value - 1);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static byte LowNibble(this byte value) => (byte)(value & 0b_0000_1111);

@@ -18,10 +18,17 @@ unsafe public ref partial struct CPU
   public void Step()
   {
     HandleInterrupts();
+
+    // if (_halt)
+    // {
+    //   _r++;
+    //   return;
+    // }
+
     DecodeInstruction();
 
     #if DEBUG
-    Console.WriteLine(this.ToString());
+    Console.WriteLine(ToString());
     Console.Read();
     #endif
 
@@ -32,9 +39,6 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void HandleInterrupts()
   {
-    if (_halt)
-      throw new Exception($"Halted\r\n{this.ToString()}");
-
     if (_iff1 && _vdp.IRQ)
     {
       _halt = false;
@@ -364,8 +368,13 @@ unsafe public ref partial struct CPU
         _vdp.Control = value;
         return;
 
+      case 0xFC:
+      case 0xFD:
+        Console.Write(value);
+        return;
+
       default:
-        throw new Exception($"Unable to write to port {port}\r\n{this.ToString()}");
+        throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
     }
   }
 
