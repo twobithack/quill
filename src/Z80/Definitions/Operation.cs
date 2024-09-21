@@ -1,4 +1,4 @@
-namespace Quill.Z80
+namespace Quill
 {
   public enum Operation 
   {

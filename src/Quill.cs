@@ -1,5 +1,4 @@
-﻿using Quill.Z80;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Quill
 {
@@ -9,13 +8,15 @@ namespace Quill
     {
       var io = new Ports();
       var cpu = new CPU(io);
+      var vdp = new VDP(io);
       var cycles = 0ul;
-      var program = ReadROM(@"test/zexdoc.sms");
+      var program = ReadROM(@"test/sonic.sms");
       cpu.LoadROM(program);
+      Console.Read();
 
       var sw = new Stopwatch();
       sw.Start();
-      while (cycles < 10000000ul)
+      while (cycles < 1000000000ul)
       {
         cpu.Step();
         cycles++;

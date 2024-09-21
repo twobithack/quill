@@ -1,4 +1,4 @@
-namespace Quill.Z80
+namespace Quill
 {
   [Flags]
   public enum Flags : byte
