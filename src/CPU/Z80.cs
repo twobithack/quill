@@ -45,13 +45,13 @@ unsafe public ref partial struct Z80
   private Flags _flags;
   #endregion
 
-  public Z80(byte[] rom, IO input, PSG audio, VDP video)
+  public Z80(byte[] rom, IO input, PSG sound, VDP video)
   {
     _flags = Flags.None;
     _instruction = Opcodes.Main[0x00];
     _memory = new Memory(rom);
     _input = input;
-    _psg = audio;
+    _psg = sound;
     _vdp = video;
   }
 
