@@ -11,10 +11,13 @@ namespace Quill.CPU;
 
 unsafe public ref partial struct Z80
 {
-  #region Fields
+  #region Constants
   private const byte NOP_CYCLES = 0x04;
-  private IO _input;
-  private VDP _vdp;
+  #endregion
+
+  #region Fields
+  private readonly IO _input;
+  private readonly VDP _vdp;
   private Memory _memory;
   private Flags _flags;
   private bool _halt = false;
@@ -391,7 +394,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte ReadByteOperand(Operand operand)
   {
-    ushort address = 0x0000;
+    ushort address;
     switch (operand)
     {
       case Operand.Immediate:
@@ -495,7 +498,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteResult(byte value, Operand destination)
   {
-    ushort address = 0x0000;
+    ushort address;
     switch (destination)
     { 
       case Operand.A: _a = value; return;
