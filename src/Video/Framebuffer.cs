@@ -16,7 +16,6 @@ unsafe public sealed class Framebuffer
   private readonly byte[] _frontBuffer;
   private readonly int[] _backBuffer;
   private readonly bool[] _occupied;
-  private bool _frameQueued;
   #endregion
 
   public Framebuffer()
