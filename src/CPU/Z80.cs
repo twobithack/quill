@@ -259,6 +259,21 @@ unsafe public ref partial struct Z80
     ushort address;
     switch (operand)
     {
+      case Operand.A:   return _a;
+      case Operand.B:   return _b;
+      case Operand.C:   return _c;
+      case Operand.D:   return _d;
+      case Operand.E:   return _e;
+      case Operand.F:   return (byte)_flags;
+      case Operand.H:   return _h;
+      case Operand.L:   return _l;
+      case Operand.I:   return _i;
+      case Operand.R:   return _r;
+      case Operand.IXh: return _ixh;
+      case Operand.IXl: return _ixl;
+      case Operand.IYh: return _iyh;
+      case Operand.IYl: return _iyl;
+
       case Operand.Immediate:
         if (_instruction.Destination == Operand.IXd)
           _memPtr = (ushort)(IX + FetchSignedByte());
@@ -266,28 +281,10 @@ unsafe public ref partial struct Z80
           _memPtr = (ushort)(IY + FetchSignedByte());
         return FetchByte();
 
-      case Operand.A: return _a;
-      case Operand.B: return _b;
-      case Operand.C: return _c;
-      case Operand.D: return _d;
-      case Operand.E: return _e;
-      case Operand.F: return (byte)_flags;
-      case Operand.H: return _h;
-      case Operand.L: return _l;
-      case Operand.I: return _i;
-      case Operand.R: return _r;
-      case Operand.IXh: return _ixh;
-      case Operand.IXl: return _ixl;
-      case Operand.IYh: return _iyh;
-      case Operand.IYl: return _iyl;
-
-      case Operand.Indirect:
-        address = FetchWord();
-        break;
-
-      case Operand.BCi: address = BC; break;
-      case Operand.DEi: address = DE; break;
-      case Operand.HLi: address = HL; break;
+      case Operand.Indirect:  address = FetchWord();  break;
+      case Operand.BCi:       address = BC;           break;
+      case Operand.DEi:       address = DE;           break;
+      case Operand.HLi:       address = HL;           break;
 
       case Operand.IXd:
         _memPtr ??= (ushort)(IX + FetchSignedByte());
@@ -310,20 +307,18 @@ unsafe public ref partial struct Z80
     ushort address;
     switch (operand)
     {
+      case Operand.Immediate: return FetchWord();
+      case Operand.AF:        return AF;
+      case Operand.BC:        return BC;
+      case Operand.DE:        return DE;
+      case Operand.HL:        return HL;
+      case Operand.IX:        return IX;
+      case Operand.IY:        return IY;
+      case Operand.SP:        return _sp;
+
       case Operand.Indirect: 
         address = FetchWord();
         break;
-
-      case Operand.Immediate:
-        return FetchWord();
-
-      case Operand.AF: return AF;
-      case Operand.BC: return BC;
-      case Operand.DE: return DE;
-      case Operand.HL: return HL;
-      case Operand.IX: return IX;
-      case Operand.IY: return IY;
-      case Operand.SP: return _sp;
 
       default: throw new Exception($"Invalid word operand: {_instruction}");
     }
@@ -370,24 +365,24 @@ unsafe public ref partial struct Z80
     ushort address;
     switch (destination)
     { 
-      case Operand.A: _a = value; return;
-      case Operand.B: _b = value; return;
-      case Operand.C: _c = value; return;
-      case Operand.D: _d = value; return;
-      case Operand.E: _e = value; return;
-      case Operand.H: _h = value; return;
-      case Operand.L: _l = value; return;
-      case Operand.I: _i = value; return;
-      case Operand.R: _r = value; return;
+      case Operand.A:   _a = value;   return;
+      case Operand.B:   _b = value;   return;
+      case Operand.C:   _c = value;   return;
+      case Operand.D:   _d = value;   return;
+      case Operand.E:   _e = value;   return;
+      case Operand.H:   _h = value;   return;
+      case Operand.L:   _l = value;   return;
+      case Operand.I:   _i = value;   return;
+      case Operand.R:   _r = value;   return;
       case Operand.IXh: _ixh = value; return;
       case Operand.IXl: _ixl = value; return;
       case Operand.IYh: _iyh = value; return;
       case Operand.IYl: _iyl = value; return;
 
-      case Operand.BCi: address = BC; break;
-      case Operand.DEi: address = DE; break;
-      case Operand.HLi: address = HL; break;
-      case Operand.Indirect: address = FetchWord(); break;
+      case Operand.Indirect:  address = FetchWord();  break;
+      case Operand.BCi:       address = BC;           break;
+      case Operand.DEi:       address = DE;           break;
+      case Operand.HLi:       address = HL;           break;
 
       case Operand.IXd:
         address = _memPtr ?? (ushort)(IX + FetchSignedByte());
@@ -412,13 +407,13 @@ unsafe public ref partial struct Z80
         _memory.WriteWord(address, value);
         return;
 
-      case Operand.AF: AF = value; return;
-      case Operand.BC: BC = value; return;
-      case Operand.DE: DE = value; return;
-      case Operand.HL: HL = value; return;
-      case Operand.IX: IX = value; return;
-      case Operand.IY: IY = value; return;
-      case Operand.SP: _sp = value; return;
+      case Operand.AF:  AF = value;   return;
+      case Operand.BC:  BC = value;   return;
+      case Operand.DE:  DE = value;   return;
+      case Operand.HL:  HL = value;   return;
+      case Operand.IX:  IX = value;   return;
+      case Operand.IY:  IY = value;   return;
+      case Operand.SP:  _sp = value;  return;
       
       default: throw new Exception($"Invalid word destination: {_instruction}");
     }
@@ -444,31 +439,31 @@ unsafe public ref partial struct Z80
         return;
     
       case 0x3E:
-      case byte mirror when (mirror < 0x3E &&
-                             mirror % 2 == 0):
+      case byte mirror when mirror < 0x3E &&
+                            mirror % 2 == 0:
         // Memory controller
         return;
     
       case 0x3F:
-      case byte mirror when (mirror < 0x3E &&
-                             mirror % 2 != 0):
+      case byte mirror when mirror < 0x3E &&
+                            mirror % 2 != 0:
         _input.WriteControl(value);
         return;
 
-      case byte mirror when (mirror > 0x3F &&
-                             mirror < 0x80):
+      case byte mirror when mirror > 0x3F &&
+                            mirror < 0x80:
         _psg.WriteData(value);
         return;
 
-      case byte mirror when (mirror > 0x7F &&
-                             mirror < 0xC0 &&
-                             mirror % 2 != 0):
+      case byte mirror when mirror > 0x7F &&
+                            mirror < 0xC0 &&
+                            mirror % 2 != 0:
         _vdp.WriteControl(value);
         return;
 
-      case byte mirror when (mirror > 0x7F &&
-                             mirror < 0xC0 &&
-                             mirror % 2 == 0):
+      case byte mirror when mirror > 0x7F &&
+                            mirror < 0xC0 &&
+                            mirror % 2 == 0:
         _vdp.WriteData(value);
         return;
     }
@@ -486,6 +481,7 @@ unsafe public ref partial struct Z80
     Operand.Even      => ParityFlag,
     Operand.Odd       => !ParityFlag,
     Operand.Implied   => true,
+
     _ => throw new Exception($"Invalid condition: {_instruction}")
   };
 
@@ -495,7 +491,7 @@ unsafe public ref partial struct Z80
     var carry = a ^ b ^ result;
     var carryIn = (carry >> 7) & 1;
     var carryOut = (carry >> 8) & 1;
-    return carryIn != carryOut;
+    return (carryIn != carryOut);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -504,7 +500,7 @@ unsafe public ref partial struct Z80
     var carry = a ^ b ^ result;
     var carryIn = (carry >> 15) & 1;
     var carryOut = (carry >> 16) & 1;
-    return carryIn != carryOut;
+    return (carryIn != carryOut);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
