@@ -3,7 +3,9 @@ using Quill.Core;
 using Quill.Video.Definitions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Quill.Video;
@@ -82,7 +84,7 @@ unsafe public class VDP
   private bool VSyncEnabled => TestRegisterBit(0x1, 5);
   private bool DisplayEnabled => TestRegisterBit(0x1, 6);
   private bool UseSecondPatternTable => TestRegisterBit(0x6, 2);
-  private int BackgroundColor => _registers[0x7] & 0b_0011;
+  private byte BackgroundColor => (byte)(_registers[0x7] & 0b_0011);
 
   private bool VSyncPending
   {
@@ -264,21 +266,14 @@ unsafe public class VDP
       Buffer.BlockCopy(_renderbuffer, 0, _framebuffer, 0, FRAMEBUFFER_SIZE);
       _frameQueued = true;
     }
-
-    if (!DisplayEnabled)
-    {
-      Array.Fill<byte>(_renderbuffer, 0x00);
-      return;
-    }
-
-    for (var pixelIndex = 0; pixelIndex < FRAMEBUFFER_SIZE; pixelIndex += 4)
-      SetPixelColor(pixelIndex, BackgroundColor, 0x00);
+    
+    Array.Fill<byte>(_renderbuffer, 0x00);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   {
-    // TODO: Mode 2 support
+    // TODO: Mode 1+2 support
     RasterizeSprites();
     RasterizeBackground();
   }
@@ -411,8 +406,7 @@ unsafe public class VDP
 
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
         if (paletteIndex == 0x00)
-          continue;
-
+          paletteIndex = BackgroundColor;
         if (tile.UseSpritePalette)
           paletteIndex += 16;
 
@@ -475,6 +469,17 @@ unsafe public class VDP
       mode |= 0b_0010;
     if (TestRegisterBit(0x1, 4))
       mode |= 0b_0001;
+
+    #if DEBUG
+    var supportedModes = new byte[]
+    {
+      0b_1000,  0b_1010,
+      0b_1011,  0b_1100,
+      0b_1110,  0b_1111
+    };
+    Debug.WriteLineIf(!supportedModes.Contains(mode), $"Unsupported video mode: {mode.ToHex()}");
+    #endif
+
     return mode;
   }
 
@@ -494,8 +499,15 @@ unsafe public class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort GetNameTableAddress()
   {
-    // TODO: medium resolution support
-    var address = _registers[0x2] & 0b_0000_1110;
+    var addressMask = 0b_0000_1110;
+
+    // Doesn't yet seem to do anything?
+    // var mode = GetDisplayMode();
+    // if (mode == 0b_1011 ||
+    //     mode == 0b_1110)
+    //   addressMask = 0b_0000_1100;
+
+    var address = _registers[0x2] & addressMask;
     return (ushort)(address << 10);
   }
 
