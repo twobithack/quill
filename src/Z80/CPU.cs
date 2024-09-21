@@ -7,9 +7,7 @@ namespace Quill.Z80
   public partial class CPU
   {
     private Memory _memory;
-    private ushort _memPtr;
     private bool _halt;
-    private int _cycleCount;
     private int _instructionCount;
 
     public CPU()
@@ -26,7 +24,7 @@ namespace Quill.Z80
     public void Step()
     {
       HandleInterrupts();
-      FetchInstruction();
+      DecodeInstruction();
       ExecuteInstruction();
       _instructionCount++;
     }
@@ -42,7 +40,7 @@ namespace Quill.Z80
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void FetchInstruction()
+    private void DecodeInstruction()
     {
       var op = FetchByte();
       _instruction = op switch
@@ -53,9 +51,6 @@ namespace Quill.Z80
         0xFD  =>  DecodeFDInstruction(),
         _     =>  Opcodes.Main[op]
       };
-#if DEBUG
-      Console.WriteLine(_instruction);
-#endif
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -174,7 +169,7 @@ namespace Quill.Z80
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private byte ReadByte(Operand operand)
+    private byte ReadByteOperand(Operand operand)
     {
       switch (operand)
       {
@@ -186,23 +181,20 @@ namespace Quill.Z80
         case Operand.DEi: _memPtr = _de; break;
         case Operand.HLi: _memPtr = _hl; break;
 
-        case Operand.IXd:
-        case Operand.IYd:
-          _memPtr = (byte)(ReadRegister(operand) + FetchByte());
-          break;
+        case Operand.IXd: _memPtr = (ushort)(_ix + FetchByte()); break;
+        case Operand.IYd: _memPtr = (ushort)(_iy + FetchByte()); break;
 
         case Operand.Immediate:
           return FetchByte();
 
-        case Operand.A:
-        case Operand.B:
-        case Operand.C:
-        case Operand.D:
-        case Operand.E:
-        case Operand.F:
-        case Operand.H:
-        case Operand.L:
-          return ReadRegister(operand);
+        case Operand.A: return _a;
+        case Operand.B: return _b;
+        case Operand.C: return _c;
+        case Operand.D: return _d;
+        case Operand.E: return _e;
+        case Operand.F: return (byte)_flags;
+        case Operand.H: return _h;
+        case Operand.L: return _l;
         
         default: throw new InvalidOperationException($"Invalid source: {operand}");
       }
@@ -210,7 +202,7 @@ namespace Quill.Z80
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort ReadWord(Operand operand)
+    private ushort ReadWordOperand(Operand operand)
     {
       switch (operand)
       {
@@ -221,15 +213,13 @@ namespace Quill.Z80
         case Operand.Immediate:
           return FetchWord();
 
-        case Operand.AF:
-        case Operand.BC: 
-        case Operand.DE: 
-        case Operand.HL: 
-        case Operand.IX:  
-        case Operand.IY: 
-        case Operand.PC:
-        case Operand.SP:
-          return ReadRegisterPair(operand);
+        case Operand.AF: return _af;
+        case Operand.BC: return _bc;
+        case Operand.DE: return _de;
+        case Operand.HL: return _hl;
+        case Operand.IX: return _ix;
+        case Operand.IY: return _iy;
+        case Operand.SP: return _sp;
 
         default:
           return 0x00;
@@ -238,7 +228,7 @@ namespace Quill.Z80
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WriteByte(byte value)
+    private void WriteByteResult(byte value)
     {
       switch (_instruction.Destination)
       {
@@ -272,7 +262,7 @@ namespace Quill.Z80
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WriteWord(ushort value)
+    private void WriteWordResult(ushort value)
     {
       switch (_instruction.Destination)
       {
@@ -286,7 +276,6 @@ namespace Quill.Z80
         case Operand.HL: _hl = value; return;
         case Operand.IX: _ix = value; return;
         case Operand.IY: _iy = value; return;
-        case Operand.PC: _pc = value; return;
         case Operand.SP: _sp = value; return;
 
         default: throw new InvalidOperationException($"Invalid destination: {_instruction.Destination}");
@@ -294,42 +283,36 @@ namespace Quill.Z80
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool EvaluateCondition()
+    private bool EvaluationCondition() => _instruction.Source switch
     {
-      return _instruction.Source switch
-      {
-        Operand.Carry     => _carry,
-        Operand.NonCarry  => !_carry,
-        Operand.Zero      => _zero,
-        Operand.NonZero   => !_zero,
-        Operand.Negative  => _sign,
-        Operand.Positive  => !_sign,
-        Operand.Even      => _parity,
-        Operand.Odd       => !_parity,
-        _                 => true
-      };
-    }
+      Operand.Carry     => _carry,
+      Operand.NonCarry  => !_carry,
+      Operand.Zero      => _zero,
+      Operand.NonZero   => !_zero,
+      Operand.Negative  => _sign,
+      Operand.Positive  => !_sign,
+      Operand.Even      => _parity,
+      Operand.Odd       => !_parity,
+      _                 => true
+    };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort GetBitIndex()
+    private ushort GetBitIndex() => _instruction.Destination switch
     {
-      return _instruction.Destination switch
-      {
-        Operand.Bit0  => 0,
-        Operand.Bit1  => 1,
-        Operand.Bit2  => 2,
-        Operand.Bit3  => 3,
-        Operand.Bit4  => 4,
-        Operand.Bit5  => 5,
-        Operand.Bit6  => 6,
-        Operand.Bit7  => 7,
-        _ => throw new InvalidOperationException($"Invalid bit index: {_instruction.Destination}")
-      };
-    }
+      Operand.Bit0  => 0,
+      Operand.Bit1  => 1,
+      Operand.Bit2  => 2,
+      Operand.Bit3  => 3,
+      Operand.Bit4  => 4,
+      Operand.Bit5  => 5,
+      Operand.Bit6  => 6,
+      Operand.Bit7  => 7,
+      _ => throw new InvalidOperationException($"Invalid bit index: {_instruction.Destination}")
+    };
 
-    public string DumpMemory(string path) => _memory.DumpPage(0x00);
+    public void DumpMemory(string path) => _memory.Dump(path);
 
     public override String ToString() => DumpRegisters() +
-      $"Instruction: {_instructionCount}, Flags: {_flags.ToString()}\r\n ";
+                                         $"Flags: {_flags.ToString()}";
   }
 }

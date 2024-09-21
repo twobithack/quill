@@ -25,7 +25,6 @@ namespace Quill.Z80
     HL, 
     IX,  
     IY, 
-    PC,
     SP,
 
     // register indirect

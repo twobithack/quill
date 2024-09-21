@@ -7,11 +7,9 @@ namespace Quill.Z80
   public partial class CPU
   {
     private Flags _flags;
-
-    private ushort _pc;
-    private ushort _sp;
-    private ushort _ix;
-    private ushort _iy;
+    
+    private bool _iff1;
+    private bool _iff2;
 
     private byte _a;
     private byte _b;
@@ -20,19 +18,19 @@ namespace Quill.Z80
     private byte _e;
     private byte _h;
     private byte _l;
-    private byte _aShadow;
-    private byte _bShadow;
-    private byte _cShadow;
-    private byte _dShadow;
-    private byte _eShadow;
-    private byte _fShadow;
-    private byte _hShadow;
-    private byte _lShadow;
-    
     private byte _i;
-    private byte _r;
-    private bool _iff1;
-    private bool _iff2;
+    private byte _r;   
+
+    private ushort _pc;
+    private ushort _sp;
+    private ushort _ix;
+    private ushort _iy;
+
+    private ushort _afShadow;
+    private ushort _bcShadow;
+    private ushort _deShadow;
+    private ushort _hlShadow;
+    private ushort _memPtr;
 
     private Opcode _instruction;
 
@@ -87,85 +85,6 @@ namespace Quill.Z80
         _l = value.GetLowByte();
       }
     }
-
-    private ushort _afShadow
-    {
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      get => _aShadow.Concat(_fShadow);
-
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      set
-      {
-        _aShadow = value.GetHighByte();
-        _fShadow = value.GetLowByte();
-      }
-    }
-
-    private ushort _bcShadow
-    {
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      get => _bShadow.Concat(_cShadow);
-
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      set
-      {
-        _bShadow = value.GetHighByte();
-        _cShadow = value.GetLowByte();
-      }
-    }
-
-    private ushort _deShadow
-    {
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      get => _dShadow.Concat(_eShadow);
-
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      set
-      {
-        _dShadow = value.GetHighByte();
-        _eShadow = value.GetLowByte();
-      }
-    }
-
-    private ushort _hlShadow
-    {
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      get => _hShadow.Concat(_lShadow);
-
-      [MethodImpl(MethodImplOptions.AggressiveInlining)]
-      set
-      {
-        _hShadow = value.GetHighByte();
-        _lShadow = value.GetLowByte();
-      }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private byte ReadRegister(Operand register) => register switch
-    {
-      Operand.A => _a,
-      Operand.B => _b,
-      Operand.C => _c,
-      Operand.D => _d,
-      Operand.E => _e,
-      Operand.H => _h,
-      Operand.L => _l,
-      _ => throw new InvalidOperationException($"Invalid source: {register}")
-    };
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort ReadRegisterPair(Operand registers) => registers switch
-    {
-      Operand.AF => _af,
-      Operand.BC => _bc,
-      Operand.DE => _de,
-      Operand.HL => _hl,
-      Operand.IX => _ix,
-      Operand.IY => _iy,
-      Operand.PC => _pc,
-      Operand.SP => _sp,
-      _ => throw new InvalidOperationException($"Invalid source: {registers}")
-    };
 
     private bool _sign
     {
@@ -235,34 +154,13 @@ namespace Quill.Z80
                                                            ? _flags | flag 
                                                            : _flags & ~flag;
 
-    private void ResetRegisters()
-    { 
-      _pc = 0x0000;
-      _sp = 0xFFFF;
-      _ix = 0xFFFF;
-      _iy = 0xFFFF;
-      _af = 0xFFFF;
-      _bc = 0xFFFF;
-      _de = 0xFFFF;
-      _hl = 0xFFFF;
-      _afShadow = 0xFFFF;
-      _bcShadow = 0xFFFF;
-      _deShadow = 0xFFFF;
-      _hlShadow = 0xFFFF;
-      
-      _i = 0x00;
-      _r = 0x00;
-      _iff1 = false;
-      _iff2 = false;
-      _instruction = new Opcode();
-    }
-
     public string DumpRegisters()
     {
-      return $"╒══════════╤═══════════╤═══════════╤═══════════╤═══════════╕\r\n" +
-             $"│Registers │ AF: {_af.ToHex()} │ BC: {_bc.ToHex()} │ DE: {_de.ToHex()} │ HL: {_hl.ToHex()} │\r\n" +
-             $"│          │ IX: {_ix.ToHex()} │ IY: {_iy.ToHex()} │ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │\r\n" +
-             $"╘══════════╧═══════════╧═══════════╧═══════════╧═══════════╛\r\n";
+      return $"╒═══════════╤═══════════╤═══════════╤═══════════╤═══════════╕\r\n" +
+             $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {_ix.ToHex()} │ IY: {_iy.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
+             $"│ AF: {_af.ToHex()} │ BC: {_bc.ToHex()} │ DE: {_de.ToHex()} │ HL: {_hl.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
+             $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
+             $"╘═══════════╧═══════════╧═══════════╧═══════════╧═══════════╛\r\n";
     }
   }
 }
