@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Quill.Extensions;
 using static Quill.Z80.Opcodes;
 
@@ -74,6 +75,47 @@ namespace Quill.Z80
       }
     }
 
+    private ushort _afS
+    {
+      get => _aS.Append(_fS);
+      set
+      {
+        _aS = value.GetHighByte();
+        _fS = value.GetLowByte();
+      }
+    }
+
+    private ushort _bcS
+    {
+      get => _bS.Append(_cS);
+      set
+      {
+        _bS = value.GetHighByte();
+        _cS = value.GetLowByte();
+      }
+    }
+
+    private ushort _deS
+    {
+      get => _dS.Append(_eS);
+      set
+      {
+        _dS = value.GetHighByte();
+        _eS = value.GetLowByte();
+      }
+    }
+
+    private ushort _hlS
+    {
+      get => _hS.Append(_lS);
+      set
+      {
+        _hS = value.GetHighByte();
+        _lS = value.GetLowByte();
+      }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private byte ReadRegister(Operand register) => register switch
     {
       Operand.A => _a,
@@ -87,6 +129,7 @@ namespace Quill.Z80
       _ => throw new InvalidOperationException()
     };
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private ushort ReadRegisterPair(Operand register) => register switch
     {
       Operand.AF => _af,
@@ -142,40 +185,34 @@ namespace Quill.Z80
       set => SetFlag(Flags.Carry, value);
     }
 
-    private void SetFlag(Flags flag, bool value) => _flags = value
-                                                          ? _flags | flag 
-                                                          : _flags & ~flag;
-    
     private Flags _flags
     {
       get => (Flags) _f;
       set => _f = (byte)value;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetFlag(Flags flag, bool value) => _flags = value
+                                                          ? _flags | flag 
+                                                          : _flags & ~flag;
+
     private void ResetRegisters()
     { 
-      _a = 0;
-      _b = 0;
-      _c = 0;
-      _d = 0;
-      _e = 0;
-      _f = 0;
-      _h = 0;
-      _l = 0;
-      _i = 0;
-      _r = 0;
-      _aS = 0;
-      _bS = 0;
-      _cS = 0;
-      _dS = 0;
-      _eS = 0;
-      _fS = 0;
-      _hS = 0;
-      _lS = 0;
-      _pc = 0;
-      _sp = 0;
-      _ix = 0;
-      _iy = 0;
+      _pc = 0x0000;
+      _sp = 0xFFFF;
+      _ix = 0xFFFF;
+      _iy = 0xFFFF;
+      _af = 0xFFFF;
+      _bc = 0xFFFF;
+      _de = 0xFFFF;
+      _hl = 0xFFFF;
+      _afS = 0xFFFF;
+      _bcS = 0xFFFF;
+      _deS = 0xFFFF;
+      _hlS = 0xFFFF;
+      
+      _i = 0x00;
+      _r = 0x00;
       _iff1 = false;
       _iff2 = false;
       _instruction = new Opcode();
