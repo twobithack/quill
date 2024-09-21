@@ -55,6 +55,7 @@ unsafe public class Emulator
       {
         cpu.Run(CYCLES_PER_SCANLINE);
         _video.RenderScanline();
+        _sound.UpdateAudioBuffer();
         scanlines--;
       }
 
