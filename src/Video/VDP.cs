@@ -292,7 +292,7 @@ unsafe public class VDP
         _status |= Status.Overflow;
 
       var offset = 0x80 + (sprite * 2);
-      var x = _vram[baseAddress + offset];
+      int x = _vram[baseAddress + offset];
       int patternIndex = _vram[baseAddress + offset + 1];
 
       if (ShiftX)
@@ -301,7 +301,7 @@ unsafe public class VDP
       if (UseSecondPatternTable)
         patternIndex += 0x100;
 
-      if (StretchSprites && y < VCounter + TILE_SIZE + 1)
+      if (StretchSprites && y <= VCounter + TILE_SIZE)
         patternIndex &= 0b_1111_1111_1111_1110;
 
       var patternAddress = patternIndex * 32;
@@ -311,7 +311,7 @@ unsafe public class VDP
       var spriteEnd = x + 8;
       for (byte i = 7; x < spriteEnd; x++, i--)
       {
-        if (x >= HORIZONTAL_RESOLUTION - 1)
+        if (x >= HORIZONTAL_RESOLUTION)
           break;
 
         if (x < 8 && MaskLeftBorder)
