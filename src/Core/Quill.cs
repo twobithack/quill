@@ -7,28 +7,48 @@ namespace Quill;
 
 public class Quill : Game
 {
+  private const int BORDER_MASK_WIDTH = 8;
+  private const int FRAMEBUFFER_WIDTH = 256;
+  private const int FRAMEBUFFER_HEIGHT = 192;
+
+  private readonly Emulator _emulator;
+  private Thread _emulationThread;
+
   private GraphicsDeviceManager _graphics;
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
-  private Emulator _emulator;
-  private Thread _emulationThread;
-
-  public Quill(string filepath)
+  private Matrix _frameTransform;
+  private bool _maskBorder;
+  private int _scale;
+  
+  public Quill(string romPath, bool maskBorder, int scale = 4)
   {
-    _emulator = new Emulator(filepath);
+    _emulator = new Emulator(romPath);
     _graphics = new GraphicsDeviceManager(this);
+    _maskBorder = maskBorder;
+    _scale = scale;
+
     Content.RootDirectory = "content";
     IsMouseVisible = true;
   }
 
   protected override void Initialize()
   {
-    _framebuffer = new Texture2D(GraphicsDevice, 256, 192);
     _emulationThread = new Thread(_emulator.Run);
     _emulationThread.Start();
 
-    _graphics.PreferredBackBufferWidth = 1024;
-    _graphics.PreferredBackBufferHeight = 768;
+    _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
+    _graphics.PreferredBackBufferHeight = _scale * FRAMEBUFFER_HEIGHT;
+    _graphics.PreferredBackBufferWidth = _scale * FRAMEBUFFER_WIDTH;
+
+    if (_maskBorder)
+    {
+      _graphics.PreferredBackBufferWidth -= _scale * BORDER_MASK_WIDTH;
+      _frameTransform = Matrix.CreateTranslation(-(_scale * BORDER_MASK_WIDTH), 0, 0);
+    }
+    else
+      _frameTransform = new Matrix();
+
     _graphics.ApplyChanges();
     base.Initialize();
   }
@@ -41,41 +61,8 @@ public class Quill : Game
 
   protected override void Update(GameTime gameTime)
   {
-    var joy1 = GamePad.GetState(0);
-    if (joy1.IsConnected)
-    {
-      _emulator.Input.Joy1Up = joy1.IsButtonDown(Buttons.DPadUp) ||
-                               joy1.IsButtonDown(Buttons.LeftThumbstickUp);
-      _emulator.Input.Joy1Left = joy1.IsButtonDown(Buttons.DPadLeft) ||
-                                 joy1.IsButtonDown(Buttons.LeftThumbstickLeft);
-      _emulator.Input.Joy1Down = joy1.IsButtonDown(Buttons.DPadDown) ||
-                                 joy1.IsButtonDown(Buttons.LeftThumbstickDown);
-      _emulator.Input.Joy1Right = joy1.IsButtonDown(Buttons.DPadRight) ||
-                                  joy1.IsButtonDown(Buttons.LeftThumbstickRight);
-      _emulator.Input.Joy1FireA = joy1.IsButtonDown(Buttons.A) || 
-                                  joy1.IsButtonDown(Buttons.X);
-      _emulator.Input.Joy1FireB = joy1.IsButtonDown(Buttons.B) || 
-                                  joy1.IsButtonDown(Buttons.Y);
-    }
-    else
-    {
-      var kb = Keyboard.GetState();
-      if (kb.IsKeyDown(Keys.Escape))
-        Exit();
-
-      _emulator.Input.Joy1Up = kb.IsKeyDown(Keys.Up) || 
-                               kb.IsKeyDown(Keys.W);
-      _emulator.Input.Joy1Left = kb.IsKeyDown(Keys.Left) || 
-                                 kb.IsKeyDown(Keys.A);
-      _emulator.Input.Joy1Down = kb.IsKeyDown(Keys.Down) || 
-                                 kb.IsKeyDown(Keys.S);
-      _emulator.Input.Joy1Right = kb.IsKeyDown(Keys.Right) || 
-                                  kb.IsKeyDown(Keys.D);
-      _emulator.Input.Joy1FireA = kb.IsKeyDown(Keys.Z) || 
-                                  kb.IsKeyDown(Keys.OemComma);
-      _emulator.Input.Joy1FireB = kb.IsKeyDown(Keys.X) || 
-                                  kb.IsKeyDown(Keys.OemPeriod);
-    }
+    if (!ReadJoystickInput())
+      ReadKeyboardInput();
 
     base.Update(gameTime);
   }
@@ -83,10 +70,52 @@ public class Quill : Game
   protected override void Draw(GameTime gameTime)
   {
     GraphicsDevice.Clear(Color.Black);
-    _framebuffer.SetData<byte>(_emulator.ReadFramebuffer());
-    _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+    _framebuffer.SetData(_emulator.ReadFramebuffer());
+
+    _spriteBatch.Begin(samplerState: SamplerState.PointClamp, transformMatrix: _frameTransform);
     _spriteBatch.Draw(_framebuffer, GraphicsDevice.Viewport.Bounds, Color.White);
     _spriteBatch.End();
     base.Draw(gameTime);
+  }
+
+  private bool ReadJoystickInput()
+  {
+    var joy1 = GamePad.GetState(0);
+    if (!joy1.IsConnected)
+      return false;
+
+    _emulator.Input.Joy1Up    = joy1.IsButtonDown(Buttons.DPadUp) ||
+                                joy1.IsButtonDown(Buttons.LeftThumbstickUp);
+    _emulator.Input.Joy1Left  = joy1.IsButtonDown(Buttons.DPadLeft) ||
+                                joy1.IsButtonDown(Buttons.LeftThumbstickLeft);
+    _emulator.Input.Joy1Down  = joy1.IsButtonDown(Buttons.DPadDown) ||
+                                joy1.IsButtonDown(Buttons.LeftThumbstickDown);
+    _emulator.Input.Joy1Right = joy1.IsButtonDown(Buttons.DPadRight) ||
+                                joy1.IsButtonDown(Buttons.LeftThumbstickRight);
+    _emulator.Input.Joy1FireA = joy1.IsButtonDown(Buttons.A) ||
+                                joy1.IsButtonDown(Buttons.X);
+    _emulator.Input.Joy1FireB = joy1.IsButtonDown(Buttons.B) ||
+                                joy1.IsButtonDown(Buttons.Y);
+    return true;
+  }
+
+  private void ReadKeyboardInput()
+  {
+    var kb = Keyboard.GetState();
+    if (kb.IsKeyDown(Keys.Escape))
+      Exit();
+
+    _emulator.Input.Joy1Up    = kb.IsKeyDown(Keys.Up) ||
+                                kb.IsKeyDown(Keys.W);
+    _emulator.Input.Joy1Left  = kb.IsKeyDown(Keys.Left) ||
+                                kb.IsKeyDown(Keys.A);
+    _emulator.Input.Joy1Down  = kb.IsKeyDown(Keys.Down) ||
+                                kb.IsKeyDown(Keys.S);
+    _emulator.Input.Joy1Right = kb.IsKeyDown(Keys.Right) ||
+                                kb.IsKeyDown(Keys.D);
+    _emulator.Input.Joy1FireA = kb.IsKeyDown(Keys.Z) ||
+                                kb.IsKeyDown(Keys.OemComma);
+    _emulator.Input.Joy1FireB = kb.IsKeyDown(Keys.X) ||
+                                kb.IsKeyDown(Keys.OemPeriod);
   }
 }

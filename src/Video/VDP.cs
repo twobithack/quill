@@ -227,10 +227,10 @@ unsafe public class VDP
     var spriteHeight = (_stretchSprites || _zoomSprites) ? 16 : 8;
     var spriteCount = 0;
 
-    var satBaseAddress = GetSpriteAttributeTableAddress();
+    var baseAddress = GetSpriteAttributeTableAddress();
     for (int sprite = 0; sprite < 64; sprite++)
     {
-      ushort y = _vram[satBaseAddress + sprite];
+      ushort y = _vram[baseAddress + sprite];
       if (y == DISABLE_SPRITES)
         return;
 
@@ -250,8 +250,8 @@ unsafe public class VDP
       }
 
       var offset = 0x80 + (sprite * 2);
-      var x = _vram[satBaseAddress + offset];
-      ushort patternIndex = _vram[satBaseAddress + offset + 1];
+      var x = _vram[baseAddress + offset];
+      ushort patternIndex = _vram[baseAddress + offset + 1];
 
       if (_shiftX)
         x -= 8;
@@ -269,16 +269,17 @@ unsafe public class VDP
       var pattern1 = _vram[patternAddress + 1];
       var pattern2 = _vram[patternAddress + 2];
       var pattern3 = _vram[patternAddress + 3];
-      
-      for (byte i = 0, col = 7; i < 8; i++, col--)
+
+      var spriteEnd = x + 8;
+      for (byte i = 7; x < spriteEnd; x++, i--)
       {
-        if (x + i >= _xResolution)
+        if (x >= _xResolution)
           break;
 
-        if (_maskLeftBorder && x + i < 8)
+        if (x < 8 && _maskLeftBorder)
           continue;
 
-        var index = GetFramebufferIndex(x + i, VCounter);
+        var index = GetFramebufferIndex(x, VCounter);
         if (_framebuffer[index + 3] != 0x00)
         {
           _status |= Status.Collision;
@@ -286,14 +287,10 @@ unsafe public class VDP
         }
 
         byte palette = 0x00;
-        if (pattern0.TestBit(col))
-          palette++;
-        if (pattern1.TestBit(col))
-          palette |= 0b_0010;
-        if (pattern2.TestBit(col))
-          palette |= 0b_0100;
-        if (pattern3.TestBit(col))
-          palette |= 0b_1000;
+        if (pattern0.TestBit(i)) palette |= 0b_0001;
+        if (pattern1.TestBit(i)) palette |= 0b_0010;
+        if (pattern2.TestBit(i)) palette |= 0b_0100;
+        if (pattern3.TestBit(i)) palette |= 0b_1000;
 
         if (palette == 0x00)
           continue;
@@ -307,6 +304,10 @@ unsafe public class VDP
         _framebuffer[index + 3] = 0xFF;
       }
     }
+
+    //var nameTableAddress = GetNameTableAddress();
+    //nameTableAddress += 
+    //for (int )
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -352,6 +353,14 @@ unsafe public class VDP
   {
     var address = _registers[0x5] & 0b_0111_1110;
     return (ushort)(address << 7);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort GetNameTableAddress()
+  {
+    // TODO: medium resolution support
+    var address = _registers[0x2] & 0b_0000_1110;
+    return (ushort)(address << 10);
   }
 
   private void DumpVRAM(string path)
