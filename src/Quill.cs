@@ -6,7 +6,7 @@ public unsafe sealed class Quill
 {
   public static void Main(string[] args)
   {
-    var rom = ReadROM(@"test/zexdoc.sms");
+    var rom = ReadROM(@"test/sdsc.sms");
     var vdp = new VDP();
     var cpu = new CPU(rom, vdp);
     cpu.InitializeSDSC();
@@ -14,7 +14,7 @@ public unsafe sealed class Quill
 
     var sw = new Stopwatch();
     sw.Start();
-    while (instructions < 100000000ul)
+    while (instructions < 10000000ul)
     {
       cpu.Step();
       instructions++;

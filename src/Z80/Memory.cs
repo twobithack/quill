@@ -22,9 +22,9 @@ unsafe public ref struct Memory
 
   public Memory(byte[] program)
   {
-    var headerOffset = program.Length % PageSize;
+    var headerOffset = (program.Length % PageSize == 512) ? 512 : 0;
     var rom = new byte[PageCount, PageSize];
-
+    
     for (int i = 0; i < program.Length; i++)
     {
       var page = (i / PageSize) + headerOffset;

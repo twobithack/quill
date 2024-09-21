@@ -34,6 +34,7 @@ public unsafe ref partial struct CPU
   private ushort _bcShadow = 0x0000;
   private ushort _deShadow = 0x0000;
   private ushort _hlShadow = 0x0000;
+  private ushort _memPtr = 0x0000;
 
   private ulong _cycleCount = 0;
 
