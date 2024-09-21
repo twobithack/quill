@@ -38,7 +38,10 @@ namespace Quill.Z80
 
     private ushort _af
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _a.Concat((byte)_flags);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set
       {
         _a = value.GetHighByte();
@@ -48,7 +51,10 @@ namespace Quill.Z80
 
     private ushort _bc
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _b.Concat(_c);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set
       {
         _b = value.GetHighByte();
@@ -58,7 +64,10 @@ namespace Quill.Z80
 
     private ushort _de
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _d.Concat(_e);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set
       {
         _d = value.GetHighByte();
@@ -68,7 +77,10 @@ namespace Quill.Z80
 
     private ushort _hl
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _h.Concat(_l);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set
       {
         _h = value.GetHighByte();
@@ -76,9 +88,12 @@ namespace Quill.Z80
       }
     }
 
-    private ushort _afS
+    private ushort _afShadow
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _aShadow.Concat(_fShadow);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set
       {
         _aShadow = value.GetHighByte();
@@ -86,9 +101,12 @@ namespace Quill.Z80
       }
     }
 
-    private ushort _bcS
+    private ushort _bcShadow
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _bShadow.Concat(_cShadow);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set
       {
         _bShadow = value.GetHighByte();
@@ -96,9 +114,12 @@ namespace Quill.Z80
       }
     }
 
-    private ushort _deS
+    private ushort _deShadow
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _dShadow.Concat(_eShadow);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set
       {
         _dShadow = value.GetHighByte();
@@ -106,9 +127,12 @@ namespace Quill.Z80
       }
     }
 
-    private ushort _hlS
+    private ushort _hlShadow
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _hShadow.Concat(_lShadow);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set
       {
         _hShadow = value.GetHighByte();
@@ -145,43 +169,64 @@ namespace Quill.Z80
 
     private bool _sign
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _flags.HasFlag(Flags.Sign);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set => SetFlag(Flags.Sign, value);
     }
 
     private bool _zero
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _flags.HasFlag(Flags.Zero);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set => SetFlag(Flags.Zero, value);
     }
 
     private bool _halfcarry
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _flags.HasFlag(Flags.Halfcarry);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set => SetFlag(Flags.Halfcarry, value);
     }
 
     private bool _parity
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _flags.HasFlag(Flags.Parity);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set => SetFlag(Flags.Parity, value);
     }
 
     private bool _overflow
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _flags.HasFlag(Flags.Parity);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set => SetFlag(Flags.Parity, value);
     }
 
     private bool _negative
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _flags.HasFlag(Flags.Negative);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set => SetFlag(Flags.Negative, value);
     }
 
     private bool _carry
     {
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       get => _flags.HasFlag(Flags.Carry);
+
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       set => SetFlag(Flags.Carry, value);
     }
 
@@ -200,10 +245,10 @@ namespace Quill.Z80
       _bc = 0xFFFF;
       _de = 0xFFFF;
       _hl = 0xFFFF;
-      _afS = 0xFFFF;
-      _bcS = 0xFFFF;
-      _deS = 0xFFFF;
-      _hlS = 0xFFFF;
+      _afShadow = 0xFFFF;
+      _bcShadow = 0xFFFF;
+      _deShadow = 0xFFFF;
+      _hlShadow = 0xFFFF;
       
       _i = 0x00;
       _r = 0x00;

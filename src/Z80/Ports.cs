@@ -1,6 +1,6 @@
 namespace Quill
 {
-  public class IO
+  public class Ports
   {
     public class Port
     {

@@ -8,8 +8,7 @@ namespace Quill.Z80
   {
     private Memory _memory;
     private ushort _memPtr;
-    private bool _nmiRequested;
-    private bool _intRequested;
+    private bool _halt;
     private int _cycleCount;
     private int _instructionCount;
 
@@ -18,10 +17,10 @@ namespace Quill.Z80
       _memory = new Memory();
     }
 
-    public void LoadProgram(byte[] rom)
+    public void LoadROM(byte[] rom)
     {
-      for (ushort index = 0x00; index < rom.Count(); index++)
-        _memory.WriteByte(index, rom[index]);
+      for (ushort i = 0x00; i < rom.Count(); i++)
+        _memory.WriteByte(i, rom[i]);
     }
 
     public void Step()
@@ -31,21 +30,13 @@ namespace Quill.Z80
       ExecuteInstruction();
       _instructionCount++;
     }
-
-    public void RequestINT()
-    {
-      // TODO
-    }
-    
-    public void RequestNMI()
-    {
-      // TODO
-    }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void HandleInterrupts()
     {
-      // TODO
+      // check nmi
+      // check iff1
+      // check irq
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -65,7 +56,8 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Opcode DecodeCBInstruction()
     {
-      return Opcodes.CB[FetchByte()];
+      var op = FetchByte();
+      return Opcodes.CB[op];
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,7 +75,8 @@ namespace Quill.Z80
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Opcode DecodeEDInstruction()
     {
-      return Opcodes.ED[FetchByte()];
+      var op = FetchByte();
+      return Opcodes.ED[op];
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -311,6 +304,23 @@ namespace Quill.Z80
         Operand.Even      => _parity,
         Operand.Odd       => !_parity,
         _                 => true
+      };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ushort GetBitIndex()
+    {
+      return _instruction.Destination switch
+      {
+        Operand.Bit0  => 0,
+        Operand.Bit1  => 1,
+        Operand.Bit2  => 2,
+        Operand.Bit3  => 3,
+        Operand.Bit4  => 4,
+        Operand.Bit5  => 5,
+        Operand.Bit6  => 6,
+        Operand.Bit7  => 7,
+        _ => throw new InvalidOperationException()
       };
     }
 
