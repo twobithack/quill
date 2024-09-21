@@ -5,7 +5,7 @@ using System;
 namespace Quill.Core;
 
 [Serializable]
-public class Snapshot
+public sealed class Snapshot
 {
   #region Constants
   private const ushort MEMORY_SIZE = 0x4000;

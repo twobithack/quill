@@ -13,15 +13,19 @@ unsafe public class Emulator
   #region Constants
   private const double FRAME_INTERVAL_MS = 1000d / 60d;
   private const int CYCLES_PER_SCANLINE = 228;
+  private const int REWIND_BUFFER_SIZE = 1000;
+  private const int FRAMES_PER_REWIND = 3;
   #endregion
 
   #region Fields
   public bool FastForward;
+  public bool Rewind;
 
   private readonly IO _input;
   private readonly PSG _audio;
   private readonly VDP _video;
   private readonly byte[] _rom;
+  private readonly RewindBuffer _rewindBuffer;
   private string _snapshotPath;
   private bool _loadRequested;
   private bool _saveRequested;
@@ -34,6 +38,7 @@ unsafe public class Emulator
     _audio = new PSG();
     _video = new VDP(extraScanlines);
     _rom = rom;
+    _rewindBuffer = new RewindBuffer(REWIND_BUFFER_SIZE);
   }
 
   #region Methods
@@ -43,6 +48,7 @@ unsafe public class Emulator
     _running = true;
     _audio.Play();
 
+    var frameCounter = 0;
     var frameTimer = new Stopwatch();
     frameTimer.Start();
 
@@ -62,11 +68,15 @@ unsafe public class Emulator
         scanlines--;
       }
 
-      if (_loadRequested)
+      if (Rewind)
+      {
+        var state = _rewindBuffer.Pop();
+        cpu.LoadState(state);
+      }
+      else if (_loadRequested)
       {
         var state = LoadSnapshot();
-        if (state != null)
-          cpu.LoadState(state);
+        cpu.LoadState(state);
         _loadRequested = false;
       }
       else if (_saveRequested)
@@ -75,6 +85,14 @@ unsafe public class Emulator
         SaveSnapshot(state);
         _saveRequested = false;
       }
+      else if (frameCounter >= FRAMES_PER_REWIND)
+      {
+        var state = cpu.SaveState();
+        _rewindBuffer.Push(state);
+        frameCounter = 0;
+      }
+
+      frameCounter++;
     }
 
     _audio.Stop();
