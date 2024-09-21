@@ -661,7 +661,7 @@ unsafe public ref partial struct Z80
       case 0x3F:
       case byte mirror when (mirror < 0x3E &&
                              mirror % 2 != 0):
-        // IO controller
+        _input.WriteControl(value);
         return;
 
       case byte mirror when (mirror > 0x3F &&
