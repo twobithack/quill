@@ -18,8 +18,8 @@ unsafe public class VDP
   private const int HORIZONTAL_RESOLUTION = 256;
   private const int TILE_SIZE = 8;
   private const int BACKGROUND_COLUMNS = 32;
-  private const int HSCROLL_LIMIT = 2;
-  private const int VSCROLL_LIMIT = 23;
+  private const int HSCROLL_LIMIT = 1;
+  private const int VSCROLL_LIMIT = 24;
   private const int DISABLE_SPRITES = 0xD0;
   #endregion
 
@@ -354,31 +354,31 @@ unsafe public class VDP
   private void RasterizeBackground()
   {
     var baseAddress = GetNameTableAddress();
-    var hScroll = LimitHScroll && (_vCounter / TILE_SIZE < HSCROLL_LIMIT) 
-                ? 0 
-                : _hScroll;
+    var allowHScroll = !LimitHScroll ||
+                       _vCounter / TILE_SIZE > HSCROLL_LIMIT;
 
-    for (int destinationColumn = 0; destinationColumn < BACKGROUND_COLUMNS; destinationColumn++)
+    for (int column = 0; column < BACKGROUND_COLUMNS; column++)
     {
-      var vScroll = LimitVScroll && destinationColumn > VSCROLL_LIMIT
-                  ? 0 
-                  : _vScroll;
+      int tilemapY = _vCounter;
+      if (!LimitVScroll ||
+          column < VSCROLL_LIMIT)
+        tilemapY += _vScroll;
 
-      var sourceRow = _vCounter + vScroll;
-      var rowOffset = sourceRow % TILE_SIZE;
-      sourceRow /= TILE_SIZE;
-      if (sourceRow >= _backgroundRows) 
-        sourceRow -= _backgroundRows;
+      var rowOffset = tilemapY % TILE_SIZE;
+      var tilemapRow = tilemapY / TILE_SIZE;
+      if (tilemapRow >= _backgroundRows) 
+        tilemapRow -= _backgroundRows;
                     
-      var sourceColumn = destinationColumn;
-      sourceColumn -= hScroll / TILE_SIZE;
-      sourceColumn %= BACKGROUND_COLUMNS;
-      if (sourceColumn < 0) 
-        sourceColumn += BACKGROUND_COLUMNS;
+      var tilemapColumn = column;
+      if (allowHScroll)
+        tilemapColumn -= _hScroll / TILE_SIZE;
+      tilemapColumn %= BACKGROUND_COLUMNS;
+      if (tilemapColumn < 0) 
+        tilemapColumn += BACKGROUND_COLUMNS;
 
       var tileAddress = baseAddress + 
-                        (sourceRow * BACKGROUND_COLUMNS * 2) + 
-                        (sourceColumn * 2);
+                        (tilemapRow * BACKGROUND_COLUMNS * 2) + 
+                        (tilemapColumn * 2);
 
       var tile = GetTileData(tileAddress);
       var tileRow = tile.VerticalFlip
@@ -394,8 +394,13 @@ unsafe public class VDP
         if (tile.HorizontalFlip)
           columnOffset = 7 - columnOffset;
 
-        var x = (sourceColumn * TILE_SIZE) + hScroll + columnOffset;
+        var x = (tilemapColumn * TILE_SIZE) + columnOffset;
+        if (allowHScroll)
+          x += _hScroll;
         x %= HORIZONTAL_RESOLUTION;
+
+        if (x < 0)
+          throw new Exception();
 
         if (x < TILE_SIZE && MaskLeftBorder)
           continue;
@@ -422,6 +427,7 @@ unsafe public class VDP
                                                             _vram[patternAddress + 2],
                                                             _vram[patternAddress + 3]);
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Tile GetTileData(int tileAddress)
   {
     var data = _vram[tileAddress + 1].Concat(_vram[tileAddress]);
@@ -519,68 +525,6 @@ unsafe public class VDP
       state += $"R{register.ToHex()}:{_registers[register].ToHex()} ";
 
     return state;
-  }
-  #endregion
-
-  #region Structs
-  [Serializable]
-  public struct Color
-  {
-    private const byte BITMASK = 0b_0011;
-    private const byte MULTIPLIER = byte.MaxValue / 3;
-
-    public byte Red = 0x00;
-    public byte Green = 0x00;
-    public byte Blue = 0x00;
-
-    public Color() {}
-
-    public void Set(byte color)
-    {
-      Red = (byte)((color & BITMASK) * MULTIPLIER);
-      color >>= 2;
-      Green = (byte)((color & BITMASK) * MULTIPLIER);
-      color >>= 2;
-      Blue = (byte)((color & BITMASK) * MULTIPLIER);
-    }
-  }
-
-  public readonly struct Pattern
-  {
-    private readonly byte Row0 = 0x00;
-    private readonly byte Row1 = 0x00;
-    private readonly byte Row2 = 0x00;
-    private readonly byte Row3 = 0x00;
-
-    public Pattern(byte row0, byte row1, byte row2, byte row3)
-    {
-      Row0 = row0;
-      Row1 = row1;
-      Row2 = row2;
-      Row3 = row3;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public byte GetPaletteIndex(int column)
-    {
-      byte paletteIndex = 0x00;
-      if (Row0.TestBit(column)) paletteIndex |= 0b_0001;
-      if (Row1.TestBit(column)) paletteIndex |= 0b_0010;
-      if (Row2.TestBit(column)) paletteIndex |= 0b_0100;
-      if (Row3.TestBit(column)) paletteIndex |= 0b_1000;
-      return paletteIndex;
-    }
-  }
-
-  public readonly struct Tile
-  {
-    private readonly ushort Data;
-    public Tile(ushort data) => Data = data;
-    public int PatternIndex => Data & 0b_0000_0001_1111_1111;
-    public bool HorizontalFlip => Data.TestBit(9);
-    public bool VerticalFlip => Data.TestBit(10);
-    public bool UseSpritePalette => Data.TestBit(11);
-    public bool HighPriotity => Data.TestBit(12);
   }
   #endregion
 }
