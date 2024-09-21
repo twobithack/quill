@@ -22,6 +22,7 @@ unsafe public ref struct Memory
   private byte _page0 = 0x00;
   private byte _page1 = 0x01;
   private byte _page2 = 0x02;
+  private bool _useMapper = false;
 
   public Memory(byte[] program)
   {
@@ -40,6 +41,7 @@ unsafe public ref struct Memory
     _bank0 = new Span<byte>(new byte[PAGE_SIZE]);
     _bank1 = new Span<byte>(new byte[PAGE_SIZE]);
     _bankEnable = _bankSelect = false;
+    _useMapper = (program.Length > PAGE_SIZE * 3);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -77,7 +79,8 @@ unsafe public ref struct Memory
     if (address < PAGE_SIZE * 2)
       return;
   
-    if (address > 0xDFFB && 
+    if (_useMapper &&
+        address > 0xDFFB && 
         address < 0xF000)
       return;
 
@@ -144,12 +147,15 @@ unsafe public ref struct Memory
     var dump = new List<string>();
     for (byte page = 0; page < 0x40; page++)
     {
-      for (byte hi = 0; hi < 0x40; hi++)
+      var row = $"PAGE {page.ToHex()}";
+      for (ushort index = 0; index < PAGE_SIZE; index++)
       {
-        var row = string.Empty;
-        for (byte lo = 0; lo < byte.MaxValue; lo++)
-          row += _rom[page,hi.Concat(lo)].ToHex();
-        dump.Add(row);
+        if (index % 16 == 0)
+        {
+          dump.Add(row);
+          row = $"{index.ToHex()} : ";
+        }
+        row += _rom[page,index].ToHex();
       }
     }
     File.WriteAllLines(path, dump);

@@ -1,19 +1,24 @@
 using Quill.Common;
 using Quill.Video.Definitions;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Quill.Video;
 
-unsafe public ref struct VDP
+unsafe public class VDP
 {
   private const int FRAMEBUFFER_SIZE = 0x30000;
   private const ushort VRAM_SIZE = 0x4000;
   private const byte CRAM_SIZE = 0x20;
   private const byte REGISTER_COUNT = 0xB;
   private const ushort HCOUNTER_MAX = 685;
+  private const byte DISABLE_SPRITES = 0xD0;
 
   public bool IRQ = false;
+  public byte VCounter = 0x00;
 
   private readonly byte[] _vram = new byte[VRAM_SIZE];
   private readonly byte[] _cram = new byte[CRAM_SIZE];
@@ -21,10 +26,9 @@ unsafe public ref struct VDP
   private ushort _controlWord = 0x0000;
   private byte _dataBuffer = 0x00;
   private Status _status = 0x00;
-  private bool _writePending = false;
+  private bool _controlWritePending = false;
   private double _cycleCounter = 0d;
   private ushort _hCounter = 0x0000;
-  private byte _vCounter = 0x00;
   private bool _vCounterJumped = false;
   private byte _lineInterrupt = 0x00;
   private byte _hScroll = 0x00;
@@ -38,7 +42,6 @@ unsafe public ref struct VDP
     _lastFrame = new byte[FRAMEBUFFER_SIZE];
   }
 
-  public byte VCounter => _vCounter;
   public byte HCounter => (byte)(_hCounter >> 1);
 
   private ushort _address => (ushort)(_controlWord & 0b_0011_1111_1111_1111);
@@ -46,7 +49,7 @@ unsafe public ref struct VDP
 
   // TODO: derive from display mode
   private byte _vCountActive = 191;
-  private byte _displayWidth = 255;
+  private byte _xResolution = 255;
   private byte _vJumpFrom = 0xDA; 
   private byte _vJumpTo = 0xD5;
   private bool _vSyncPending
@@ -63,6 +66,9 @@ unsafe public ref struct VDP
   
   private bool _shiftX => TestRegisterBit(0x0, 3);
   private bool _lineInterruptEnabled => TestRegisterBit(0x0, 4);
+  private bool _maskLeftBorder => TestRegisterBit(0x0, 5);
+  private bool _hScrollLock => TestRegisterBit(0x0, 6);
+  private bool _vScrollLock => TestRegisterBit(0x0, 7);
   private bool _zoomSprites => TestRegisterBit(0x1, 0);
   private bool _stretchSprites => TestRegisterBit(0x1, 1);
   private bool _vSyncEnabled => TestRegisterBit(0x1, 5);
@@ -74,7 +80,7 @@ unsafe public ref struct VDP
   {
     var status = (byte)_status;
     _status = Status.None;
-    _writePending = false;
+    _controlWritePending = false;
     IRQ = false;
     return status;
   }
@@ -82,17 +88,17 @@ unsafe public ref struct VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteControl(byte value)
   {
-    if (!_writePending)
+    if (!_controlWritePending)
     {
       _controlWord &= 0b_1111_1111_0000_0000;
       _controlWord |= value;
-      _writePending = true;
+      _controlWritePending = true;
       return;
     }
     
     _controlWord &= 0b_0000_0000_1111_1111;
     _controlWord |= (ushort)(value << 8);
-    _writePending = false;
+    _controlWritePending = false;
 
     if (_controlCode == ControlCode.WriteVRAM)
     {
@@ -118,7 +124,7 @@ unsafe public ref struct VDP
   public byte ReadData()
   {
     var data = _dataBuffer;
-    _writePending = false;
+    _controlWritePending = false;
     _dataBuffer = _vram[_address];
     IncrementAddress();
     return data;
@@ -127,7 +133,7 @@ unsafe public ref struct VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteData(byte value)
   {
-    _writePending = false;
+    _controlWritePending = false;
     _dataBuffer = value;
 
     if (_controlCode == ControlCode.WriteCRAM)
@@ -147,50 +153,50 @@ unsafe public ref struct VDP
     IRQ = false;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Update(double systemCyclesElapsed)
+  public void Update(double cyclesElapsed)
   {
     IRQ = false;
 
-    _cycleCounter += systemCyclesElapsed / 2d;
+    _cycleCounter += cyclesElapsed;
     var cyclesThisUpdate = (int)_cycleCounter;
-    var hCount = _hCounter + (cyclesThisUpdate * 2);
-    _hCounter = (ushort)(hCount % HCOUNTER_MAX);
+    _hCounter += (ushort)(cyclesThisUpdate * 2);
 
-    if (hCount >= HCOUNTER_MAX)
+    if (_hCounter >= HCOUNTER_MAX)
     {
-      _vCounter++;
-      if (_vCounter == byte.MinValue)
+      _hCounter %= HCOUNTER_MAX;
+      VCounter++;
+
+      if (VCounter == byte.MinValue)
       {
         _vCounterJumped = false;
       }
-      else if (!_vCounterJumped && _vCounter == _vJumpFrom)
+      else if (!_vCounterJumped && VCounter == _vJumpFrom)
       {
-        _vCounter = _vJumpTo;
+        VCounter = _vJumpTo;
         _vCounterJumped = true;
       }
-      else if (_vCounter == _vCountActive)
+      else if (VCounter == _vCountActive)
       {
         _vSyncPending = true;
         if (!_screenEnabled)
-          GenerateNoise();
+         GenerateNoise();
         RenderFrame();
       }
 
-      if (_vCounter > _vCountActive)
+      if (VCounter > _vCountActive)
         _lineInterrupt = _registers[0xA];
 
-      if (_vCounter >= _vCountActive)
+      if (VCounter >= _vCountActive)
       {
         _vScroll = _registers[0x9];
       }
       else
       {
-        //if (_screenEnabled)
+        if (_screenEnabled)
           RenderScanline();
       }
 
-      if (_vCounter <= _vCountActive)
+      if (VCounter <= _vCountActive)
       {
         if (_lineInterrupt == 0x00)
         {
@@ -242,13 +248,16 @@ unsafe public ref struct VDP
     var satBaseAddress = GetSpriteAttributeTableAddress();
     for (int sprite = 0; sprite < 64; sprite++)
     {
-      int y = _vram[satBaseAddress + sprite];
-      if (y == 0xD0)
+      ushort y = _vram[satBaseAddress + sprite];
+      if (y == DISABLE_SPRITES)
         return;
-      
+
+      if (y >= 0xD0)
+        y -= 0x100;
+
       y++;
-      if (y > _vCounter || 
-          y + spriteHeight <= _vCounter)
+      if (y > VCounter || 
+          y + spriteHeight <= VCounter)
         continue;
       
       spriteCount++;
@@ -266,16 +275,14 @@ unsafe public ref struct VDP
         x -= 8;
 
       if (_useSecondPatternTable)
-      {
         patternIndex += 0x100;
-        
-        if (_stretchSprites)
-          patternIndex &= 0b_1111_1111_1111_1110;
-      }
+
+      if (_stretchSprites && y < VCounter + 9)
+        patternIndex &= 0b_1111_1111_1111_1110;
 
       var patternAddress = patternIndex * 32;
-      patternAddress += (_vCounter - y) * 4;
-      
+      patternAddress += (VCounter - y) * 4;
+
       var pattern0 = _vram[patternAddress];
       var pattern1 = _vram[patternAddress + 1];
       var pattern2 = _vram[patternAddress + 2];
@@ -283,10 +290,10 @@ unsafe public ref struct VDP
 
       for (byte i = 0, col = 7; i < 8; i++, col--)
       {
-        if (x + i >= _displayWidth)
+        if (x + i >= _xResolution)
           return;
 
-        var index = GetFramebufferIndex(x + i, _vCounter);
+        var index = GetFramebufferIndex(x + i, VCounter);
         if (_framebuffer[index + 3] == 0x00)
           _framebuffer[index + 3] = 0xFF;
         else
@@ -323,6 +330,7 @@ unsafe public ref struct VDP
   {
     lock (_lastFrame)
       Array.Copy(_framebuffer, _lastFrame, FRAMEBUFFER_SIZE);
+    Array.Fill<byte>(_framebuffer, 0x00);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -353,12 +361,46 @@ unsafe public ref struct VDP
     return (ushort)(address << 7);
   }
 
+  private void DumpSAT()
+  {
+    var sat = GetSpriteAttributeTableAddress();
+
+    for (int sprite = 0; sprite < 64; sprite++)
+    {
+      var addr = sat + sprite;
+      var y = _vram[addr];
+      var addr_2 = sat + 128 + (sprite * 2);
+      var x = _vram[addr_2];
+      var t = _vram[addr_2 + 1];
+
+      Debug.WriteLine($"Sprite {sprite}: x:{x}, y:{y}, t:{t}");
+    }
+  }
+
+  private void DumpVRAM(string path)
+  {
+    var memory = new List<string>();
+    var row = string.Empty;
+    
+    for (ushort address = 0; address < VRAM_SIZE; address++)
+    {
+      if (address % 16 == 0)
+      {
+        memory.Add(row);
+        row = $"{address.ToHex()} | ";
+      }
+      row += _vram[address].ToHex();
+    }
+
+    File.WriteAllLines(path, memory);
+  }
+
   public override string ToString()
   {
-    var state = $"VDP: {_controlCode}\r\n"; 
+    var state = $"VDP | Control: {_controlCode} | Address: {_address.ToHex()} | SAT Address: {GetSpriteAttributeTableAddress().ToHex()}\r\n"; 
 
-    for (var register = 0; register < REGISTER_COUNT; register++)
-      state += $"R{register}:{_registers[register].ToHex()} ";
+    for (byte register = 0; register < REGISTER_COUNT; register++)
+      state += $"R{register.ToHex()}:{_registers[register].ToHex()} ";
 
     return state;
   }

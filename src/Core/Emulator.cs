@@ -1,5 +1,6 @@
 using Quill.CPU;
 using Quill.Input;
+using Quill.Input.Definitions;
 using Quill.Video;
 using System;
 using System.Diagnostics;
@@ -29,7 +30,7 @@ unsafe public class Emulator
     var cpu = new Z80(_rom, vdp, Input);
     var clock = new Stopwatch();
     var lastFrameTime = 0d;
-
+    
     #if DEBUG
     cpu.InitializeSDSC();
     #endif
@@ -46,20 +47,21 @@ unsafe public class Emulator
       {
         var cpuCycles = cpu.Step();
         var systemCycles = cpuCycles * 3;
+        var vdpCycles = (double)systemCycles / 2d;
         
-        vdp.Update(systemCycles);
+        vdp.Update(vdpCycles);
 
         cyclesThisFrame += systemCycles;
       }
 
       lock (_framebuffer)
         Array.Copy(vdp.ReadFramebuffer(), _framebuffer, _framebuffer.Length);
-      
+        
       lastFrameTime = currentTime;
     }
   }
 
-  public byte[] GetFramebuffer()
+  public byte[] ReadFramebuffer()
   {
     lock (_framebuffer)
       return _framebuffer;
