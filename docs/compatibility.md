@@ -32,8 +32,10 @@
 * Bubble Bobble
 * California Games
 * Castelo Rá-Tim-Bum
+* Castle of Illusion Starring Mickey Mouse
 * Chapolim x Drácula - Um Duelo Assustador
 * Choplifter
+* Chuck Rock
 * Chuck Rock II - Son of Chuck
 * Columns
 * The Cyber Shinobi
@@ -42,20 +44,29 @@
 * Desert Strike
 * Disney's Aladdin 
 * Disney's Bonkers: Wax Up!
-* Disney's Land of Illusion
 * Double Dragon
 * Dr. Robotnik's Mean Bean Machine
 * Dragon Crystal
+* Dragon: The Bruce Lee Story
 * Dynamite Duke
 * Dynamite Dux
 * Dynamite Headdy
 * Earthworm Jim 
 * Ecco the Dolphin
 * E-SWAT - City under Siege
+* Fantasy Zone
+* Fantasy Zone II
+* Fantasy Zone: The Maze
 * Férias Frustradas do Pica-Pau
 * FIFA International Soccer
+* Final Bubble Bobble
+* Fire and Forget II
+* Fire and Ice
 * The Flash
+* The Flintstones
+* Forgotten Worlds
 * Flight of the Pigarus
+* Gain Ground
 * Gauntlet
 * Geraldinho
 * Ghouls'n Ghosts
@@ -71,21 +82,27 @@
 * James Pond 2 - Codename Robocod
 * Kenseiden
 * King's Quest
+* Land of Illusion Starring Mickey Mouse
 * Laser Ghost
+* Legend of Illusion starring Mickey Mouse
 * Lemmings
 * Line of Fire
 * Lord of the Sword
+* The Lucky Dime Caper Starring Donald Duck
 * Master of Darkness
 * Marble Madness
 * Mercs
 * Michael Jackson's Moonwalker
 * Monopoly
+* Montezuma's Revenge featuring Panama Joe
 * Mortal Kombat
 * Ms. Pac-Man
 * The New Zealand Story
 * The Ninja
 * Ninja Gaiden
+* Olympic Gold - Barcelona '92
 * Operation Wolf
+* Ottifants
 * OutRun
 * OutRun Europa
 * Pac-Mania
@@ -162,13 +179,14 @@
 * Wonder Boy in Monster Land (region detection)
 
 # AUDIO ISSUES
+* Double Hawk (no gunfire sound)
 * Sonic Blast (no startup jingle)
 
 # VISUAL ISSUES
 * Alien 3 (palette)
 * Bram Stoker's Dracula (sprite flickering)
 * Dick Tracy (palette)
-* Disney's Deep Duck Trouble (palette)
+* Deep Duck Trouble Starring Donald Duck (palette)
 * Incredible Hulk (palette)
 * Mortal Kombat II (palette)
 * Mortal Kombat 3 (no splash screen)
