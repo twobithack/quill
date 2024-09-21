@@ -1,0 +1,7 @@
+namespace Sonic
+{
+  public enum AddressingMode
+  {
+    None = 0,
+  }
+}
