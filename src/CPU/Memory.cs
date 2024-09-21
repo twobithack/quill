@@ -16,10 +16,10 @@ unsafe public ref struct Memory
   private const ushort PAGING_START = 0x400;
   private const ushort MIRROR_SIZE = 0x2000;
   private const ushort MIRROR_START = 0xE000;
-  private const ushort BANK_CONTROL = 0x1FFC;
-  private const ushort PAGE0_CONTROL = 0x1FFD;
-  private const ushort PAGE1_CONTROL = 0x1FFE;
-  private const ushort PAGE2_CONTROL = 0x1FFF;
+  private const ushort BANK_CONTROL = 0xFFFC;
+  private const ushort PAGE0_CONTROL = 0xFFFD;
+  private const ushort PAGE1_CONTROL = 0xFFFE;
+  private const ushort PAGE2_CONTROL = 0xFFFF;
   #endregion
 
   #region Fields
@@ -111,16 +111,16 @@ unsafe public ref struct Memory
     if (address >= MIRROR_START)
       index -= MIRROR_SIZE;
 
-    if (index == BANK_CONTROL)
+    if (address == BANK_CONTROL)
     {
       _bankEnable = value.TestBit(3);
       _bankSelect = value.TestBit(2);
     }
-    else if (index == PAGE0_CONTROL) 
+    else if (address == PAGE0_CONTROL)
       _page0 = (byte)(value & 0b_0011_1111);
-    else if (index == PAGE1_CONTROL) 
+    else if (address == PAGE1_CONTROL)
       _page1 = (byte)(value & 0b_0011_1111);
-    else if (index == PAGE2_CONTROL) 
+    else if (address == PAGE2_CONTROL)
       _page2 = (byte)(value & 0b_0011_1111);
 
     _ram[index] = value;

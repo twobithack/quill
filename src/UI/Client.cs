@@ -41,7 +41,7 @@ public sealed class Client : Game
   public Client(string filepath,
                 int scaleFactor = 1,
                 int extraScanlines = 0,
-                bool cropBorders = true)
+                bool cropLeftBorder = true)
   {
     var rom = File.ReadAllBytes(filepath);
     _emulator = new Emulator(rom, extraScanlines);
@@ -52,7 +52,7 @@ public sealed class Client : Game
                                             AudioChannels.Mono);
     _romName = Path.GetFileNameWithoutExtension(filepath);
     _saveDirectory = Path.GetDirectoryName(filepath);
-    _cropBorder = cropBorders;
+    _cropBorder = cropLeftBorder;
     _scale = scaleFactor;
     _running = true;
   }

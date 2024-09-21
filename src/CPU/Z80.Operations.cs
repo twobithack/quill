@@ -541,8 +541,6 @@ unsafe public ref partial struct Z80
     LDD();
     if (ParityFlag)
       _pc -= 2;
-    else 
-      ParityFlag = false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -568,8 +566,6 @@ unsafe public ref partial struct Z80
     LDI();
     if (ParityFlag)
       _pc -= 2;
-    else 
-      ParityFlag = false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

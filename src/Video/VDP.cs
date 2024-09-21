@@ -86,7 +86,7 @@ unsafe public class VDP
   private bool UseSecondPatternTable => TestRegisterBit(0x6, 2);
   private byte BackgroundColor => (byte)(_registers[0x7] & 0b_0011);
 
-  private bool VBlank
+  private bool VSyncPending
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get => _status.HasFlag(Status.VSync);
@@ -164,7 +164,7 @@ unsafe public class VDP
 
       if (register == 0x0 &&
           VSyncEnabled && 
-          VBlank)
+          VSyncPending)
         IRQ = true;
     }
   }
@@ -212,7 +212,7 @@ unsafe public class VDP
     else if (_vCounter == _vCounterActive)
     {
       RenderFrame();
-      VBlank = true;
+      VSyncPending = true;
     }
 
     if (_vCounter > _vCounterActive)
@@ -242,7 +242,7 @@ unsafe public class VDP
 
     if (!IRQ &&
         VSyncEnabled && 
-        VBlank)
+        VSyncPending)
       IRQ = true;
   }
 
@@ -297,7 +297,7 @@ unsafe public class VDP
       }
 
       y++;
-      if (y >= 0xD0)
+      if (y >= DISABLE_SPRITES)
         y -= 0x100;
 
       if (y > _vCounter ||
@@ -313,20 +313,20 @@ unsafe public class VDP
       int patternIndex = _vram[baseAddress + offset + 1];
 
       if (ShiftX)
-        x -= 8;
+        x -= TILE_SIZE;
 
       if (UseSecondPatternTable)
         patternIndex += 0x100;
 
-      if (StretchSprites)
+      if (StretchSprites && y <= _vCounter + TILE_SIZE)
         patternIndex &= 0b_1111_1111_1111_1110;
 
       var patternAddress = patternIndex * 32;
       patternAddress += (_vCounter - y) * 4;
       var patternData = GetPatternData(patternAddress);
 
-      var spriteEnd = x + 8;
-      for (byte i = 7; x < spriteEnd; x++, i--)
+      var spriteEnd = x + TILE_SIZE;
+      for (byte i = TILE_SIZE - 1; x < spriteEnd; x++, i--)
       {
         if (x >= HORIZONTAL_RESOLUTION)
           break;
@@ -462,7 +462,7 @@ unsafe public class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementAddress()
   {
-    if (Address == VRAM_SIZE - 1)
+    if (Address + 1 == VRAM_SIZE)
       _controlWord &= 0b_1100_0000_0000_0000;
     else
       _controlWord++;
