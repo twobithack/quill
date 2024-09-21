@@ -406,7 +406,13 @@ unsafe public class VDP
 
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
         if (paletteIndex == 0x00)
-          paletteIndex = BackgroundColor;
+        {
+          if (_renderbuffer[pixelIndex + 3] == 0x00)
+            paletteIndex = BackgroundColor;
+          else
+            continue;
+        }
+        
         if (tile.UseSpritePalette)
           paletteIndex += 16;
 
