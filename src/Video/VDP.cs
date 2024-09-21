@@ -16,7 +16,6 @@ unsafe public class VDP
   private const int CRAM_SIZE = 0x20;
   private const int REGISTER_COUNT = 11;
   private const int HORIZONTAL_RESOLUTION = 256;
-  private const int VCOUNTER_PADDING = 130;
   private const int BACKGROUND_COLUMNS = 32;
   private const int TILE_SIZE = 8;
   private const int SPRITES_DISABLED = 0xD0;
@@ -51,7 +50,7 @@ unsafe public class VDP
   #endregion
 
   #region Constructors
-  public VDP(bool fixSlowdown)
+  public VDP(int fakeScanlines)
   {
     _vram = new byte[VRAM_SIZE];
     _cram = new Color[CRAM_SIZE];
@@ -59,8 +58,7 @@ unsafe public class VDP
     _framebuffer = new byte[FRAMEBUFFER_SIZE];
     _renderbuffer = new byte[FRAMEBUFFER_SIZE];
     _vCounterMax += (_vCounterJumpStart - _vCounterJumpEnd);
-    if (fixSlowdown)
-      _vCounterMax += VCOUNTER_PADDING;
+    _vCounterMax += fakeScanlines;
   }
   #endregion
 

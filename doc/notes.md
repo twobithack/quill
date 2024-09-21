@@ -31,7 +31,7 @@ Bit5 = If set vsync interrupts are enabled
 Bit4 = If set active display has 224 (medium) scanlines. Reg 0 bit1 must be set
 Bit3 = If set active display has 240 (large) scanlines. Reg0 bit1 must be set
 Bit1 = If set sprites are 16x16 otherwise 8x8
-Bit0 = If set sprites are zoomed (double in size)
+Bit0 = If set sprites are zoomed (double height)
 
 ## Register 0x2
 Bit3 = Bit13 of the name base table address
