@@ -9,21 +9,29 @@ public unsafe sealed class Quill
     var rom = ReadROM(@"test/sdsc.sms");
     var vdp = new VDP();
     var cpu = new CPU(rom, vdp);
-    cpu.InitializeSDSC();
-    var instructions = 0ul;
 
+    #if DEBUG
+    cpu.InitializeSDSC();
+    #endif
+
+    var instructionCount = 0ul;
     var sw = new Stopwatch();
     sw.Start();
-    while (instructions < 10000000ul)
+
+    while (instructionCount < 10000000ul)
     {
       cpu.Step();
-      instructions++;
+      instructionCount++;
     }
+
     sw.Stop();
 
-    cpu.DumpMemory("mem.txt");
     Console.WriteLine(cpu.ToString());
-    Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(instructions * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");
+    Console.WriteLine($"{sw.ElapsedMilliseconds}ms elapsed, ({(instructionCount * 1000ul) / (ulong)(sw.ElapsedMilliseconds)} per second)");
+
+    #if DEBUG
+    cpu.DumpMemory("mem.txt");
+    #endif 
   }
 
   private static byte[] ReadROM(string path) => File.ReadAllBytes(path);

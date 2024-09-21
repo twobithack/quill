@@ -49,7 +49,7 @@ unsafe public ref partial struct CPU
   private byte FetchByte() => _memory.ReadByte(_pc++);
     
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private sbyte FetchSignedByte() => (sbyte)FetchByte();
+  private sbyte FetchDisplacement() => (sbyte)FetchByte();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort FetchWord()
@@ -63,7 +63,7 @@ unsafe public ref partial struct CPU
   private void DecodeInstruction()
   {
     var op = FetchByte();
-    _memPtr = 0x0000;
+    _memPtr = null;
     _instruction = op switch
     {
       0xCB  =>  DecodeCBInstruction(),
@@ -78,42 +78,38 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Opcode DecodeCBInstruction()
   {
-    var op = FetchByte();
     _r++;
-    return Opcodes.CB[op];
+    return Opcodes.CB[FetchByte()];
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Opcode DecodeDDInstruction()
   {
-    var op = FetchByte();
     _r++;
-
+    var op = FetchByte();
     if (op != 0xCB)
       return Opcodes.DD[op];
     
-    _memPtr = (ushort)(_ix + FetchSignedByte());
+    _memPtr = (ushort)(_ix + FetchDisplacement());
     return Opcodes.DDCB[FetchByte()];
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Opcode DecodeEDInstruction()
   {
-    var op = FetchByte();
     _r++;
-    return Opcodes.ED[op];
+    return Opcodes.ED[FetchByte()];
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Opcode DecodeFDInstruction()
   {
-    var op = FetchByte();
     _r++;
-
+    var op = FetchByte();
     if (op != 0xCB)
       return Opcodes.FD[op];
       
-    _memPtr = (ushort)(_iy + FetchSignedByte());
+    _memPtr = (ushort)(_iy + FetchDisplacement());
     return Opcodes.FDCB[FetchByte()];
   }
 
@@ -216,14 +212,14 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte ReadByteOperand(Operand operand)
   {
-    ushort address;
+    ushort address = 0x0000;
     switch (operand)
     {
       case Operand.Immediate:
         if (_instruction.Destination == Operand.IXd)
-          _memPtr = (ushort)(_ix + FetchSignedByte());
-        if (_instruction.Destination == Operand.IYd)
-          _memPtr = (ushort)(_iy + FetchSignedByte());
+          _memPtr = (ushort)(_ix + FetchDisplacement());
+        else if (_instruction.Destination == Operand.IYd)
+          _memPtr = (ushort)(_iy + FetchDisplacement());
         return FetchByte();
 
       case Operand.A: return _a;
@@ -248,18 +244,20 @@ unsafe public ref partial struct CPU
       case Operand.HLi: address = _hl; break;
 
       case Operand.IXd:
-        if (_memPtr == 0x0000)
-          _memPtr = (ushort)(_ix + FetchSignedByte());
-        address = _memPtr;
+        if (!_memPtr.HasValue)
+          _memPtr = (ushort)(_ix + FetchDisplacement());
+        address = _memPtr.Value;
         break;
 
       case Operand.IYd:
-        if (_memPtr == 0x0000)
-          _memPtr = (ushort)(_iy + FetchSignedByte());
-        address = _memPtr;
+        if (!_memPtr.HasValue)
+          _memPtr = (ushort)(_iy + FetchDisplacement());
+        address = _memPtr.Value;
         break;
 
+      #if DEBUG
       default: throw new Exception($"Invalid byte operand: {_instruction}");
+      #endif
     }
     return _memory.ReadByte(address);
   }
@@ -267,15 +265,15 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort ReadWordOperand(Operand operand)
   {
-    ushort address;
+    ushort address = 0x0000;
     switch (operand)
     {
-      case Operand.Immediate:
-        return FetchWord();
-
       case Operand.Indirect: 
         address = FetchWord();
-        return _memory.ReadWord(address);
+        break;
+
+      case Operand.Immediate:
+        return FetchWord();
 
       case Operand.AF: return _af;
       case Operand.BC: return _bc;
@@ -285,8 +283,11 @@ unsafe public ref partial struct CPU
       case Operand.IY: return _iy;
       case Operand.SP: return _sp;
 
+      #if DEBUG
       default: throw new Exception($"Invalid word operand: {_instruction}");
+      #endif
     }
+    return _memory.ReadWord(address); 
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -298,7 +299,10 @@ unsafe public ref partial struct CPU
     0xBF or 0xBD => _vdp.Status,
     0xDC or 0xC0 => 0xFF, // joypad 1
     0xDD or 0xC1 => 0xFF, // joypad 2
+
+    #if DEBUG
     _ => throw new Exception($"Unable to read port: {port}\r\n{this.ToString()}")
+    #endif
   };
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -307,7 +311,7 @@ unsafe public ref partial struct CPU
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteResult(byte value, Operand destination)
   {
-    ushort address;
+    ushort address = 0x0000;
     switch (destination)
     { 
       case Operand.A: _a = value; return;
@@ -328,18 +332,16 @@ unsafe public ref partial struct CPU
       case Operand.Indirect: address = FetchWord(); break;
 
       case Operand.IXd:
-        address = _memPtr == 0x0000
-                ? (ushort)(_ix + FetchSignedByte())
-                : _memPtr;
+        address = _memPtr ?? (ushort)(_ix + FetchDisplacement());
         break;
 
       case Operand.IYd: 
-        address = _memPtr == 0x0000
-                ? (ushort)(_iy + FetchSignedByte())
-                : _memPtr;
+        address = _memPtr ?? (ushort)(_iy + FetchDisplacement());
         break;
 
+      #if DEBUG
       default: throw new Exception($"Invalid byte destination: {destination}");
+      #endif
     }
     _memory.WriteByte(address, value);
   }
@@ -361,7 +363,10 @@ unsafe public ref partial struct CPU
       case Operand.IX: _ix = value; return;
       case Operand.IY: _iy = value; return;
       case Operand.SP: _sp = value; return;
+      
+      #if DEBUG
       default: throw new Exception($"Invalid word destination: {_instruction}");
+      #endif
     }
   }
 
@@ -388,6 +393,7 @@ unsafe public ref partial struct CPU
         // IO controller
         return;
 
+      #if DEBUG
       case 0xFC:
         ControlSDSC(value);
         return;
@@ -396,8 +402,8 @@ unsafe public ref partial struct CPU
         WriteSDSC(value);
         return;
 
-      default:
-        throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
+      default: throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
+      #endif
     }
   }
 
@@ -413,7 +419,10 @@ unsafe public ref partial struct CPU
     Operand.Positive  => !_sign,
     Operand.Odd       => !_parity,
     Operand.Implied   => true,
+
+    #if DEBUG
     _ => throw new Exception($"Invalid condition: {_instruction}")
+    #endif
   };
 
   public void DumpMemory(string path) => _memory.DumpRAM(path);
