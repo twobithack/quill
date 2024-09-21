@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Quill.Z80
 {
-  public static class Opcodes
+  public unsafe static class Opcodes
   {
     public readonly struct Opcode
     {
@@ -92,7 +92,7 @@ namespace Quill.Z80
       new Opcode(Operation.DEC,  Operand.HL,         Operand.Implied),  
       new Opcode(Operation.INC,  Operand.L,          Operand.Implied),  
       new Opcode(Operation.DEC,  Operand.L,          Operand.Implied),  
-      new Opcode(Operation.LD,   Operand.L,          Operand.Implied),  
+      new Opcode(Operation.LD,   Operand.L,          Operand.Immediate),  
       new Opcode(Operation.CPL,  Operand.Implied,    Operand.Implied), 
         
       // Opcodes 0x30 - 0x3F  
@@ -212,14 +212,14 @@ namespace Quill.Z80
       new Opcode(Operation.SUB,  Operand.Implied,    Operand.L),  
       new Opcode(Operation.SUB,  Operand.Implied,    Operand.HLi),  
       new Opcode(Operation.SUB,  Operand.Implied,    Operand.A), 
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.B),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.C),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.D),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.E),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.H),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.L),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.HLi),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.A),
+      new Opcode(Operation.SBC,  Operand.A,          Operand.B),  
+      new Opcode(Operation.SBC,  Operand.A,          Operand.C),  
+      new Opcode(Operation.SBC,  Operand.A,          Operand.D),  
+      new Opcode(Operation.SBC,  Operand.A,          Operand.E),  
+      new Opcode(Operation.SBC,  Operand.A,          Operand.H),  
+      new Opcode(Operation.SBC,  Operand.A,          Operand.L),  
+      new Opcode(Operation.SBC,  Operand.A,          Operand.HLi),  
+      new Opcode(Operation.SBC,  Operand.A,          Operand.A),
 
       // Opcodes 0xA0 - 0xAF  
       new Opcode(Operation.AND,  Operand.Implied,    Operand.B),  
@@ -240,14 +240,14 @@ namespace Quill.Z80
       new Opcode(Operation.XOR,  Operand.Implied,    Operand.A),
 
       // Opcodes 0xB0 - 0xBF  
-      new Opcode(Operation.OR,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OR,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OR,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OR,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OR,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OR,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OR,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OR,   Operand.Implied,    Operand.Implied), 
+      new Opcode(Operation.OR,   Operand.Implied,    Operand.B),   
+      new Opcode(Operation.OR,   Operand.Implied,    Operand.C),   
+      new Opcode(Operation.OR,   Operand.Implied,    Operand.D),   
+      new Opcode(Operation.OR,   Operand.Implied,    Operand.E),   
+      new Opcode(Operation.OR,   Operand.Implied,    Operand.H),   
+      new Opcode(Operation.OR,   Operand.Implied,    Operand.L),   
+      new Opcode(Operation.OR,   Operand.Implied,    Operand.HLi),  
+      new Opcode(Operation.OR,   Operand.Implied,    Operand.A),
       new Opcode(Operation.CP,   Operand.Implied,    Operand.B),  
       new Opcode(Operation.CP,   Operand.Implied,    Operand.C),  
       new Opcode(Operation.CP,   Operand.Implied,    Operand.D),  

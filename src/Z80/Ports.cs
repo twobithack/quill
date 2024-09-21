@@ -1,6 +1,6 @@
 namespace Quill
 {
-  public class Ports
+  public unsafe sealed class Ports
   {
     public class Port
     {

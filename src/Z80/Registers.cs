@@ -4,7 +4,7 @@ using static Quill.Z80.Opcodes;
 
 namespace Quill.Z80
 {
-  public partial class CPU
+  public unsafe sealed partial class CPU
   {
     private Flags _flags;
     
