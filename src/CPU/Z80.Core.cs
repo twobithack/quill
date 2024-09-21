@@ -243,7 +243,7 @@ unsafe public ref partial struct Z80
     _memory.SaveState(ref state);
     _vdp.SaveState(ref state);
     return state;
-}
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private int Step()
