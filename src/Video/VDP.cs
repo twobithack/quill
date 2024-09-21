@@ -269,11 +269,14 @@ unsafe public class VDP
       var pattern1 = _vram[patternAddress + 1];
       var pattern2 = _vram[patternAddress + 2];
       var pattern3 = _vram[patternAddress + 3];
-
+      
       for (byte i = 0, col = 7; i < 8; i++, col--)
       {
         if (x + i >= _xResolution)
           return;
+
+        if (_maskLeftBorder && x + i < 8)
+          continue;
 
         var index = GetFramebufferIndex(x + i, VCounter);
         if (_framebuffer[index + 3] != 0x00)
@@ -342,7 +345,7 @@ unsafe public class VDP
   private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private int GetFramebufferIndex(int x, int y) => (x + (y * 256)) * 4;
+  private static int GetFramebufferIndex(int x, int y) => (x + (y * 256)) * 4;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort GetSpriteAttributeTableAddress()
