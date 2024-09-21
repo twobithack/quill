@@ -52,6 +52,8 @@ unsafe public class Emulator
           frameTimer.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
         continue;
       
+      frameTimer.Restart();
+
       var scanlines = _video.ScanlinesPerFrame;
       while (scanlines > 0)
       {
@@ -73,8 +75,6 @@ unsafe public class Emulator
         SaveSnapshot(state);
         _saveRequested = false;
       }
-
-      frameTimer.Restart();
     }
 
     _audio.Stop();

@@ -22,6 +22,8 @@ unsafe public class VDP
   private const int HSCROLL_LIMIT = 1;
   private const int VSCROLL_LIMIT = 24;
   private const int DISABLE_SPRITES = 0xD0;
+  private const byte OCCUPIED = 0xFF;
+  private const byte TRANSPARENT = 0x00;
   #endregion
 
   #region Fields
@@ -150,9 +152,12 @@ unsafe public class VDP
     _controlWord &= 0b_0000_0000_1111_1111;
     _controlWord |= (ushort)(value << 8);
     _controlWritePending = false;
-
-    if (ControlCode == ControlCode.WriteVRAM)
+    
+    if (ControlCode == ControlCode.ReadVRAM)
+    {
       _dataBuffer = _vram[Address];
+      IncrementAddress();
+    }
     else if (ControlCode == ControlCode.WriteRegister)
     {
       var register = _controlWord.HighByte().LowNibble();
@@ -161,10 +166,8 @@ unsafe public class VDP
 
       _registers[register] = _controlWord.LowByte();
 
-      if (register == 0x0 &&
-          VSyncEnabled && 
-          VSyncPending)
-        IRQ = true;
+      if (register == 0x1)
+        IRQ = VSyncEnabled && VSyncPending;
     }
   }
 
@@ -289,9 +292,9 @@ unsafe public class VDP
       ushort y = _vram[baseAddress + sprite];
       if (y == DISABLE_SPRITES)
       {
-        var mode = GetDisplayMode();
-        if (mode != DisplayMode.Mode_4_224 &&
-            mode != DisplayMode.Mode_4_240)
+        // var mode = GetDisplayMode();
+        // if (mode != DisplayMode.Mode_4_224 &&
+        //     mode != DisplayMode.Mode_4_240)
           return;
       }
 
@@ -333,18 +336,18 @@ unsafe public class VDP
         if (x < 8 && MaskLeftBorder)
           continue;
 
+        var paletteIndex = patternData.GetPaletteIndex(i);
+        if (paletteIndex == TRANSPARENT)
+          continue;
+
         var pixelIndex = GetPixelIndex(x, _vCounter);
-        if (_renderbuffer[pixelIndex + 3] != 0x00)
+        if (_renderbuffer[pixelIndex + 3] == OCCUPIED)
         {
           _status |= Status.Collision;
           continue;
         }
 
-        var paletteIndex = patternData.GetPaletteIndex(i);
-        if (paletteIndex == 0x00)
-          continue;
-
-        SetPixelColor(pixelIndex, paletteIndex + 16, 0xFF);
+        SetPixelColor(pixelIndex, paletteIndex + 16, true);
       }
     }
   }
@@ -405,13 +408,14 @@ unsafe public class VDP
           continue;
 
         var pixelIndex = GetPixelIndex(x, _vCounter);
-        if (!tile.HighPriotity && _renderbuffer[pixelIndex + 3] != 0x00)
+        if (!tile.HighPriotity && 
+            _renderbuffer[pixelIndex + 3] == OCCUPIED)
           continue;
 
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
-        if (paletteIndex == 0x00)
+        if (paletteIndex == TRANSPARENT)
         {
-          if (_renderbuffer[pixelIndex + 3] == 0x00)
+          if (_renderbuffer[pixelIndex + 3] != OCCUPIED)
             paletteIndex = BackgroundColor;
           else
             continue;
@@ -420,7 +424,7 @@ unsafe public class VDP
         if (tile.UseSpritePalette)
           paletteIndex += 16;
 
-        SetPixelColor(pixelIndex, paletteIndex);
+        SetPixelColor(pixelIndex, paletteIndex, false);
       }
     }
   }
@@ -439,15 +443,15 @@ unsafe public class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixelColor(int pixelIndex, int paletteIndex, byte? alpha = null)
+  private void SetPixelColor(int pixelIndex, int paletteIndex, bool sprite)
   {
     var color = _cram[paletteIndex];
     _renderbuffer[pixelIndex] = color.Red;
     _renderbuffer[pixelIndex + 1] = color.Green;
     _renderbuffer[pixelIndex + 2] = color.Blue;
 
-    if (alpha != null)
-      _renderbuffer[pixelIndex + 3] = alpha.Value;
+    if (sprite)
+      _renderbuffer[pixelIndex + 3] = OCCUPIED;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -501,7 +505,6 @@ unsafe public class VDP
   {
     var addressMask = 0b_0000_1110;
 
-    // Doesn't yet seem to do anything?
     // var mode = GetDisplayMode();
     // if (mode == 0b_1011 ||
     //     mode == 0b_1110)
