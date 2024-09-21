@@ -13,10 +13,22 @@ namespace Quill.CPU;
 unsafe public ref partial struct Z80
 {
   #region Fields
+  private Memory _memory;
   private readonly IO _input;
   private readonly PSG _psg;
   private readonly VDP _vdp;
-  private Memory _memory;
+
+  private Instruction _instruction;
+  private ushort? _memPtr = null;
+  private ushort _pc = 0x0000;
+  private ushort _sp = 0xFFFF;
+
+  private Flags _flags;
+  private bool _iff1 = true;
+  private bool _iff2 = true;
+  private bool _halt = false;
+  private bool _eiPending = false;
+
   private byte _a = 0x00;
   private byte _b = 0x00;
   private byte _c = 0x00;
@@ -30,18 +42,10 @@ unsafe public ref partial struct Z80
   private byte _ixl = 0x00;
   private byte _iyh = 0x00;
   private byte _iyl = 0x00;
-  private ushort _pc = 0x0000;
-  private ushort _sp = 0xFFFF;
   private ushort _afShadow = 0x0000;
   private ushort _bcShadow = 0x0000;
   private ushort _deShadow = 0x0000;
   private ushort _hlShadow = 0x0000;
-  private ushort? _memPtr = null;
-  private bool _halt = false;
-  private bool _iff1 = true;
-  private bool _iff2 = true;
-  private Instruction _instruction;
-  private Flags _flags;
   #endregion
 
   public Z80(byte[] rom, IO input, PSG sound, VDP video)
@@ -270,6 +274,14 @@ unsafe public ref partial struct Z80
       _iff2 = _iff1;
       _iff1 = false;
       _input.NMI = false;
+    }
+
+    if (_eiPending)
+    {
+      _iff1 = true;
+      _iff2 = true;
+      _eiPending = false;
+      return;
     }
 
     if (_iff1 && _vdp.IRQ)

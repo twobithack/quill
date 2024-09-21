@@ -313,11 +313,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void EI()
-  {
-    _iff1 = true;
-    _iff2 = true;
-  }
+  private void EI() => _eiPending = true;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void EX()
