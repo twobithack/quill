@@ -16,6 +16,8 @@ unsafe public class Emulator
   #endregion
 
   #region Fields
+  public bool FastForward;
+
   private readonly IO _input;
   private readonly PSG _audio;
   private readonly VDP _video;
@@ -38,20 +40,18 @@ unsafe public class Emulator
   public void Run()
   {
     var cpu = new Z80(_rom, _input, _audio, _video);
-    var clock = new Stopwatch();
-    var lastFrame = 0d;
-
-    clock.Start();
-    _audio.Start();
-
     _running = true;
+    _audio.Play();
+
+    var frameTimer = new Stopwatch();
+    frameTimer.Start();
+
     while (_running)
     {
-      var currentTime = clock.Elapsed.TotalMilliseconds;
-      if (currentTime < lastFrame + FRAME_INTERVAL_MS)
+      if (!FastForward && 
+          frameTimer.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
         continue;
-
-      lastFrame = currentTime;
+      
       var scanlines = _video.ScanlinesPerFrame;
       while (scanlines > 0)
       {
@@ -73,7 +73,10 @@ unsafe public class Emulator
         SaveSnapshot(state);
         _saveRequested = false;
       }
+
+      frameTimer.Restart();
     }
+
     _audio.Stop();
   }
 

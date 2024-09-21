@@ -171,6 +171,7 @@ public sealed class Client : Game
     
     if (player == PLAYER_1)
     {
+      _emulator.FastForward = joypad.IsButtonDown(Buttons.RightTrigger);
       _emulator.SetResetButtonState(joypad.IsButtonDown(Buttons.Back));
       HandleSnapshotRequest(loadRequested: joypad.IsButtonDown(Buttons.LeftShoulder),
                             saveRequested: joypad.IsButtonDown(Buttons.RightShoulder));
@@ -197,15 +198,16 @@ public sealed class Client : Game
 
     _emulator.SetJoypadState(
       joypad: PLAYER_2,
-      up:     kb.IsKeyDown(Keys.Up),
-      down:   kb.IsKeyDown(Keys.Down),
-      left:   kb.IsKeyDown(Keys.Left),
-      right:  kb.IsKeyDown(Keys.Right),
-      fireA:  kb.IsKeyDown(Keys.OemComma),
-      fireB:  kb.IsKeyDown(Keys.OemPeriod),
+      up:     kb.IsKeyDown(Keys.I),
+      down:   kb.IsKeyDown(Keys.K),
+      left:   kb.IsKeyDown(Keys.J),
+      right:  kb.IsKeyDown(Keys.L),
+      fireA:  kb.IsKeyDown(Keys.OemSemicolon),
+      fireB:  kb.IsKeyDown(Keys.OemQuotes),
       pause:  kb.IsKeyDown(Keys.Space)
     );
 
+    _emulator.FastForward = kb.IsKeyDown(Keys.LeftControl);
     _emulator.SetResetButtonState(kb.IsKeyDown(Keys.Escape));
     HandleSnapshotRequest(loadRequested: kb.IsKeyDown(Keys.Back),
                           saveRequested: kb.IsKeyDown(Keys.Enter));
