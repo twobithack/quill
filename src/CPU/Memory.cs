@@ -11,15 +11,22 @@ namespace Quill.CPU;
 unsafe public ref struct Memory
 {
   #region Constants
+  private const ushort PAGE_COUNT = 0x100;
   private const ushort PAGE_SIZE = 0x4000;
+  private const ushort PAGING_START = 0x400;
+  private const ushort MIRROR_SIZE = 0x2000;
+  private const ushort MIRROR_START = 0xE000;
+  private const ushort BANK_CONTROL = 0x1FFC;
+  private const ushort PAGE0_CONTROL = 0x1FFD;
+  private const ushort PAGE1_CONTROL = 0x1FFE;
+  private const ushort PAGE2_CONTROL = 0x1FFF;
   #endregion
 
   #region Fields
   private readonly ReadOnlySpan2D<byte> _rom;
   private readonly Span<byte> _ram;
-  private readonly Span<byte> _bank0;
-  private readonly Span<byte> _bank1;
-  private readonly bool _useMapper;
+  private readonly Span<byte> _ramBank0;
+  private readonly Span<byte> _ramBank1;
   private bool _bankEnable;
   private bool _bankSelect;
   private byte _page0;
@@ -30,12 +37,7 @@ unsafe public ref struct Memory
   public Memory(byte[] program)
   {
     var headerOffset = (program.Length % PAGE_SIZE == 512) ? 512 : 0;
-    var romSize = program.Length - headerOffset;
-    var pages = (romSize - 1) / PAGE_SIZE;
-    if (pages++ > byte.MaxValue) 
-      throw new Exception("ROM too large for standard mapper.");
-
-    var rom = new byte[pages, PAGE_SIZE];
+    var rom = new byte[PAGE_COUNT, PAGE_SIZE];
     for (int i = headerOffset; i < program.Length; i++)
     {
       var page = i / PAGE_SIZE;
@@ -44,14 +46,13 @@ unsafe public ref struct Memory
     }
 
     _rom = new ReadOnlySpan2D<byte>(rom);
-    _useMapper = pages > 3;
     _page0 = 0x00;
     _page1 = 0x01;
     _page2 = 0x02;
 
     _ram = new Span<byte>(new byte[PAGE_SIZE]);
-    _bank0 = new Span<byte>(new byte[PAGE_SIZE]);
-    _bank1 = new Span<byte>(new byte[PAGE_SIZE]);
+    _ramBank0 = new Span<byte>(new byte[PAGE_SIZE]);
+    _ramBank1 = new Span<byte>(new byte[PAGE_SIZE]);
     _bankEnable = false;
     _bankSelect = false;
   }
@@ -61,7 +62,7 @@ unsafe public ref struct Memory
   {
     var index = address % PAGE_SIZE;
 
-    if (address < 0x400)
+    if (address < PAGING_START)
       return _rom[0x00, index];
 
     if (address < PAGE_SIZE)
@@ -74,11 +75,14 @@ unsafe public ref struct Memory
     {
       if (_bankEnable)
         return _bankSelect
-             ? _bank0[index]
-             : _bank1[index];
+             ? _ramBank0[index]
+             : _ramBank1[index];
 
       return _rom[_page2, index];
     }
+
+    if (address >= MIRROR_START)
+      index -= MIRROR_SIZE;
 
     return _ram[index];
   }
@@ -91,32 +95,33 @@ unsafe public ref struct Memory
     if (address < PAGE_SIZE * 2)
       return;
   
-    if (_useMapper &&
-        address > 0xDFFB && 
-        address < 0xF000)
-      return;
-
     if (address < PAGE_SIZE * 3)
     {
       if (!_bankEnable)
         return;
 
       if (_bankSelect)
-        _bank0[index] = value;
+        _ramBank0[index] = value;
       else
-        _bank1[index] = value;
+        _ramBank1[index] = value;
 
       return;
     }
-    
-    if (address == 0xFFFC)
+
+    if (address >= MIRROR_START)
+      index -= MIRROR_SIZE;
+
+    if (index == BANK_CONTROL)
     {
       _bankEnable = value.TestBit(3);
       _bankSelect = value.TestBit(2);
     }
-    else if (address == 0xFFFD) _page0 = (byte)(value & 0b_0011_1111);
-    else if (address == 0xFFFE) _page1 = (byte)(value & 0b_0011_1111);
-    else if (address == 0xFFFF) _page2 = (byte)(value & 0b_0011_1111);
+    else if (index == PAGE0_CONTROL) 
+      _page0 = (byte)(value & 0b_0011_1111);
+    else if (index == PAGE1_CONTROL) 
+      _page1 = (byte)(value & 0b_0011_1111);
+    else if (index == PAGE2_CONTROL) 
+      _page2 = (byte)(value & 0b_0011_1111);
 
     _ram[index] = value;
   }
@@ -141,8 +146,8 @@ unsafe public ref struct Memory
     for (var index = 0; index < PAGE_SIZE; index++)
     {
       _ram[index] = state.RAM[index];
-      _bank0[index] = state.Bank0[index];
-      _bank1[index] = state.Bank1[index];
+      _ramBank0[index] = state.Bank0[index];
+      _ramBank1[index] = state.Bank1[index];
     }
     _page0 = state.Page0;
     _page1 = state.Page1;
@@ -154,8 +159,8 @@ unsafe public ref struct Memory
   public void SaveState(ref Snapshot state)
   {
     _ram.CopyTo(state.RAM);
-    _bank0.CopyTo(state.Bank0);
-    _bank1.CopyTo(state.Bank1);
+    _ramBank0.CopyTo(state.Bank0);
+    _ramBank1.CopyTo(state.Bank1);
     state.Page0 = _page0;
     state.Page1 = _page1;
     state.Page2 = _page2;
