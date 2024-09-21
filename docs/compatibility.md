@@ -53,6 +53,7 @@
 * Disney's Aladdin 
 * Disney's Bonkers: Wax Up!
 * Double Dragon
+* Double Hawk
 * Dr. Robotnik's Mean Bean Machine
 * Dragon Crystal
 * Dragon: The Bruce Lee Story
@@ -81,6 +82,7 @@
 * Gauntlet
 * Geraldinho
 * Ghostbusters
+* Ghouls'n Ghosts
 * G-LOC Air Battle
 * Golden Axe
 * Golden Axe Warrior 
@@ -208,8 +210,6 @@
 * Wonder Boy in Monster Land (region detection)
 
 # AUDIO ISSUES
-* Double Hawk (no gunfire sound)
-* Ghouls'n Ghosts (no weapon sound)
 * Sonic Blast (no startup jingle)
 
 # VISUAL ISSUES
