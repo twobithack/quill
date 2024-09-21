@@ -1,3 +1,4 @@
+using Quill.Definitions;
 using Quill.Extensions;
 using System.Numerics;
 using System.Runtime.CompilerServices;

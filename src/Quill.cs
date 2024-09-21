@@ -6,13 +6,11 @@ namespace Quill
   {
     public static void Main(string[] args)
     {
-      var io = new Ports();
-      var cpu = new CPU(io);
-      var vdp = new VDP(io);
+      var vdp = new VDP();
+      var cpu = new CPU(vdp);
       var cycles = 0ul;
       var program = ReadROM(@"test/sonic.sms");
       cpu.LoadROM(program);
-      Console.Read();
 
       var sw = new Stopwatch();
       sw.Start();

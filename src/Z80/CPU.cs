@@ -1,20 +1,21 @@
 using System.Runtime.CompilerServices;
+using Quill.Definitions;
 using Quill.Extensions;
-using static Quill.Opcodes;
+using static Quill.Definitions.Opcodes;
 
 namespace Quill
 {
   public unsafe sealed partial class CPU
   {
     private Memory _memory;
-    private Ports _ports;
+    private VDP _vdp;
     private bool _halt;
     private int _instructionCount;
 
-    public CPU(Ports ports)
+    public CPU(VDP vdp)
     {
       _memory = new Memory();
-      _ports = ports;
+      _vdp = vdp;
     }
 
     public void LoadROM(byte[] rom) => _memory.LoadROM(rom);
@@ -30,11 +31,16 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void HandleInterrupts()
     {
-      if (_halt) 
-        throw new Exception("Halted");
-      // check nmi
-      // check iff1
-      // check irq
+      if (_vdp.IRQ && _iff1)
+      {
+        _halt = false;
+        _iff1 = false;
+        _iff2 = false;
+
+        _memory.WriteWord(_sp, _pc);
+        _sp += 2;
+        _pc = 0x38;
+      }
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -275,12 +281,12 @@ namespace Quill
     private bool EvaluationCondition() => _instruction.Source switch
     {
       Operand.Carry     => _carry,
-      Operand.NonCarry  => !_carry,
       Operand.Zero      => _zero,
-      Operand.NonZero   => !_zero,
       Operand.Negative  => _sign,
-      Operand.Positive  => !_sign,
       Operand.Even      => _parity,
+      Operand.NonCarry  => !_carry,
+      Operand.NonZero   => !_zero,
+      Operand.Positive  => !_sign,
       Operand.Odd       => !_parity,
       _                 => true
     };
