@@ -543,25 +543,32 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte ReadPort(byte port) => port switch
   {
-    0x3F => _io,
+    0x3E => 0xFF,
+    0x3F => 0xFF,
     0x7E => _vdp.VCounter,
     0x7F => _vdp.HCounter,
     0xBE => _vdp.ReadData(),
     0xBF or 0xBD => _vdp.ReadStatus(),
     0xDC or 0xC0 => _input.ReadPortA(),
     0xDD or 0xC1 => _input.ReadPortB(),
-    byte mirror when mirror < 0x3F && 
-                     mirror % 2 != 0 => _io,
-    byte mirror when mirror > 0xC0 && 
-                     mirror <= 0xFE && 
+    byte mirror when mirror < 0x3E => 0xFF,
+    byte mirror when mirror > 0x3F &&
+                     mirror < 0x80 &&
+                     mirror % 2 == 0 => _vdp.VCounter,
+    byte mirror when mirror > 0x3F &&
+                     mirror < 0x80 &&
+                     mirror % 2 != 0 => _vdp.HCounter,
+    byte mirror when mirror > 0x7F &&
+                     mirror < 0xC0 &&
+                     mirror % 2 == 0 => _vdp.ReadData(),
+    byte mirror when mirror > 0x7F &&
+                     mirror < 0xC0 &&
+                     mirror % 2 != 0 => _vdp.ReadStatus(),
+    byte mirror when mirror > 0xC0 &&
                      mirror % 2 == 0 => _input.ReadPortA(),
-    byte mirror when mirror > 0xC1 && 
+    byte mirror when mirror > 0xC1 &&
                      mirror % 2 != 0 => _input.ReadPortB(),
-    #if DEBUG
-    _ => throw new Exception($"Unable to read port: {port}\r\n{this.ToString()}")
-    #else
-    _ => 0x00
-    #endif
+    _ => 0xFF
   };
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -633,7 +640,7 @@ unsafe public ref partial struct Z80
     switch (port)
     {
       case 0x7E:
-      case 0x7F: 
+      case 0x7F:
         _psg.WriteData(value);
         return;
 
@@ -645,22 +652,40 @@ unsafe public ref partial struct Z80
       case 0xBE:
         _vdp.WriteData(value);
         return;
-
+    
       case 0x3E:
+      case byte mirror when (mirror < 0x3E &&
+                             mirror % 2 == 0):
+        // Memory controller
+        return;
+    
       case 0x3F:
-      case byte mirror when (mirror < 0x3F && 
+      case byte mirror when (mirror < 0x3E &&
                              mirror % 2 != 0):
-        _io = value;
+        // IO controller
+        return;
+
+      case byte mirror when (mirror > 0x3F &&
+                             mirror < 0x80):
+        _psg.WriteData(value);
+        return;
+
+      case byte mirror when (mirror > 0x7F &&
+                             mirror < 0xC0 &&
+                             mirror % 2 != 0):
+        _vdp.WriteControl(value);
+        return;
+
+      case byte mirror when (mirror > 0x7F &&
+                             mirror < 0xC0 &&
+                             mirror % 2 == 0):
+        _vdp.WriteData(value);
         return;
 
       case 0xFC:
       case 0xFD:
         // SDSC
         return;
-
-      //#if DEBUG
-      //default: throw new Exception($"Unable to write to port {port.ToHex()}\r\n{this.ToString()}");
-      //#endif
     }
   }
 
