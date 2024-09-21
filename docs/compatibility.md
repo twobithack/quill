@@ -3,7 +3,6 @@
 * Air Rescue
 * Alex Kidd In Miracle World
 * Alex Kidd In Shinobi World
-* Alex Kidd: High Tech World
 * Alex Kidd: The Lost Stars
 * Assault City
 * Asterix
@@ -11,17 +10,22 @@
 * Batman Returns
 * Battle Outrun
 * Battletoads in Battlemaniacs
+* Black Belt
 * Bomber Raid
 * Bonanza Bros
 * Bubble Bobble
 * California Games
 * Castelo Rá-Tim-Bum
+* Chapolim x Dracula - Um Duelo Assustador
 * Choplifter
 * Columns
+* Dead Angle
 * Disney's Aladdin 
 * Disney's Bonkers: Wax Up!
 * Double Dragon
 * Dragon Crystal
+* Dynamite Duke
+* Dynamite Dux
 * Dynamite Headdy
 * Ecco the Dolphin
 * Felipe em Ação 
@@ -34,6 +38,7 @@
 * Lemmings
 * Master of Darkness
 * Michael Jackson's Moonwalker
+* Ms. Pac-Man
 * The NewZealand Story
 * The Ninja
 * Operation Wolf
@@ -43,6 +48,7 @@
 * Power Strike
 * Power Strike II
 * Psycho Fox
+* Quartet
 * Rastan
 * Road Rash
 * R-Type
@@ -79,8 +85,10 @@
 
 # VISUAL ISSUES
 * Action Figther (artifacts)
+* Alex Kidd: High Tech World (palette issues)
 * Altered Beast (palette issues)
 * Astro Warrior (artifacts)
+* Dick Tracy (palette + artifacts)
 * Disney's Deep Duck Trouble (palette issues)
 * Disney's Land of Illusion (tilemap issues?)
 * Earthworm Jim (tilemap issues)
