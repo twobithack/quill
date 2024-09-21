@@ -24,7 +24,12 @@ namespace Quill
 
     public void LoadROM(byte[] rom)
     {
-      for (int i = 0; i < rom.Count(); i++)
+      var includesHeader = (rom.Length % PageSize == 0x200);
+      var rom_start = includesHeader 
+                    ? 0x200 
+                    : 0x00;
+      Console.WriteLine(rom.Length % 512);
+      for (int i = rom_start; i < rom.Count(); i++)
         _rom[i / PageSize][i % PageSize] = rom[i];
     }
 
@@ -60,9 +65,12 @@ namespace Quill
     public void WriteByte(ushort address, byte value)
     {
       var index = address % PageSize;
+      Console.WriteLine($"Writing {value.ToHex()} to {address.ToHex()}");
 
       if (address < PageSize * 2)
+      {
         return;
+      }
 
       if (address > 0xDFFB && 
           address < 0xF000)
@@ -87,9 +95,9 @@ namespace Quill
         _bankEnable = value.TestBit(3);
         _bankSelect = value.TestBit(2);
       }
-      else if (address == 0xFFFD) _page0 = value;
-      else if (address == 0xFFFE) _page1 = value;
-      else if (address == 0xFFFF) _page2 = value;
+      else if (address == 0xFFFD) _page0 = (byte)(value & 0b_0011_1111);
+      else if (address == 0xFFFE) _page1 = (byte)(value & 0b_0011_1111);
+      else if (address == 0xFFFF) _page2 = (byte)(value & 0b_0011_1111);
 
       _ram[index] = value;
     }
@@ -154,7 +162,9 @@ namespace Quill
       var banking = (_bankEnable 
                   ? $"enabled (Bank {_bankSelect.ToBit()})"
                   : "disabled");
-      return $"Memory: RAM banking {banking}";
+      return $"Memory: RAM banking {banking} | " + 
+             $"{_reads} reads, {_writes} writes | " +
+             $"P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
     }
   }
 }

@@ -348,7 +348,8 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void IN()
     {
-      
+      var port = ReadByteOperand(_instruction.Source);
+      Console.WriteLine($"Attempting to read port {port}");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -376,19 +377,19 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void IND()
     {
-      // TODO
+      Console.WriteLine("IND not implemented");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void INI()
     {
-      // TODO
+      Console.WriteLine("INI not implemented");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void INIR()
     {
-      // TODO
+      Console.WriteLine("INIR not implemented");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -513,31 +514,33 @@ namespace Quill
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OTDR()
     {
-      // TODO
+      Console.WriteLine("OTDR not implemented");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OTIR()
     {
-      // TODO
+      Console.WriteLine("OTIR not implemented");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OUT()
     {
-      // TODO
+      var value = ReadByteOperand(_instruction.Source);
+      var port = ReadByteOperand(_instruction.Destination);
+      Console.WriteLine($"Writing {value.ToHex()} to port {port.ToHex()}");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OUTD()
     {
-      // TODO
+      Console.WriteLine("OUTD not implemented");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OUTI()
     {
-      // TODO
+      Console.WriteLine("OUTI not implemented");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
