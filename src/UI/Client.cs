@@ -47,7 +47,7 @@ public sealed class Client : Game
   public Client(string romPath, Configuration config)
   {
     var rom = File.ReadAllBytes(romPath);
-    _emulator = new Emulator(rom, AUDIO_SAMPLE_RATE, config.ExtraScanlines);
+    _emulator = new Emulator(rom, AUDIO_SAMPLE_RATE, config.VirtualScanlines);
     _emulationThread = new Thread(_emulator.Run);
     _pollingThread = new Thread(PollAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
@@ -74,6 +74,7 @@ public sealed class Client : Game
     _pollingThread.Start();
     _sound.Play();
 
+    InactiveSleepTime = new TimeSpan(0);
     base.Initialize();
   }
 
