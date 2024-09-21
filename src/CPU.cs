@@ -1,36 +1,46 @@
 using Sonic.Definitions;
+using Sonic.Extensions;
 
 namespace Sonic
 {
-  public class CPU
+  public partial class CPU
   {
-    private Registers _registers;
     private Memory _memory;
-    private int _cycles;
-
+    private int _instructions;
+    
     public CPU()
     {
-      _registers = new Registers();
       _memory = new Memory();
     }
-
-    private StatusFlags _flags
+    
+    private Flags _flags
     {
-      get => (StatusFlags) _registers.F;
-      set => _registers.F = (byte) value;
+      get => (Flags) F;
+      set => F = (byte) value;
     }
 
-    private byte Fetch() => _memory[_registers.PC++]; 
-    private ushort FetchWord() => Util.ConcatBytes(Fetch(), Fetch());
+    private void SetFlag(Flags flag, bool value) => _flags = value
+                                                           ? _flags | flag 
+                                                           : _flags & ~flag;
     
     public void Step()
     {
-      // fetch
-      _registers.Instruction = Fetch();
-      _cycles++;
+      var opcode = Fetch();
+      Decode(opcode);
+      _instructions++;
     }
+    
+    private byte Fetch() => _memory[PC++];
+    private ushort FetchWord() => Util.ConcatBytes(Fetch(), Fetch());
 
-    public override string ToString() => _registers.ToString() + "\r\n" +
-                                         $"Flags: {_flags.ToString()}, Cycles: {_cycles} ";
+    public override String ToString()
+    {
+      return  $"╒══════════╤════════════╤════════════╤════════════╤════════════╕\r\n" +
+              $"│Registers │  AF: {AF.ToHex()} │  BC: {BC.ToHex()} │  DE: {DE.ToHex()} │  HL: {HL.ToHex()} │\r\n" +
+              $"│          │ AF': {AFp.ToHex()} │ BC': {BCp.ToHex()} │ DE': {DEp.ToHex()} │ HL': {HLp.ToHex()} │\r\n" +
+              $"│          │  IX: {IX.ToHex()} │  IY: {IY.ToHex()} │  PC: {PC.ToHex()} │  SP: {SP.ToHex()} │\r\n" +
+              $"╘══════════╧════════════╧════════════╧════════════╧════════════╛\r\n" +
+              $"Flags: {_flags.ToString()}, Instruction Count: {_instructions} ";
+    }
   }
 }

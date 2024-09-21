@@ -2,6 +2,7 @@ namespace Sonic.Definitions
 {
   public enum Operand 
   {
+    None,
     A,
     B,
     C,
