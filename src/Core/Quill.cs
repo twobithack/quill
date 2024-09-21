@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -20,14 +21,18 @@ public class Quill : Game
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
   private readonly GraphicsDeviceManager _graphics;
+  private readonly string _romName;
+  private readonly string _saveDirectory;
+  private readonly bool _cropBorder;
+  private readonly int _scale;
   private SpriteBatch _spriteBatch;
   private Texture2D _framebuffer;
   private Rectangle _viewport;
-  private readonly bool _cropBorder;
-  private readonly int _scale;
   #endregion
 
   public Quill(byte[] rom, 
+               string romName,
+               string saveDir,
                int scaleFactor,
                bool cropBorders = true,
                bool fixSlowdown = true)
@@ -36,6 +41,8 @@ public class Quill : Game
     _emulator = new Emulator(rom, fixSlowdown);
     _emulationThread = new Thread(_emulator.Run);
     _graphics = new GraphicsDeviceManager(this);
+    _romName = romName;
+    _saveDirectory = saveDir;
     _cropBorder = cropBorders;
     _scale = scaleFactor;
   }
@@ -103,6 +110,14 @@ public class Quill : Game
     if (!joypad.IsConnected)
       return false;
 
+    if (player == PLAYER_1)
+    {
+      if (joypad.IsButtonDown(Buttons.RightShoulder))
+        _emulator.SaveState(GetSnapshotPath());
+      else if (joypad.IsButtonDown(Buttons.LeftShoulder))
+        _emulator.LoadState(GetSnapshotPath());
+    }
+
     _emulator.SetJoypadState(
       joypad: player,
       up:     joypad.IsButtonDown(Buttons.DPadUp) ||
@@ -128,6 +143,11 @@ public class Quill : Game
     if (kb.IsKeyDown(Keys.Escape))
       Exit();
 
+    if (kb.IsKeyDown(Keys.Enter))
+      _emulator.SaveState(GetSnapshotPath());
+    else if (kb.IsKeyDown(Keys.Back))
+      _emulator.LoadState(GetSnapshotPath());
+
     _emulator.SetJoypadState(
       joypad: PLAYER_1,
       up:     kb.IsKeyDown(Keys.Up) ||
@@ -144,5 +164,8 @@ public class Quill : Game
               kb.IsKeyDown(Keys.OemPeriod)
     );
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private string GetSnapshotPath() => Path.Combine(_saveDirectory, _romName + ".save");
   #endregion
 }

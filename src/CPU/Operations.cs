@@ -381,10 +381,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void HALT()
-  {
-    _halt = true;
-  }
+  private void HALT() => _halted = true;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IM()

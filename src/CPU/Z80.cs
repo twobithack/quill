@@ -1,4 +1,5 @@
 using Quill.Common;
+using Quill.Core;
 using Quill.CPU.Definitions;
 using Quill.Input;
 using Quill.Video;
@@ -11,18 +12,11 @@ namespace Quill.CPU;
 
 unsafe public ref partial struct Z80
 {
-  #region Constants
-  private const byte NOP_CYCLES = 0x04;
-  #endregion
-
   #region Fields
   private readonly IO _input;
   private readonly VDP _vdp;
   private Memory _memory;
   private Flags _flags;
-  private bool _halt = false;
-  private bool _iff1 = true;
-  private bool _iff2 = true;
   private byte _a = 0x00;
   private byte _b = 0x00;
   private byte _c = 0x00;
@@ -44,6 +38,9 @@ unsafe public ref partial struct Z80
   private ushort _deShadow = 0x0000;
   private ushort _hlShadow = 0x0000;
   private ushort? _memPtr = null;
+  private bool _halted = false;
+  private bool _iff1 = true;
+  private bool _iff2 = true;
   private Opcode _instruction;
   #endregion
 
@@ -191,25 +188,74 @@ unsafe public ref partial struct Z80
   #endregion
 
   #region Methods
+  public void Run(int cycles)
+  {
+    while (!_halted && cycles > 0)
+      cycles -= Step();
+  }
+
+  public void LoadState(Snapshot state)
+  {
+    AF = state.AF;
+    BC = state.BC;
+    DE = state.DE;
+    HL = state.HL;
+    IX = state.IX;
+    IY = state.IY;
+    _i = state.I;
+    _r = state.R;
+    _pc = state.PC;
+    _sp = state.SP;
+    _afShadow = state.AFs;
+    _bcShadow = state.BCs;
+    _deShadow = state.DEs;
+    _hlShadow = state.HLs;
+    _halted = state.Halted;
+    _iff1 = state.IFF1;
+    _iff2 = state.IFF2;
+    _memory.LoadState(state);
+    _vdp.LoadState(state);
+  }
+
+  public Snapshot SaveState()
+  {
+    var state = new Snapshot
+    {
+      AF = AF,
+      BC = BC,
+      DE = DE,
+      HL = HL,
+      IX = IX,
+      IY = IY,
+      I = _i,
+      R = _r,
+      PC = _pc,
+      SP = _sp,
+      AFs = _afShadow,
+      BCs = _bcShadow,
+      DEs = _deShadow,
+      HLs = _hlShadow,
+      Halted = _halted,
+      IFF1 = _iff1,
+      IFF2 = _iff2
+    };
+    _memory.SaveState(ref state);
+    _vdp.SaveState(ref state);
+    return state;
+}
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public int Step()
+  private int Step()
   {
     HandleInterrupts();
-    if (_halt)
+    if (_halted)
     {
       _r++;
-      return NOP_CYCLES;
+      return 0;
     }
     DecodeInstruction();
     ExecuteInstruction();
     return _instruction.Cycles;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Run(int cycles)
-  {
-    while (cycles > 0)
-      cycles -= Step();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -219,9 +265,9 @@ unsafe public ref partial struct Z80
     {
       PushToStack(_pc);
       _pc = 0x38;
-      _halt = false;
       _iff1 = false;
       _iff2 = false;
+      _halted = false;
       _r++;
     }
   }
@@ -486,7 +532,7 @@ unsafe public ref partial struct Z80
   private byte ReadPort(byte port) => port switch
   {
     0x3F => _io,
-    0x7E => (byte)_vdp.VCounter,
+    0x7E => _vdp.VCounter,
     0x7F => _vdp.HCounter,
     0xBE => _vdp.ReadData(),
     0xBF or 0xBD => _vdp.ReadStatus(),

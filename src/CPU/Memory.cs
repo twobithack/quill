@@ -1,5 +1,6 @@
 using CommunityToolkit.HighPerformance;
 using Quill.Common;
+using Quill.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -133,6 +134,33 @@ unsafe public ref struct Memory
   {
     WriteByte(address, word.LowByte());
     WriteByte(address.Increment(), word.HighByte());
+  }
+
+  public void LoadState(Snapshot state)
+  {
+    for (var index = 0; index < PAGE_SIZE; index++)
+    {
+      _ram[index] = state.RAM[index];
+      _bank0[index] = state.Bank0[index];
+      _bank1[index] = state.Bank1[index];
+    }
+    _page0 = state.Page0;
+    _page1 = state.Page1;
+    _page2 = state.Page2;
+    _bankEnable = state.BankEnable;
+    _bankSelect = state.BankSelect;
+  }
+
+  public void SaveState(ref Snapshot state)
+  {
+    _ram.CopyTo(state.RAM);
+    _bank0.CopyTo(state.Bank0);
+    _bank1.CopyTo(state.Bank1);
+    state.Page0 = _page0;
+    state.Page1 = _page1;
+    state.Page2 = _page2;
+    state.BankEnable= _bankEnable;
+    state.BankSelect= _bankSelect;
   }
 
   public void DumpRAM(string path)
