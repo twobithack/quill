@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Quill.Z80
 {
   public static class Opcodes
@@ -8,7 +10,9 @@ namespace Quill.Z80
       public readonly Operand Destination;
       public readonly Operand Source;
 
-      public Opcode() : this(Operation.NOP, Operand.Implied, Operand.Implied) {}
+      public Opcode() : this(Operation.NOP) {}
+
+      public Opcode(Operation op) : this(op, Operand.Implied, Operand.Implied) {}
 
       public Opcode(Operation op, Operand dst, Operand src)
       {
@@ -17,6 +21,7 @@ namespace Quill.Z80
         Source = src;
       }
 
+      [MethodImpl(MethodImplOptions.AggressiveInlining)]
       public bool IsWordOperation() => _wordOperands.Contains(Destination) ||
                                        _wordOperands.Contains(Source);
 
@@ -1201,8 +1206,8 @@ namespace Quill.Z80
     public static readonly Opcode[] ED = new Opcode[]
     {
       // Opcodes 0x00 - 0x0F
-      new Opcode(),  
-      new Opcode(),  
+      new Opcode(Operation.IN,  Operand.B,          Operand.Immediate),  
+      new Opcode(Operation.OUT, Operand.Immediate,  Operand.B),    
       new Opcode(),  
       new Opcode(),  
       new Opcode(),  
@@ -1273,27 +1278,27 @@ namespace Quill.Z80
       new Opcode(),
 
       // Opcodes 0x40 - 0x4F
-      new Opcode(Operation.IN,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OUT,  Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.LD,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.NEG,  Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.RETN, Operand.Implied,    Operand.Implied),  
+      new Opcode(Operation.IN,   Operand.B,          Operand.C),  
+      new Opcode(Operation.OUT,  Operand.C,          Operand.B),  
+      new Opcode(Operation.SBC,  Operand.HL,         Operand.BC),  
+      new Opcode(Operation.LD,   Operand.Immediate,  Operand.BC),  
+      new Opcode(Operation.NEG), 
+      new Opcode(Operation.RETN),  
       new Opcode(Operation.IM,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.LD,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.IN,   Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.OUT,  Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.ADC,  Operand.Implied,    Operand.Implied),  
-      new Opcode(Operation.LD,   Operand.Implied,    Operand.Implied),  
+      new Opcode(Operation.LD,   Operand.I,          Operand.A),  
+      new Opcode(Operation.IN,   Operand.C,          Operand.C),  
+      new Opcode(Operation.OUT,  Operand.C,          Operand.C),  
+      new Opcode(Operation.ADC,  Operand.HL,         Operand.BC),  
+      new Opcode(Operation.LD,   Operand.BC,         Operand.Indirect),  
       new Opcode(),  
-      new Opcode(Operation.RETI, Operand.Implied,    Operand.Implied),  
+      new Opcode(Operation.RETI),
       new Opcode(),  
-      new Opcode(Operation.LD,   Operand.Implied,    Operand.Implied),
+      new Opcode(Operation.LD,   Operand.R,          Operand.A),
 
       // Opcodes 0x50 - 0x5F
       new Opcode(Operation.IN,   Operand.Implied,    Operand.Implied),  
       new Opcode(),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.Implied),  
+      new Opcode(Operation.SBC,  Operand.HL,         Operand.DE),  
       new Opcode(Operation.LD,   Operand.Implied,    Operand.Implied),  
       new Opcode(),  
       new Opcode(),  
@@ -1309,9 +1314,9 @@ namespace Quill.Z80
       new Opcode(Operation.LD,   Operand.Implied,    Operand.Implied),
 
       // Opcodes 0x60 - 0x6F
-      new Opcode(Operation.IN,   Operand.Implied,    Operand.Implied),  
-      new Opcode(),  
-      new Opcode(Operation.SBC,  Operand.Implied,    Operand.Implied),  
+      new Opcode(Operation.IN,   Operand.H,          Operand.C),  
+      new Opcode(Operation.OUT,  Operand.C,          Operand.H),  
+      new Opcode(Operation.SBC,  Operand.HL,         Operand.HL),  
       new Opcode(),  
       new Opcode(),  
       new Opcode(),  

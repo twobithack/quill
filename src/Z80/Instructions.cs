@@ -802,28 +802,51 @@ namespace Quill.Z80
         Operand.RST5 => 0x28,
         Operand.RST6 => 0x30,
         Operand.RST7 => 0x38,
-        _ => throw new InvalidOperationException()
+        _ => throw new InvalidOperationException($"Invalid RST address: {_instruction.Destination}")
       };
+      
+      Console.WriteLine(_a);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SBC()
     {
-      var minuend = _a;
-      var subtrahend = ReadByte(_instruction.Source);
+      if (_instruction.Destination == Operand.HL)
+      {
+        var minuend = _hl;
+        var subtrahend = ReadWord(_instruction.Source);
 
-      if (_carry) subtrahend++;
-      var difference = minuend - subtrahend;
+        if (_carry) subtrahend++;
+        var difference = minuend - subtrahend;
 
-      _sign = (difference & 0x80) > 0;
-      _zero = (minuend == subtrahend);
-      _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
-      _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
-                  (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
-      _negative = true;
-      _carry = (subtrahend > minuend);
+        _sign = (difference & 0x8000) > 0;
+        _zero = (minuend == subtrahend);
+        _halfcarry = (minuend & 0x0FFF) - (subtrahend & 0x0FFF) < 0;
+        _overflow = (minuend < 0x8000 && subtrahend >= 0x8000 && _sign) ||
+                    (minuend >= 0x8000 && subtrahend < 0x8000 && !_sign);
+        _negative = true;
+        _carry = (subtrahend > minuend);
 
-      _a = (byte)difference;
+        _hl = (ushort)difference;
+      }
+      else
+      {
+        var minuend = _a;
+        var subtrahend = ReadByte(_instruction.Source);
+
+        if (_carry) subtrahend++;
+        var difference = minuend - subtrahend;
+
+        _sign = (difference & 0x80) > 0;
+        _zero = (minuend == subtrahend);
+        _halfcarry = (minuend & 0x0F) - (subtrahend & 0x0F) < 0;
+        _overflow = (minuend < 0x80 && subtrahend >= 0x80 && _sign) ||
+                    (minuend >= 0x80 && subtrahend < 0x80 && !_sign);
+        _negative = true;
+        _carry = (subtrahend > minuend);
+
+        _a = (byte)difference;
+      }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

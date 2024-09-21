@@ -150,11 +150,11 @@ namespace Quill.Z80
       Operand.E => _e,
       Operand.H => _h,
       Operand.L => _l,
-      _ => throw new InvalidOperationException()
+      _ => throw new InvalidOperationException($"Invalid source: {register}")
     };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private ushort ReadRegisterPair(Operand register) => register switch
+    private ushort ReadRegisterPair(Operand registers) => registers switch
     {
       Operand.AF => _af,
       Operand.BC => _bc,
@@ -164,7 +164,7 @@ namespace Quill.Z80
       Operand.IY => _iy,
       Operand.PC => _pc,
       Operand.SP => _sp,
-      _ => throw new InvalidOperationException()
+      _ => throw new InvalidOperationException($"Invalid source: {registers}")
     };
 
     private bool _sign
