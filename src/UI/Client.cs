@@ -38,21 +38,20 @@ public sealed class Client : Game
   private bool _running;
   #endregion
 
-  public Client(byte[] rom, 
-                string romName,
-                string saveDir,
+  public Client(string filepath,
                 int scaleFactor = 1,
                 int extraScanlines = 0,
                 bool cropBorders = true)
   {
+    var rom = File.ReadAllBytes(filepath);
     _emulator = new Emulator(rom, extraScanlines);
     _emulationThread = new Thread(_emulator.Run);
     _bufferingThread = new Thread(UpdateAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
     _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
                                             AudioChannels.Mono);
-    _romName = romName;
-    _saveDirectory = saveDir;
+    _romName = Path.GetFileNameWithoutExtension(filepath);
+    _saveDirectory = Path.GetDirectoryName(filepath);
     _cropBorder = cropBorders;
     _scale = scaleFactor;
     _running = true;
