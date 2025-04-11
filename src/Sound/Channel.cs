@@ -37,26 +37,21 @@ public struct Channel
   #region Methods
   public short GenerateTone()
   {
-    if (Tone == 0)
-      return 0;
-
+    if (Tone <= 1)
+      return ATTENUATION_TABLE[Volume];
+      
     _counter--;
     if (_counter <= 0)
     {
       _counter = Tone;
       _polarity = !_polarity;
     }
-
-    return _polarity
-      ? ATTENUATION_TABLE[Volume]
-      : (short)-ATTENUATION_TABLE[Volume];
+    
+    return Output;
   }
 
   public short GenerateNoise(ushort tone2)
   {
-    if (Tone == 0)
-      return 0;
-
     _counter--;
     if (_counter <= 0)
     {
@@ -71,25 +66,40 @@ public struct Channel
       _polarity = !_polarity;
       if (_polarity)
       {
-        var isWhiteNoise = ((Tone >> 2) & 1) > 0;
-        var input = isWhiteNoise
+        var input = WhiteNoiseMode
                   ? Parity(_lfsr & LFSR_TAPPED_BITS)
                   : (_lfsr & 1);
-        _lfsr = (ushort)((input << 15 ) | (_lfsr >> 1));
+        _lfsr = (ushort)((_lfsr >> 1) | (input << 15));
       }
     }
 
-    return _polarity
-      ? (short)(ATTENUATION_TABLE[Volume] * (_lfsr & 1))
-      : (short)(-ATTENUATION_TABLE[Volume] * (_lfsr & 1));
+    if (!_lfsr.TestBit(0))
+      return 0;
+
+    return Output;
   }
 
   public void ResetLFSR()
   {
-    if (!Tone.TestBit(2))
+    if (PeriodicNoiseMode)
       _lfsr = INITIAL_LFSR;
   }
 
-  private static int Parity(int value) => 1 - (BitOperations.PopCount((uint)value) % 2);
+  private short Output => _polarity 
+                        ? ATTENUATION_TABLE[Volume] 
+                        : (short)-ATTENUATION_TABLE[Volume];
+                        
+  private bool WhiteNoiseMode => Tone.TestBit(2);
+
+  private bool PeriodicNoiseMode => !WhiteNoiseMode;
+
+  private static int Parity(int value)
+  {
+     value ^= value >> 8;
+     value ^= value >> 4;
+     value ^= value >> 2;
+     value ^= value >> 1;
+     return value & 1;
+  }
   #endregion
 }
