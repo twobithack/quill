@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using Quill.Common.Extensions;
+using System.Numerics;
 
 namespace Quill.Sound;
 
@@ -7,12 +8,12 @@ public struct Channel
   #region Constants
   private const ushort INITIAL_LFSR = 0x2000;
   private const byte LFSR_TAPPED_BITS = 0b_1001;
-  private static readonly short[] VOLUME_TABLE = new short[]
+  private static readonly short[] ATTENUATION_TABLE = new short[]
   {
     8191, 6507, 5168, 4105,
     3261, 2590, 2057, 1642,
     1298, 1031, 819,  650,
-    516,  1642, 410,  0
+    516,  410,  326,  0
   };
   #endregion
 
@@ -40,17 +41,15 @@ public struct Channel
       return 0;
 
     _counter--;
-
     if (_counter <= 0)
     {
       _counter = Tone;
       _polarity = !_polarity;
     }
 
-    if (_polarity)
-      return VOLUME_TABLE[Volume];
-    else
-      return (short)-VOLUME_TABLE[Volume];
+    return _polarity
+      ? ATTENUATION_TABLE[Volume]
+      : (short)-ATTENUATION_TABLE[Volume];
   }
 
   public short GenerateNoise(ushort tone2)
@@ -80,10 +79,16 @@ public struct Channel
       }
     }
 
-    return (short)(VOLUME_TABLE[Volume] * (_lfsr & 1));
+    return _polarity
+      ? (short)(ATTENUATION_TABLE[Volume] * (_lfsr & 1))
+      : (short)(-ATTENUATION_TABLE[Volume] * (_lfsr & 1));
   }
 
-  public void ResetLFSR() => _lfsr = INITIAL_LFSR;
+  public void ResetLFSR()
+  {
+    if (!Tone.TestBit(2))
+      _lfsr = INITIAL_LFSR;
+  }
 
   private static int Parity(int value) => 1 - (BitOperations.PopCount((uint)value) % 2);
   #endregion
