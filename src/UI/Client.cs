@@ -19,7 +19,7 @@ public sealed class Client : Game
   private const int LEFT_BORDER_WIDTH = 8;
 
   private const int AUDIO_SAMPLE_RATE = 44100;
-  private const int MIN_AUDIO_SAMPLES = 5;
+  private const int MIN_AUDIO_SAMPLES = 44;
 
   private const int PLAYER_1 = 0;
   private const int PLAYER_2 = 1;
@@ -142,8 +142,10 @@ public sealed class Client : Game
         var buffer = _emulator.ReadAudioBuffer();
         if (buffer != null)
           _sound.SubmitBuffer(buffer);
+        Thread.Sleep(10);
       }
-      Thread.Sleep(10);
+      else
+        Thread.Sleep(1);
     }
   }
 

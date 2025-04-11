@@ -1,5 +1,6 @@
 ﻿using Quill.Common.Extensions;
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace Quill.Sound;
@@ -7,9 +8,8 @@ namespace Quill.Sound;
 public sealed class PSG
 {
   #region Constants
-  private const int CLOCK_RATE = 224000;
-  private const int UPDATE_INTERVAL_MS = 1;
-  private const int BUFFER_SIZE = 1000;
+  private const int CLOCK_RATE = 223722;
+  private const int BUFFER_SIZE = 440;
   private const int CHANNEL_COUNT = 4;
   private const int TONE0 = 0b_00;
   private const int TONE1 = 0b_01;
@@ -24,7 +24,10 @@ public sealed class PSG
 
   private readonly Thread _bufferingThread;
   private readonly short[] _buffer;
+  private readonly int _sampleRate;
   private readonly int _decimationFactor;
+  private readonly int _compensationInterval;
+  
   private int _bufferPosition;
   private bool _playing;
   #endregion
@@ -40,7 +43,22 @@ public sealed class PSG
     _buffer = new short[BUFFER_SIZE];
     _bufferPosition = BUFFER_SIZE;
     _bufferingThread = new Thread(FillBuffer);
-    _decimationFactor = CLOCK_RATE / sampleRate;
+
+    _sampleRate = sampleRate;
+    _decimationFactor = CLOCK_RATE / _sampleRate;
+    _compensationInterval = CalculateCompensationInterval();
+  }
+
+  private int CalculateCompensationInterval()
+  {
+    double ratio = (double)CLOCK_RATE / _sampleRate;
+    double fractionalPart = ratio - Math.Floor(ratio);
+    
+    if (fractionalPart == 0)
+        return int.MaxValue;
+
+    double spacing = 1.0 / fractionalPart;
+    return (int)Math.Round(spacing);
   }
 
   #region Methods
@@ -62,31 +80,38 @@ public sealed class PSG
       if (_volumeLatch)
       {
         _channels[_channelLatch].Volume = value.LowNibble();
+        return;
       }
-      else
+
+      if (_channelLatch == NOISE)
       {
-        _channels[_channelLatch].Tone &= 0b_0011_1111_0000;
-        _channels[_channelLatch].Tone |= value.LowNibble();
+        _channels[NOISE].Tone = value.LowNibble();
+        _channels[NOISE].Tone &= 0b_0111;
+        _channels[NOISE].ResetLFSR();
+        return;
       }
+
+      _channels[_channelLatch].Tone &= 0b_0011_1111_0000;
+      _channels[_channelLatch].Tone |= value.LowNibble();
     }
     else
     {
       if (_volumeLatch)
       {
         _channels[_channelLatch].Volume = value.LowNibble();
+        return;
       }
-      else
-      {
-        if (_channelLatch == NOISE)
-        {
-          _channels[NOISE].Tone = value.LowNibble();
-          _channels[NOISE].ResetLFSR();
-          return;
-        }
 
-        _channels[_channelLatch].Tone &= 0b_0000_0000_1111;
-        _channels[_channelLatch].Tone |= (ushort)((value & 0b_0011_1111) << 4);
+      if (_channelLatch == NOISE)
+      {
+        _channels[NOISE].Tone = value.LowNibble();
+        _channels[NOISE].Tone &= 0b_0111;
+        _channels[NOISE].ResetLFSR();
+        return;
       }
+
+      _channels[_channelLatch].Tone &= 0b_0000_0000_1111;
+      _channels[_channelLatch].Tone |= (ushort)((value & 0b_0011_1111) << 4);
     }
   }
 
@@ -106,29 +131,44 @@ public sealed class PSG
 
   private void FillBuffer()
   {
+    Stopwatch timer = new Stopwatch();
+    long nextSampleTick = 0;
+    long sampleCount = 0;
+
+    timer.Start();
+
     while (_playing)
     {
-      if (_bufferPosition == BUFFER_SIZE)
-        continue;
-
-      lock (_buffer)
+      if (timer.ElapsedTicks >= nextSampleTick)
       {
-        int tone = 0;
-        for (var sample = 0; sample < BUFFER_SIZE / 2; sample++)
-        {
-          for (var channel = 0; channel < NOISE; channel++)
-            tone += _channels[channel].GenerateTone();
-            
-          tone += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
-          
-          if (sample % _decimationFactor == 0)
-          {
-            _buffer[_bufferPosition] = (short)(tone / _decimationFactor);
-            _bufferPosition++;
-            tone = 0;
-          }
-        }
+        GenerateSample(sampleCount % _compensationInterval == 0);
+        sampleCount++;
+        nextSampleTick = sampleCount * Stopwatch.Frequency / _sampleRate;
       }
+    }
+  }
+
+  private void GenerateSample(bool addCompensationSample)
+  {
+    if (_bufferPosition == BUFFER_SIZE)
+      return;
+
+    int tone = 0;
+    var sampleCount = addCompensationSample 
+                    ? _decimationFactor + 1 
+                    : _decimationFactor;
+
+    for (var sample = 0; sample < sampleCount; sample++)
+    {
+      for (var channel = 0; channel < NOISE; channel++)
+        tone += _channels[channel].GenerateTone();
+      tone += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
+    }
+
+    lock (_buffer)
+    {
+      _buffer[_bufferPosition] = (short)(tone / sampleCount);
+      _bufferPosition++;
     }
   }
   #endregion
