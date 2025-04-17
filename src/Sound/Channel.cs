@@ -6,7 +6,7 @@ namespace Quill.Sound;
 public struct Channel
 {
   #region Constants
-  private const ushort INITIAL_LFSR = 0x2000;
+  private const ushort INITIAL_LFSR = 0x8000;
   private const byte LFSR_TAPPED_BITS = 0b_1001;
   private static readonly short[] ATTENUATION_TABLE = new short[]
   {
@@ -47,7 +47,9 @@ public struct Channel
       _polarity = !_polarity;
     }
     
-    return Output;
+    return _polarity 
+      ? ATTENUATION_TABLE[Volume] 
+      : (short)-ATTENUATION_TABLE[Volume];
   }
 
   public short GenerateNoise(ushort tone2)
@@ -73,22 +75,13 @@ public struct Channel
       }
     }
 
-    if (!_lfsr.TestBit(0))
-      return 0;
-
-    return Output;
+    return _lfsr.TestBit(0)
+      ? ATTENUATION_TABLE[Volume] 
+      : (short)-ATTENUATION_TABLE[Volume];
   }
 
-  public void ResetLFSR()
-  {
-    if (PeriodicNoiseMode)
-      _lfsr = INITIAL_LFSR;
-  }
+  public void ResetLFSR() => _lfsr = INITIAL_LFSR;
 
-  private short Output => _polarity 
-                        ? ATTENUATION_TABLE[Volume] 
-                        : (short)-ATTENUATION_TABLE[Volume];
-                        
   private bool WhiteNoiseMode => Tone.TestBit(2);
 
   private bool PeriodicNoiseMode => !WhiteNoiseMode;
