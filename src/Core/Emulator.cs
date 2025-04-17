@@ -48,15 +48,15 @@ unsafe public class Emulator
 
     var cycleCount = 0;
     var frameCount = 0;
-    var frameTime = new Stopwatch();
-    frameTime.Start();
+    var frameTime = Stopwatch.StartNew();
+    var nextFrame = frameTime.Elapsed.TotalMilliseconds;
 
     while (_running)
     {
-      if (frameTime.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
+      if (frameTime.Elapsed.TotalMilliseconds < nextFrame)
         continue;
 
-      frameTime.Restart();
+      nextFrame += FRAME_INTERVAL_MS;
       frameCount++;
 
       var scanlines = _video.ScanlinesPerFrame;
