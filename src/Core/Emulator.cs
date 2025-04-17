@@ -17,7 +17,6 @@ unsafe public class Emulator
   #endregion
 
   #region Fields
-  public bool FastForwarding;
   public bool Rewinding;
 
   private readonly RingBuffer<Snapshot> _history;
@@ -25,6 +24,7 @@ unsafe public class Emulator
   private readonly PSG _audio;
   private readonly VDP _video;
   private readonly byte[] _rom;
+
   private string _snapshotPath;
   private bool _loadRequested;
   private bool _saveRequested;
@@ -36,7 +36,7 @@ unsafe public class Emulator
     _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
     _input = new IO();
     _audio = new PSG(sampleRate);
-    _video = new VDP(virtualScanlines);
+    _video = new VDP();
     _rom = rom;
   }
 
@@ -45,16 +45,15 @@ unsafe public class Emulator
   {
     var cpu = new Z80(_rom, _input, _audio, _video);
     _running = true;
-    _audio.Play();
 
+    var cycleCount = 0;
     var frameCount = 0;
     var frameTime = new Stopwatch();
     frameTime.Start();
 
     while (_running)
     {
-      if (!FastForwarding && 
-          frameTime.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
+      if (frameTime.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
         continue;
 
       frameTime.Restart();
@@ -63,8 +62,16 @@ unsafe public class Emulator
       var scanlines = _video.ScanlinesPerFrame;
       while (scanlines > 0)
       {
-        cpu.Run(CYCLES_PER_SCANLINE);
+        if (cycleCount < CYCLES_PER_SCANLINE)
+        {
+          var cycles = cpu.Step();
+          cycleCount += cycles;
+          _audio.Step(cycles);
+          continue;
+        }
+        
         _video.RenderScanline();
+        cycleCount -= CYCLES_PER_SCANLINE;
         scanlines--;
       }
 
@@ -92,8 +99,6 @@ unsafe public class Emulator
         frameCount = 0;
       }
     }
-
-    _audio.Stop();
   }
 
   public void Stop() => _running = false;

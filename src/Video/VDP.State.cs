@@ -19,6 +19,7 @@ public sealed partial class VDP
   private const int BACKGROUND_COLUMNS = 32;
   private const int HSCROLL_LIMIT = 1;
   private const int VSCROLL_LIMIT = 24;
+  private const int VCOUNTER_MAX = byte.MaxValue;
   private const byte DISABLE_SPRITES = 0xD0;
   private const byte TRANSPARENT = 0x00;
   #endregion
@@ -63,7 +64,6 @@ public sealed partial class VDP
 
   private DisplayMode _displayMode;
   private readonly int _backgroundRows = 28; // 32
-  private readonly int _vCounterMax;
   private readonly byte _vCounterActive = 192; // 224
   private readonly byte _vCounterJumpFrom = 0xDA; // 0xEA
   private readonly byte _vCounterJumpTo = 0xD5; // 0xE5
@@ -71,7 +71,7 @@ public sealed partial class VDP
   #endregion
 
   #region Properties
-  public int ScanlinesPerFrame => _vCounterMax + (_vCounterJumpFrom - _vCounterJumpTo);
+  public int ScanlinesPerFrame => VCOUNTER_MAX + (_vCounterJumpFrom - _vCounterJumpTo);
   public byte VCounter => (byte)Math.Min(_vCounter, byte.MaxValue);
 
   private bool SpriteCollision

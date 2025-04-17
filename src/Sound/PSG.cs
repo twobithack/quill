@@ -8,7 +8,9 @@ namespace Quill.Sound;
 public sealed class PSG
 {
   #region Constants
-  private const int CLOCK_RATE = 223722;
+  private const int MASTER_CLOCK = 3579545;
+  private const int MASTER_CLOCK_DIVIDER = 16;
+  private const double CLOCK_RATE = (double)MASTER_CLOCK / MASTER_CLOCK_DIVIDER;
   private const int BUFFER_SIZE = 440;
   private const int CHANNEL_COUNT = 4;
   private const int TONE0 = 0b_00;
@@ -22,14 +24,17 @@ public sealed class PSG
   private int _channelLatch;
   private bool _volumeLatch;
 
-  private readonly Thread _bufferingThread;
   private readonly short[] _buffer;
+  private readonly short[] _rawBuffer;
+  private readonly byte[] _copyBuffer;
   private readonly int _sampleRate;
   private readonly int _decimationFactor;
-  private readonly int _compensationInterval;
+  private readonly double _decimationRemainder;
   
+  private double _phase;
   private int _bufferPosition;
-  private bool _playing;
+  private int _rawBufferPosition;
+  private int _masterClockCycles;
   #endregion
 
   public PSG(int sampleRate)
@@ -41,35 +46,17 @@ public sealed class PSG
     _channels[NOISE] = new Channel();
 
     _buffer = new short[BUFFER_SIZE];
-    _bufferPosition = BUFFER_SIZE;
-    _bufferingThread = new Thread(FillBuffer);
+    _rawBuffer = new short[BUFFER_SIZE];
+    _copyBuffer = new byte[BUFFER_SIZE * 2];
 
     _sampleRate = sampleRate;
-    _decimationFactor = CLOCK_RATE / _sampleRate;
-    _compensationInterval = CalculateCompensationInterval();
-  }
 
-  private int CalculateCompensationInterval()
-  {
-    double ratio = (double)CLOCK_RATE / _sampleRate;
-    double fractionalPart = ratio - Math.Floor(ratio);
-    
-    if (fractionalPart == 0)
-        return int.MaxValue;
-
-    double spacing = 1.0 / fractionalPart;
-    return (int)Math.Round(spacing);
+    var ratio = CLOCK_RATE / _sampleRate;
+    _decimationFactor = (int)ratio;
+    _decimationRemainder = ratio - _decimationFactor;
   }
 
   #region Methods
-  public void Play()
-  {
-    _playing = true;
-    _bufferingThread.Start();
-  }
-
-  public void Stop() => _playing = false;
-
   public void WriteData(byte value)
   {
     if (value.TestBit(7))
@@ -117,59 +104,67 @@ public sealed class PSG
 
   public byte[] ReadBuffer()
   {
-    if (_bufferPosition == 0)
-      return null;
+    while (_bufferPosition < BUFFER_SIZE)
+      Thread.Sleep(0);
 
     lock (_buffer)
     {
-      var byteBuffer = new byte[_bufferPosition * 2];
-      Buffer.BlockCopy(_buffer, 0, byteBuffer, 0, byteBuffer.Length);
+      Buffer.BlockCopy(_buffer, 0, _copyBuffer, 0, _copyBuffer.Length);
       _bufferPosition = 0;
-      return byteBuffer;
+      return _copyBuffer;
     }
   }
 
-  private void FillBuffer()
+  public void Step(int cycles)
   {
-    Stopwatch timer = new Stopwatch();
-    long nextSampleTick = 0;
-    long sampleCount = 0;
-
-    timer.Start();
-
-    while (_playing)
+    _masterClockCycles += cycles;
+    while (_masterClockCycles >= MASTER_CLOCK_DIVIDER)
     {
-      if (timer.ElapsedTicks >= nextSampleTick)
-      {
-        GenerateSample(sampleCount % _compensationInterval == 0);
-        sampleCount++;
-        nextSampleTick = sampleCount * Stopwatch.Frequency / _sampleRate;
-      }
+      _masterClockCycles -= MASTER_CLOCK_DIVIDER;
+      GenerateSample();
     }
   }
 
-  private void GenerateSample(bool addCompensationSample)
+  private void GenerateSample()
   {
     if (_bufferPosition == BUFFER_SIZE)
       return;
 
-    int tone = 0;
-    var sampleCount = addCompensationSample 
-                    ? _decimationFactor + 1 
+    _rawBuffer[_rawBufferPosition] = GenerateRawSample();
+    _rawBufferPosition++;
+
+    var sampleCount = _phase >= 1
+                    ? _decimationFactor + 1
                     : _decimationFactor;
 
-    for (var sample = 0; sample < sampleCount; sample++)
+    if (_rawBufferPosition == sampleCount)
     {
-      for (var channel = 0; channel < NOISE; channel++)
-        tone += _channels[channel].GenerateTone();
-      tone += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
-    }
+      var sample = 0;
+      for (var index = 0; index < sampleCount; index++)
+        sample += _rawBuffer[index];
 
-    lock (_buffer)
-    {
-      _buffer[_bufferPosition] = (short)(tone / sampleCount);
-      _bufferPosition++;
+      lock (_buffer)
+      {
+        _buffer[_bufferPosition] = (short)(sample / sampleCount);
+        _bufferPosition++;
+      }
+
+      if (_phase >= 1)
+        _phase -= 1;
+      
+      _phase += _decimationRemainder;
+      _rawBufferPosition = 0;
     }
+  }
+
+  private short GenerateRawSample()
+  {
+    var sample = 0;
+    sample += _channels[TONE0].GenerateTone();
+    sample += _channels[TONE1].GenerateTone();
+    sample += _channels[TONE2].GenerateTone();
+    sample += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
+    return (short)sample;
   }
   #endregion
 }

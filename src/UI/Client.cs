@@ -137,15 +137,9 @@ public sealed class Client : Game
   {
     while (_running)
     {
-      if (_sound.PendingBufferCount < MIN_AUDIO_SAMPLES)
-      {
-        var buffer = _emulator.ReadAudioBuffer();
-        if (buffer != null)
-          _sound.SubmitBuffer(buffer);
-        Thread.Sleep(10);
-      }
-      else
-        Thread.Sleep(1);
+      var buffer = _emulator.ReadAudioBuffer();
+      _sound.SubmitBuffer(buffer);
+      Thread.Sleep(1);
     }
   }
 
@@ -184,7 +178,6 @@ public sealed class Client : Game
     
     if (player == PLAYER_1)
     {
-      _emulator.FastForwarding = joypad.IsButtonDown(Buttons.RightTrigger);
       _emulator.Rewinding = joypad.IsButtonDown(Buttons.LeftTrigger);
       _emulator.SetResetButtonState(joypad.IsButtonDown(Buttons.Back));
       HandleSnapshotRequest(loadRequested: joypad.IsButtonDown(Buttons.LeftShoulder),
@@ -221,7 +214,6 @@ public sealed class Client : Game
       pause:  kb.IsKeyDown(Keys.Space)
     );
 
-    _emulator.FastForwarding = kb.IsKeyDown(Keys.LeftControl);
     _emulator.Rewinding = kb.IsKeyDown(Keys.R);
     _emulator.SetResetButtonState(kb.IsKeyDown(Keys.Escape));
     HandleSnapshotRequest(loadRequested: kb.IsKeyDown(Keys.Back),

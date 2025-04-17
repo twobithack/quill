@@ -22,12 +22,6 @@ unsafe public ref partial struct Z80
   }
 
   #region Methods
-  public void Run(int cycles)
-  {
-    while (cycles > 0)
-      cycles -= Step();
-  }
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int Step()
   {

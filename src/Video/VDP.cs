@@ -7,14 +7,12 @@ namespace Quill.Video;
 
 public sealed partial class VDP
 {
-  public VDP(int virtualScanlines)
+  public VDP()
   {
     _framebuffer = new Framebuffer();
     _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
-    _vCounterMax = byte.MaxValue + (_vCounterJumpFrom - _vCounterJumpTo);
-    _vCounterMax += virtualScanlines;
   }
 
   #region Methods
@@ -120,7 +118,7 @@ public sealed partial class VDP
         _vCounterJumped = true;
       }
     }
-    else if (_vCounter == _vCounterMax)
+    else if (_vCounter == VCOUNTER_MAX)
     {
       _vCounter = 0;
       _vCounterJumped = false;
