@@ -139,7 +139,6 @@ public sealed class Client : Game
     {
       var buffer = _emulator.ReadAudioBuffer();
       _sound.SubmitBuffer(buffer);
-      Thread.Sleep(1);
     }
   }
 

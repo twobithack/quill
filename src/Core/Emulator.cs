@@ -4,6 +4,7 @@ using Quill.Input;
 using Quill.Sound;
 using Quill.Video;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Quill.Core;
 
@@ -53,8 +54,12 @@ unsafe public class Emulator
 
     while (_running)
     {
-      if (frameTime.Elapsed.TotalMilliseconds < nextFrame)
-        continue;
+      var timeRemaining = nextFrame - frameTime.Elapsed.TotalMilliseconds;
+      if (timeRemaining > 1)
+        Thread.Sleep((int)timeRemaining);
+
+      while (frameTime.Elapsed.TotalMilliseconds < nextFrame)
+        Thread.SpinWait(1);
 
       nextFrame += FRAME_INTERVAL_MS;
       frameCount++;

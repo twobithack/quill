@@ -31,10 +31,10 @@ public sealed class PSG
   private readonly int _decimationFactor;
   private readonly double _decimationRemainder;
   
-  private double _phase;
-  private int _bufferPosition;
+  private volatile int _bufferPosition;
   private int _rawBufferPosition;
   private int _masterClockCycles;
+  private double _phase;
   #endregion
 
   public PSG(int sampleRate)
@@ -102,19 +102,6 @@ public sealed class PSG
     }
   }
 
-  public byte[] ReadBuffer()
-  {
-    while (_bufferPosition < BUFFER_SIZE)
-      Thread.Sleep(0);
-
-    lock (_buffer)
-    {
-      Buffer.BlockCopy(_buffer, 0, _copyBuffer, 0, _copyBuffer.Length);
-      _bufferPosition = 0;
-      return _copyBuffer;
-    }
-  }
-
   public void Step(int cycles)
   {
     _masterClockCycles += cycles;
@@ -125,10 +112,25 @@ public sealed class PSG
     }
   }
 
+  public byte[] ReadBuffer()
+  {
+    var spin = new SpinWait();
+    while (Volatile.Read(ref _bufferPosition) < BUFFER_SIZE)
+      spin.SpinOnce();
+
+    lock (_buffer)
+    {
+      Buffer.BlockCopy(_buffer, 0, _copyBuffer, 0, _copyBuffer.Length);
+      _bufferPosition = 0;
+      return _copyBuffer;
+    }
+  }
+
   private void GenerateSample()
   {
-    if (_bufferPosition == BUFFER_SIZE)
-      return;
+    var spin = new SpinWait();
+    while (Volatile.Read(ref _bufferPosition) == BUFFER_SIZE)
+      spin.SpinOnce();
 
     _rawBuffer[_rawBufferPosition] = GenerateRawSample();
     _rawBufferPosition++;

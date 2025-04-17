@@ -37,6 +37,7 @@
 * Black Belt
 * Bomber Raid
 * Bonanza Bros
+* Bram Stoker's Dracula
 * Bubble Bobble
 * Buggy Run
 * California Games
@@ -238,8 +239,6 @@
 * Sonic Blast (no startup jingle)
 
 ## VISUAL BUGS
-* Bram Stoker's Dracula (sprite flickering)
-* California Games II (garbled screens)
 * Cool Spot (sprite flickering)
 
 ## BROKEN
@@ -248,12 +247,13 @@
 * Alien Storm
 * Bank Panic
 * Block Hole
-* Desert Speedtrap Starring Roadrunner (nothing after menus)
+* California Games II
+* Desert Speedtrap Starring Roadrunner
 * King & Road
 * Knightmare II: The Maze of Galious
 * Parlour Games 
-* Sega Chess (nothing after splash screen)
-* Zool: Warrior of the "Nth" Dimension (character won't load)
+* Sega Chess
+* Zool: Warrior of the "Nth" Dimension
 
 ## UNSUPPORTED
 * Alex Kidd BMX Trial (paddle)
@@ -293,6 +293,7 @@
 * Elevator Action
 * Flicky
 * Girl's Garden
+* Golgo 13
 * Gulkave
 * Guzzler
 * Hang-On II
@@ -313,13 +314,12 @@
 * Space Slalom
 * Star Force
 * Star Jacker 
+* Wonder Boy
 
 ## VISUAL BUGS
 * Bomberman Special (menu logo)
 * Exerion (no sprites)
-* Golgo 13 (sprite wrapping)
 * Rock n' Bolt (sprite sorting)
-* Wonder Boy (sprite wrapping)
 * Yamato (background tiles)
 
 ## BROKEN

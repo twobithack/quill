@@ -63,10 +63,10 @@ public sealed partial class VDP
   private bool _useSecondPatternTable;
 
   private DisplayMode _displayMode;
-  private readonly int _backgroundRows = 28; // 32
-  private readonly byte _vCounterActive = 192; // 224
-  private readonly byte _vCounterJumpFrom = 0xDA; // 0xEA
-  private readonly byte _vCounterJumpTo = 0xD5; // 0xE5
+  private readonly int _backgroundRows = 28;      // 32
+  private readonly byte _vCounterActive = 192;    // 224
+  private readonly byte _vCounterJumpFrom = 218;  // 234
+  private readonly byte _vCounterJumpTo = 213;    // 229
   private bool _vCounterJumped;
   #endregion
 
