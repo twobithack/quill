@@ -35,6 +35,8 @@ public struct Channel
     _lfsr = INITIAL_LFSR;
   }
 
+  private bool WhiteNoiseMode => Tone.TestBit(2);
+
   #region Methods
   public short GenerateTone()
   {
@@ -82,10 +84,6 @@ public struct Channel
   }
 
   public void ResetLFSR() => _lfsr = INITIAL_LFSR;
-
-  private bool WhiteNoiseMode => Tone.TestBit(2);
-
-  private bool PeriodicNoiseMode => !WhiteNoiseMode;
 
   private static int Parity(int value)
   {

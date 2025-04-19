@@ -20,7 +20,6 @@ public class Audio
   private readonly int _sampleRate;
   private readonly int[] _buffers;
   private readonly int _source;
-  private readonly byte[] _silence;
   private bool _playing;
   #endregion
 
@@ -31,19 +30,21 @@ public class Audio
     ALC.MakeContextCurrent(context);
     
     _requestNextBuffer = requestNextBuffer;
-    _bufferingThread = new Thread(BufferAudio);
+    _bufferingThread = new Thread(BufferAudio) { IsBackground = true };
+    
     _buffers = AL.GenBuffers(BUFFER_COUNT);
     _source = AL.GenSource();
 
     _sampleRate = sampleRate;
     _format = ALFormat.Mono16;
-    _silence = new byte[(_sampleRate / 100) * sizeof(short)];
-
+    
+    var silence = new byte[(_sampleRate / 100) * sizeof(short)];
     for (int buffer = 0; buffer < BUFFER_COUNT; buffer++)
-      AL.BufferData(_buffers[buffer], _format, _silence, _sampleRate);
+      AL.BufferData(_buffers[buffer], _format, silence, _sampleRate);
     AL.SourceQueueBuffers(_source, BUFFER_COUNT, _buffers);
   }
 
+  #region Methods
   public void Play()
   {
     _playing = true;
@@ -62,13 +63,13 @@ public class Audio
 
   private void BufferAudio()
   {
-    var spin = new SpinWait();
+    var spinner = new SpinWait();
     while (_playing)
     {
       AL.GetSource(_source, ALGetSourcei.BuffersProcessed, out int processed);
       if (processed == 0)
       {
-        spin.SpinOnce();
+        spinner.SpinOnce();
         continue;
       }
 
@@ -86,4 +87,5 @@ public class Audio
         AL.SourcePlay(_source);
     }
   }
+  #endregion
 }

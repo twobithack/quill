@@ -2,15 +2,15 @@
 using System.IO;
 using System.Threading;
 
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using Quill.Core;
 
 namespace Quill.Client;
 
-public sealed class Window : Game
+public sealed class Window : GameWindow
 {
   #region Constants
   private const int FRAMEBUFFER_WIDTH = 256;
@@ -24,152 +24,114 @@ public sealed class Window : Game
   #endregion
 
   #region Fields
+  private readonly Audio _audio;
+  private readonly Graphics _graphics;
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
-  private readonly GraphicsDeviceManager _graphics;
-  private readonly Audio _audio;
+  private readonly Configuration _config;
 
-  private readonly Configuration _configuration;
   private readonly string _romName;
   private readonly string _savesDirectory;
-
-  private SpriteBatch _spriteBatch;
-  private Texture2D _framebuffer;
-  private Rectangle _viewport;
-
   private bool _savesEnabled;
   #endregion
 
   public Window(string romPath, Configuration config)
+    : base(
+      GameWindowSettings.Default,
+      new NativeWindowSettings
+      {
+        Title = "Quill",
+        Size = new Vector2i(
+          config.ScaleFactor * (FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0)),
+          config.ScaleFactor * (FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0)) 
+        ),
+        AspectRatio = (FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0), 
+                       FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0)),
+        WindowBorder = WindowBorder.Resizable,
+        APIVersion = new Version(3, 3),
+        Profile = ContextProfile.Core,
+        Vsync = VSyncMode.On
+      })
   {
     var rom = File.ReadAllBytes(romPath);
     _emulator = new Emulator(rom, AUDIO_SAMPLE_RATE, config.VirtualScanlines);
-    _emulationThread = new Thread(_emulator.Run);
-    _audio = new Audio(AUDIO_SAMPLE_RATE,
-                       _emulator.ReadAudioBuffer);
-    _graphics = new GraphicsDeviceManager(this);
+    _emulationThread = new Thread(_emulator.Run) { IsBackground = true };
+    _audio = new Audio(AUDIO_SAMPLE_RATE, _emulator.ReadAudioBuffer);
+    _graphics = new Graphics(config, _emulator.ReadFramebuffer);
 
     _romName = Path.GetFileNameWithoutExtension(romPath);
     _savesDirectory = Path.Combine(Path.GetDirectoryName(romPath), "saves");
-    _configuration = config;
+    _config = config;
   }
 
   #region Properties
   private string SnapshotFilepath => Path.Combine(_savesDirectory, _romName + ".save");
+  private int TextureWidth => FRAMEBUFFER_WIDTH - (_config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0);
+  private int TextureHeight => FRAMEBUFFER_HEIGHT - (_config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0);
   #endregion
 
   #region Methods
-  protected override void Initialize()
+  protected override void OnLoad()
   {
-    Window.Title = "Quill";
-    ResizeViewport();
-
-    _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
+    base.OnLoad();
     _emulationThread.Start();
+    _graphics.Initialize();
     _audio.Play();
-
-    InactiveSleepTime = new TimeSpan(0);
-    base.Initialize();
   }
 
-  protected override void LoadContent() => _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-  protected override void UnloadContent()
+  protected override void OnUpdateFrame(FrameEventArgs args)
   {
-    _emulator.Stop();
-    _audio.Stop();
-  }
-
-  protected override void Update(GameTime gameTime)
-  {
-    var frame = _emulator.ReadFramebuffer();
-    if (frame != null)
-      _framebuffer.SetData(frame);
-
+    base.OnUpdateFrame(args);
+    _graphics.UpdateFrame();
     HandleInput();
-    base.Update(gameTime);
   }
 
-  protected override void Draw(GameTime gameTime)
+  protected override void OnRenderFrame(FrameEventArgs args)
   {
-    GraphicsDevice.Clear(Color.Black);
-
-    _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-    _spriteBatch.Draw(_framebuffer, _viewport, Color.White);
-    _spriteBatch.End();
-    
-    base.Draw(gameTime);
+    base.OnRenderFrame(args);
+    _graphics.RenderFrame();
+    SwapBuffers();
   }
 
-  private void ResizeViewport()
+  protected override void OnUnload()
   {
-    _viewport = new Rectangle(0, 0, 
-                              _configuration.ScaleFactor * FRAMEBUFFER_WIDTH, 
-                              _configuration.ScaleFactor * FRAMEBUFFER_HEIGHT);
-    _graphics.PreferredBackBufferHeight = _viewport.Height;
-    _graphics.PreferredBackBufferWidth = _viewport.Width;
+    _audio.Stop();
+    _graphics.Stop();
+    _emulator.Stop();
+    base.OnUnload();
+  }
 
-    if (_configuration.CropBottomBorder)
+  protected override void OnResize(ResizeEventArgs e)
+  {
+    base.OnResize(e);
+
+    var textureAR = (float) TextureWidth / TextureHeight;
+    var viewportAR = (float) FramebufferSize.X / FramebufferSize.Y;
+
+    int width, height, x, y;
+    if (viewportAR > textureAR)
     {
-      var bottomBorder = _configuration.ScaleFactor * BOTTOM_BORDER_HEIGHT;
-      _graphics.PreferredBackBufferHeight -= bottomBorder;
+      height = FramebufferSize.Y;
+      width = (int)(height * textureAR);
+      x = (FramebufferSize.X - width) / 2;
+      y = 0;
     }
-
-    if (_configuration.CropLeftBorder)
-    {
-      var leftBorder = _configuration.ScaleFactor * LEFT_BORDER_WIDTH;
-      _viewport.X -= leftBorder;
-      _graphics.PreferredBackBufferWidth -= leftBorder;
-    }
-
-    _graphics.ApplyChanges();
-  }
-
-  private void HandleInput()
-  {
-    if (ReadJoypadInput(PLAYER_1))
-      ReadJoypadInput(PLAYER_2);
     else
-      ReadKeyboardInput();
-  }
-
-  private bool ReadJoypadInput(int player)
-  {
-    var joypad = GamePad.GetState(player);
-    if (!joypad.IsConnected)
-      return false;
-
-    _emulator.SetJoypadState(
-      joypad: player,
-      up:     joypad.IsButtonDown(Buttons.DPadUp) ||
-              joypad.IsButtonDown(Buttons.LeftThumbstickUp),
-      down:   joypad.IsButtonDown(Buttons.DPadDown) ||
-              joypad.IsButtonDown(Buttons.LeftThumbstickDown),
-      left:   joypad.IsButtonDown(Buttons.DPadLeft) ||
-              joypad.IsButtonDown(Buttons.LeftThumbstickLeft),
-      right:  joypad.IsButtonDown(Buttons.DPadRight) ||
-              joypad.IsButtonDown(Buttons.LeftThumbstickRight),
-      fireA:  joypad.IsButtonDown(Buttons.A) ||
-              joypad.IsButtonDown(Buttons.Y),
-      fireB:  joypad.IsButtonDown(Buttons.B) ||
-              joypad.IsButtonDown(Buttons.X),
-      pause:  joypad.IsButtonDown(Buttons.Start)
-    );
-    
-    if (player == PLAYER_1)
     {
-      _emulator.Rewinding = joypad.IsButtonDown(Buttons.LeftTrigger);
-      _emulator.SetResetButtonState(joypad.IsButtonDown(Buttons.Back));
-      HandleSnapshotRequest(loadRequested: joypad.IsButtonDown(Buttons.LeftShoulder),
-                            saveRequested: joypad.IsButtonDown(Buttons.RightShoulder));
+      width = FramebufferSize.X;
+      height = (int)(width / textureAR);
+      y = (FramebufferSize.Y - height) / 2;
+      x = 0;
     }
-
-    return true;
+    
+    _graphics.ResizeViewport(x, y, width, height);
   }
+
+  private void HandleInput() => ReadKeyboardInput();
 
   private void ReadKeyboardInput()
   {
-    var kb = Keyboard.GetState();
+    var kb = KeyboardState.GetSnapshot();
 
     _emulator.SetJoypadState(
       joypad: PLAYER_1,
@@ -188,14 +150,14 @@ public sealed class Window : Game
       down:   kb.IsKeyDown(Keys.K),
       left:   kb.IsKeyDown(Keys.J),
       right:  kb.IsKeyDown(Keys.L),
-      fireA:  kb.IsKeyDown(Keys.OemSemicolon),
-      fireB:  kb.IsKeyDown(Keys.OemQuotes),
+      fireA:  kb.IsKeyDown(Keys.Semicolon),
+      fireB:  kb.IsKeyDown(Keys.Apostrophe),
       pause:  kb.IsKeyDown(Keys.Space)
     );
 
     _emulator.Rewinding = kb.IsKeyDown(Keys.R);
     _emulator.SetResetButtonState(kb.IsKeyDown(Keys.Escape));
-    HandleSnapshotRequest(loadRequested: kb.IsKeyDown(Keys.Back),
+    HandleSnapshotRequest(loadRequested: kb.IsKeyDown(Keys.Backspace),
                           saveRequested: kb.IsKeyDown(Keys.Enter));
   }
 
@@ -219,15 +181,6 @@ public sealed class Window : Game
       _emulator.SaveState(SnapshotFilepath);
       _savesEnabled = false;
     }
-  }
-
-  private void GenerateStatic()
-  {
-    var random = new Random();
-    var buffer = new byte[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT * 4];
-    for (int index = 0; index < buffer.Length; index += 4)
-      buffer[index] = buffer[index + 1] = buffer[index + 2] = (byte)(byte.MaxValue * random.NextSingle());
-    _framebuffer.SetData(buffer);
   }
   #endregion
 }

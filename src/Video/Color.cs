@@ -21,11 +21,9 @@ public static class Color
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static int ToRGBA(byte color)
   {
-    var r = (color & MAX_VALUE) * MULTIPLIER;
-    color >>= 2;
-    var g = (color & MAX_VALUE) * MULTIPLIER;
-    color >>= 2;
-    var b = (color & MAX_VALUE) * MULTIPLIER;
+    var r = ((color >> 0) & MAX_VALUE) * MULTIPLIER;
+    var g = ((color >> 2) & MAX_VALUE) * MULTIPLIER;
+    var b = ((color >> 4) & MAX_VALUE) * MULTIPLIER;
     return (r << 0) | (g << 8) | (b << 16);
   }
 
