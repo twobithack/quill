@@ -84,7 +84,7 @@ public sealed partial class VDP
   private bool SpriteOverflow
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _status.HasFlag(Status.Overflow);
+    get => GetFlag(Status.Overflow);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Status.Overflow, value);
@@ -93,14 +93,14 @@ public sealed partial class VDP
   private bool VBlank
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _status.HasFlag(Status.VBlank);
+    get => GetFlag(Status.VBlank);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Status.VBlank, value);
   }
 
   private bool VSyncPending => _vSyncEnabled && VBlank;
-  private bool DisplayMode4 => _displayMode.HasFlag(DisplayMode.Mode_4);
+  private bool DisplayMode4 => (_displayMode & DisplayMode.Mode_4) != 0;
   #endregion
 
   #region Methods

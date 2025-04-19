@@ -502,6 +502,7 @@ unsafe public ref partial struct Z80
   private static bool CheckParity(uint value) => BitOperations.PopCount(value) % 2 == 0;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool GetFlag(Flags flag) => (_flags & flag) != 0;
   private void SetFlag(Flags flag, bool value) => _flags = value
                                                 ? _flags | flag 
                                                 : _flags & ~flag;

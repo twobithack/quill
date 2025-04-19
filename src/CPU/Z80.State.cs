@@ -51,7 +51,7 @@ unsafe public ref partial struct Z80
   private bool SignFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Sign);
+    get => GetFlag(Flags.Sign);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Sign, value);
@@ -60,7 +60,7 @@ unsafe public ref partial struct Z80
   private bool ZeroFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Zero);
+    get => GetFlag(Flags.Zero);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Zero, value);
@@ -69,7 +69,7 @@ unsafe public ref partial struct Z80
   private bool HalfcarryFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Halfcarry);
+    get => GetFlag(Flags.Halfcarry);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Halfcarry, value);
@@ -78,7 +78,7 @@ unsafe public ref partial struct Z80
   private bool ParityFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Parity);
+    get => GetFlag(Flags.Parity);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Parity, value);
@@ -87,7 +87,7 @@ unsafe public ref partial struct Z80
   private bool NegativeFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Negative);
+    get => GetFlag(Flags.Negative);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Negative, value);
@@ -96,7 +96,7 @@ unsafe public ref partial struct Z80
   private bool CarryFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Carry);
+    get => GetFlag(Flags.Carry);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Carry, value);

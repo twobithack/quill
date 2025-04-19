@@ -101,7 +101,14 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementScanline()
   {
-    if (_vCounter == _vCounterJumpFrom)
+    if (_vCounter == VCOUNTER_MAX)
+    {
+      _vCounter = 0;
+      _vCounterJumped = false;
+      _vScroll = _registers[0x9];
+      return;
+    }
+    else if (_vCounter == _vCounterJumpFrom)
     {
       if (!_vCounterJumped)
       {
@@ -110,14 +117,8 @@ public sealed partial class VDP
         return;
       }
     }
-    else if (_vCounter == VCOUNTER_MAX)
-    {
-      _vCounter = 0;
-      _vCounterJumped = false;
-      _vScroll = _registers[0x9];
-      return;
-    }
-    else if (_vCounter == _vCounterActive)
+    
+    if (_vCounter == _vCounterActive)
     {
       _framebuffer.PushFrame();
       VBlank = true;
@@ -452,6 +453,9 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetLegacyPixel(int x, int y, byte color, bool isSprite) => _framebuffer.SetPixel(x, y, Color.ToLegacyRGBA(color), isSprite);
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool GetFlag(Status flag) => (_status & flag) != 0;
+  
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetFlag(Status flag, bool value) => _status = value
                                                  ? _status | flag

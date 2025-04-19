@@ -29,12 +29,12 @@ public sealed class IO
     _control = (ControlPort)value;
     _portB &= PortB.Joy2;
 
-    if (!_control.HasFlag(ControlPort.TH1_Input) &&
-        !_control.HasFlag(ControlPort.TH1_Output))
+    if (!GetControlFlag(ControlPort.TH1_Input) &&
+        !GetControlFlag(ControlPort.TH1_Output))
       _portB |= PortB.TH1;
       
-    if (!_control.HasFlag(ControlPort.TH2_Input) &&
-        !_control.HasFlag(ControlPort.TH2_Output))
+    if (!GetControlFlag(ControlPort.TH2_Input) &&
+        !GetControlFlag(ControlPort.TH2_Output))
       _portB |= PortB.TH2;
   }
 
@@ -95,5 +95,7 @@ public sealed class IO
            ? (_portB | PortB.Reset) 
            : (_portB & ~PortB.Reset);
   }
+
+  private bool GetControlFlag(ControlPort flag) => (_control & flag) != 0;
   #endregion
 }
