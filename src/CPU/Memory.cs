@@ -1,10 +1,11 @@
-using CommunityToolkit.HighPerformance;
-using Quill.Common.Extensions;
-using Quill.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+
+using CommunityToolkit.HighPerformance;
+using Quill.Common.Extensions;
+using Quill.Core;
 
 namespace Quill.CPU;
 

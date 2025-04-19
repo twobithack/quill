@@ -1,25 +1,23 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.IO;
+using System.Threading;
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Quill.Core;
-using System;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Threading;
 
-namespace Quill.UI;
+namespace Quill.Client;
 
-public sealed class Client : Game
+public sealed class Window : Game
 {
   #region Constants
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 240;
   private const int BOTTOM_BORDER_HEIGHT = 48;
   private const int LEFT_BORDER_WIDTH = 8;
-
   private const int AUDIO_SAMPLE_RATE = 44100;
-  private const int MIN_AUDIO_SAMPLES = 44;
 
   private const int PLAYER_1 = 0;
   private const int PLAYER_2 = 1;
@@ -28,9 +26,8 @@ public sealed class Client : Game
   #region Fields
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
-  private readonly Thread _pollingThread;
   private readonly GraphicsDeviceManager _graphics;
-  private readonly DynamicSoundEffectInstance _sound;
+  private readonly Audio _audio;
 
   private readonly Configuration _configuration;
   private readonly string _romName;
@@ -40,23 +37,21 @@ public sealed class Client : Game
   private Texture2D _framebuffer;
   private Rectangle _viewport;
 
-  private bool _running;
   private bool _savesEnabled;
   #endregion
 
-  public Client(string romPath, Configuration config)
+  public Window(string romPath, Configuration config)
   {
     var rom = File.ReadAllBytes(romPath);
     _emulator = new Emulator(rom, AUDIO_SAMPLE_RATE, config.VirtualScanlines);
     _emulationThread = new Thread(_emulator.Run);
-    _pollingThread = new Thread(PollAudioBuffer);
+    _audio = new Audio(AUDIO_SAMPLE_RATE,
+                       _emulator.ReadAudioBuffer);
     _graphics = new GraphicsDeviceManager(this);
-    _sound = new DynamicSoundEffectInstance(AUDIO_SAMPLE_RATE, 
-                                            AudioChannels.Mono);
+
     _romName = Path.GetFileNameWithoutExtension(romPath);
     _savesDirectory = Path.Combine(Path.GetDirectoryName(romPath), "saves");
     _configuration = config;
-    _running = true;
   }
 
   #region Properties
@@ -71,8 +66,7 @@ public sealed class Client : Game
 
     _framebuffer = new Texture2D(GraphicsDevice, FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
     _emulationThread.Start();
-    _pollingThread.Start();
-    _sound.Play();
+    _audio.Play();
 
     InactiveSleepTime = new TimeSpan(0);
     base.Initialize();
@@ -83,7 +77,7 @@ public sealed class Client : Game
   protected override void UnloadContent()
   {
     _emulator.Stop();
-    _running = false;
+    _audio.Stop();
   }
 
   protected override void Update(GameTime gameTime)
@@ -107,7 +101,6 @@ public sealed class Client : Game
     base.Draw(gameTime);
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ResizeViewport()
   {
     _viewport = new Rectangle(0, 0, 
@@ -132,17 +125,6 @@ public sealed class Client : Game
     _graphics.ApplyChanges();
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void PollAudioBuffer()
-  {
-    while (_running)
-    {
-      var buffer = _emulator.ReadAudioBuffer();
-      _sound.SubmitBuffer(buffer);
-    }
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void HandleInput()
   {
     if (ReadJoypadInput(PLAYER_1))
@@ -151,7 +133,6 @@ public sealed class Client : Game
       ReadKeyboardInput();
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private bool ReadJoypadInput(int player)
   {
     var joypad = GamePad.GetState(player);
@@ -186,7 +167,6 @@ public sealed class Client : Game
     return true;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ReadKeyboardInput()
   {
     var kb = Keyboard.GetState();
@@ -219,7 +199,6 @@ public sealed class Client : Game
                           saveRequested: kb.IsKeyDown(Keys.Enter));
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void HandleSnapshotRequest(bool loadRequested,
                                      bool saveRequested)
   {
@@ -242,7 +221,6 @@ public sealed class Client : Game
     }
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void GenerateStatic()
   {
     var random = new Random();

@@ -1,5 +1,6 @@
-﻿using Quill.Common.Extensions;
-using System.Numerics;
+﻿using System.Numerics;
+
+using Quill.Common.Extensions;
 
 namespace Quill.Sound;
 

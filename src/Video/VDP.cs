@@ -1,7 +1,8 @@
-using Quill.Common.Extensions;
-using Quill.Video.Definitions;
 using System.Linq;
 using System.Runtime.CompilerServices;
+
+using Quill.Common.Extensions;
+using Quill.Video.Definitions;
 
 namespace Quill.Video;
 
@@ -100,22 +101,13 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementScanline()
   {
-    _vCounter++;
-
-    if (_vCounter == _vCounterActive)
-    {
-      _framebuffer.PushFrame();
-    }
-    else if (_vCounter == _vCounterActive + 1)
-    {
-      VBlank = true;
-    }
-    else if (_vCounter == _vCounterJumpFrom)
+    if (_vCounter == _vCounterJumpFrom)
     {
       if (!_vCounterJumped)
       {
         _vCounter = _vCounterJumpTo;
         _vCounterJumped = true;
+        return;
       }
     }
     else if (_vCounter == VCOUNTER_MAX)
@@ -123,7 +115,15 @@ public sealed partial class VDP
       _vCounter = 0;
       _vCounterJumped = false;
       _vScroll = _registers[0x9];
+      return;
     }
+    else if (_vCounter == _vCounterActive)
+    {
+      _framebuffer.PushFrame();
+      VBlank = true;
+    }
+    
+    _vCounter++;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
