@@ -26,6 +26,7 @@
     <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+    <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.10.0" />
   </ItemGroup>
 </Project>

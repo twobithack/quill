@@ -1,5 +1,6 @@
-﻿using Quill.Common.Extensions;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+
+using Quill.Common.Extensions;
 
 namespace Quill.Video;
 

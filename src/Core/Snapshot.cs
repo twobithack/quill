@@ -1,7 +1,8 @@
-﻿using Quill.Video.Definitions;
-using System;
+﻿using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+
+using Quill.Video.Definitions;
 
 namespace Quill.Core;
 

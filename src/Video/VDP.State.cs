@@ -1,10 +1,11 @@
-﻿using Quill.Common.Extensions;
-using Quill.Core;
-using Quill.Video.Definitions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+
+using Quill.Common.Extensions;
+using Quill.Core;
+using Quill.Video.Definitions;
 
 namespace Quill.Video;
 
@@ -71,7 +72,7 @@ public sealed partial class VDP
   #endregion
 
   #region Properties
-  public int ScanlinesPerFrame => VCOUNTER_MAX + (_vCounterJumpFrom - _vCounterJumpTo);
+  public int ScanlinesPerFrame => VCOUNTER_MAX + (_vCounterJumpFrom - _vCounterJumpTo) + 2;
   public byte VCounter => (byte)Math.Min(_vCounter, byte.MaxValue);
 
   private bool SpriteCollision

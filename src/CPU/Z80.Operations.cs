@@ -1,7 +1,8 @@
-using Quill.Common.Extensions;
-using Quill.CPU.Definitions;
 using System;
 using System.Runtime.CompilerServices;
+
+using Quill.Common.Extensions;
+using Quill.CPU.Definitions;
 
 namespace Quill.CPU;
 

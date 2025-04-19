@@ -1,11 +1,12 @@
+using System;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+
 using Quill.Common.Extensions;
 using Quill.CPU.Definitions;
 using Quill.Input;
 using Quill.Sound;
 using Quill.Video;
-using System;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Quill.CPU;
 
