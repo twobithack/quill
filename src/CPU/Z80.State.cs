@@ -3,7 +3,7 @@
 using Quill.Common.Extensions;
 using Quill.Core;
 using Quill.CPU.Definitions;
-using Quill.Input;
+using Quill.IO;
 using Quill.Sound;
 using Quill.Video;
 
@@ -13,9 +13,9 @@ unsafe public ref partial struct Z80
 {
   #region Fields
   private Memory _memory;
-  private readonly IO _input;
   private readonly PSG _psg;
   private readonly VDP _vdp;
+  private readonly Ports _ports;
 
   private Instruction _instruction;
   private ushort? _memPtr = null;

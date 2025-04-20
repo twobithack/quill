@@ -1,6 +1,7 @@
 {
+  "audioSampleRate":  44100,
   "cropBottomBorder": true,
   "cropLeftBorder":   true,
-  "scaleFactor":      1,
-  "virtualScanlines": 0
+  "frameRate":        60,
+  "scaleFactor":      4
 }

@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
 
+using Quill.Common;
 using Quill.Common.Extensions;
 
 namespace Quill.Sound;
@@ -38,12 +38,12 @@ public sealed class PSG
   private int _masterClockCycles;
   private double _phase;
 
-  private event Action FrameTimeElapsed;
+  private readonly Action FrameTimeElapsed;
   private readonly int _samplesPerFrame;
   private int _sampleCounter;
   #endregion
 
-  public PSG(int sampleRate, int frameRate, Action frameTimeElapsed)
+  public PSG(Action frameTimeElapsed, Configuration config)
   {
     _channels = new Channel[CHANNEL_COUNT];
     _channels[TONE0] = new Channel();
@@ -56,8 +56,8 @@ public sealed class PSG
     _rawBuffer = new short[BUFFER_SIZE];
     _copyBuffer = new byte[BUFFER_SIZE * 2];
 
-    _sampleRate = sampleRate;
-    _samplesPerFrame = _sampleRate / frameRate;
+    _sampleRate = config.AudioSampleRate;
+    _samplesPerFrame = _sampleRate / config.FrameRate;
     FrameTimeElapsed = frameTimeElapsed;
 
     var ratio = CLOCK_RATE / _sampleRate;

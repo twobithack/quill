@@ -1,6 +1,6 @@
 using System;
 
-namespace Quill.Input.Definitions;
+namespace Quill.IO.Definitions;
 
 [Flags]
 public enum PortB : byte

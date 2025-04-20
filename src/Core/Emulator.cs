@@ -2,7 +2,7 @@ using System.Threading;
 
 using Quill.Common;
 using Quill.CPU;
-using Quill.Input;
+using Quill.IO;
 using Quill.Sound;
 using Quill.Video;
 
@@ -11,18 +11,15 @@ namespace Quill.Core;
 unsafe public class Emulator
 {
   #region Constants
-  private const int FRAME_RATE = 60;
   private const int CYCLES_PER_SCANLINE = 228;
   private const int REWIND_BUFFER_SIZE = 1000;
   private const int FRAMES_PER_REWIND = 3;
   #endregion
 
-  #region Fields
-  public bool Rewinding;
-  
-  private readonly IO _input;
+  #region Fields  
   private readonly PSG _audio;
   private readonly VDP _video;
+  private readonly Ports _io;
   private readonly byte[] _rom;
 
   private readonly object _frameLock;
@@ -33,13 +30,14 @@ unsafe public class Emulator
   private string _snapshotPath;
   private bool _loadRequested;
   private bool _saveRequested;
+  private bool _rewinding;
   #endregion
 
-  public Emulator(byte[] rom, int sampleRate, int virtualScanlines)
+  public Emulator(byte[] rom, Configuration config)
   {
-    _input = new IO();
-    _audio = new PSG(sampleRate, FRAME_RATE, OnFrameTimeElapsed);
+    _audio = new PSG(OnFrameTimeElapsed, config);
     _video = new VDP();
+    _io = new Ports();
     _rom = rom;
 
     _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
@@ -49,7 +47,7 @@ unsafe public class Emulator
   #region Methods
   public void Run()
   {
-    var cpu = new Z80(_rom, _input, _audio, _video);
+    var cpu = new Z80(_rom, _audio, _video, _io);
     var cycleCounter = 0;
     var frameCounter = 0;
 
@@ -84,7 +82,7 @@ unsafe public class Emulator
 
       frameCounter++;
 
-      if (Rewinding)
+      if (_rewinding)
       {
         var state = _history.Pop();
         cpu.LoadState(state);
@@ -116,22 +114,17 @@ unsafe public class Emulator
 
   public byte[] ReadAudioBuffer() => _audio.ReadBuffer();
 
-  public void SetJoypadState(int joypad,
-                             bool up, 
-                             bool down, 
-                             bool left, 
-                             bool right, 
-                             bool fireA, 
-                             bool fireB,
-                             bool pause)
+  public void SetJoypadState(int joypad, JoypadState state)
   {
     if (joypad == 0)
-      _input.SetJoypad1State(up, down, left, right, fireA, fireB, pause);
+      _io.SetJoypad1State(state);
     else
-      _input.SetJoypad2State(up, down, left, right, fireA, fireB, pause);
+      _io.SetJoypad2State(state);
   }
 
-  public void SetResetButtonState(bool reset) => _input.SetResetButtonState(reset);
+  public void SetResetButtonState(bool reset) => _io.SetResetButtonState(reset);
+
+  public void SetRewinding(bool rewinding) => _rewinding = rewinding;
 
   public void LoadState(string path)
   {

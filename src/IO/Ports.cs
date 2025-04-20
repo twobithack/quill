@@ -1,9 +1,9 @@
 using Quill.Common.Extensions;
-using Quill.Input.Definitions;
+using Quill.IO.Definitions;
 
-namespace Quill.Input;
+namespace Quill.IO;
 
-public sealed class IO
+public sealed class Ports
 {
   #region Fields
   public bool NMI;
@@ -14,7 +14,7 @@ public sealed class IO
   private PortB _portB;
   #endregion
 
-  public IO()
+  public Ports()
   {
     _portA = PortA.None;
     _portB = PortB.None;
@@ -38,24 +38,18 @@ public sealed class IO
       _portB |= PortB.TH2;
   }
 
-  public void SetJoypad1State(bool up,
-                              bool down,
-                              bool left,
-                              bool right,
-                              bool fireA,
-                              bool fireB,
-                              bool pause)
+  public void SetJoypad1State(JoypadState joypad)
   {
     _portA &= ~PortA.Joy1;
 
-    if (up)     _portA |= PortA.Joy1Up;
-    if (down)   _portA |= PortA.Joy1Down;
-    if (left)   _portA |= PortA.Joy1Left;
-    if (right)  _portA |= PortA.Joy1Right;
-    if (fireA)  _portA |= PortA.Joy1FireA;
-    if (fireB)  _portA |= PortA.Joy1FireB;
+    if (joypad.Up)    _portA |= PortA.Joy1Up;
+    if (joypad.Down)  _portA |= PortA.Joy1Down;
+    if (joypad.Left)  _portA |= PortA.Joy1Left;
+    if (joypad.Right) _portA |= PortA.Joy1Right;
+    if (joypad.FireA) _portA |= PortA.Joy1FireA;
+    if (joypad.FireB) _portA |= PortA.Joy1FireB;
 
-    if (!pause) 
+    if (!joypad.Pause) 
       _pauseEnabled = true;
     else if (_pauseEnabled)
     {
@@ -64,25 +58,19 @@ public sealed class IO
     }
   }
 
-  public void SetJoypad2State(bool up,
-                              bool down,
-                              bool left,
-                              bool right,
-                              bool fireA,
-                              bool fireB,
-                              bool pause)
+  public void SetJoypad2State(JoypadState joypad)
   {
     _portA &= ~PortA.Joy2;
     _portB &= ~PortB.Joy2;
 
-    if (up)     _portA |= PortA.Joy2Up;
-    if (down)   _portA |= PortA.Joy2Down;
-    if (left)   _portB |= PortB.Joy2Left;
-    if (right)  _portB |= PortB.Joy2Right;
-    if (fireA)  _portB |= PortB.Joy2FireA;
-    if (fireB)  _portB |= PortB.Joy2FireB;
+    if (joypad.Up)    _portA |= PortA.Joy2Up;
+    if (joypad.Down)  _portA |= PortA.Joy2Down;
+    if (joypad.Left)  _portB |= PortB.Joy2Left;
+    if (joypad.Right) _portB |= PortB.Joy2Right;
+    if (joypad.FireA) _portB |= PortB.Joy2FireA;
+    if (joypad.FireB) _portB |= PortB.Joy2FireB;
 
-    if (pause && _pauseEnabled)
+    if (joypad.Pause && _pauseEnabled)
     {
       _pauseEnabled = false;
       NMI = true;

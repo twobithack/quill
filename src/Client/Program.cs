@@ -1,10 +1,9 @@
 ﻿using System.IO;
 using System.Text.Json;
 
-using Quill.Client;
-using Quill.Core;
+using Quill.Common;
 
-namespace Quill;
+namespace Quill.Client;
 
 public static class Program
 {

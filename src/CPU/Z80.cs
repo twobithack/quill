@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
 using Quill.CPU.Definitions;
-using Quill.Input;
+using Quill.IO;
 using Quill.Sound;
 using Quill.Video;
 
@@ -12,14 +12,14 @@ namespace Quill.CPU;
 
 unsafe public ref partial struct Z80
 {
-  public Z80(byte[] rom, IO input, PSG sound, VDP video)
+  public Z80(byte[] rom, PSG sound, VDP video, Ports io)
   {
     _flags = Flags.None;
     _instruction = Opcodes.Main[0x00];
     _memory = new Memory(rom);
-    _input = input;
     _psg = sound;
     _vdp = video;
+    _ports = io;
   }
 
   #region Methods
@@ -40,14 +40,14 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void HandleInterrupts()
   {
-    if (_input.NMI)
+    if (_ports.NMI)
     {
       PushToStack(_pc);
       _pc = 0x66;
       _halt = false;
       _iff2 = _iff1;
       _iff1 = false;
-      _input.NMI = false;
+      _ports.NMI = false;
     }
 
     if (_eiPending)
@@ -329,8 +329,8 @@ unsafe public ref partial struct Z80
     0x7F => _vdp.HCounter,
     0xBE => _vdp.ReadData(),
     0xBF or 0xBD => _vdp.ReadStatus(),
-    0xDC or 0xC0 => _input.ReadPortA(),
-    0xDD or 0xC1 => _input.ReadPortB(),
+    0xDC or 0xC0 => _ports.ReadPortA(),
+    0xDD or 0xC1 => _ports.ReadPortB(),
     byte mirror when mirror < 0x3E => 0xFF,
     byte mirror when mirror > 0x3F &&
                      mirror < 0x80 &&
@@ -345,9 +345,9 @@ unsafe public ref partial struct Z80
                      mirror < 0xC0 &&
                      mirror % 2 != 0 => _vdp.ReadStatus(),
     byte mirror when mirror > 0xC0 &&
-                     mirror % 2 == 0 => _input.ReadPortA(),
+                     mirror % 2 == 0 => _ports.ReadPortA(),
     byte mirror when mirror > 0xC1 &&
-                     mirror % 2 != 0 => _input.ReadPortB(),
+                     mirror % 2 != 0 => _ports.ReadPortB(),
     _ => 0xFF
   };
 
@@ -442,7 +442,7 @@ unsafe public ref partial struct Z80
       case 0x3F:
       case byte mirror when mirror < 0x3E &&
                             mirror % 2 != 0:
-        _input.WriteControl(value);
+        _ports.WriteControl(value);
         return;
 
       case byte mirror when mirror > 0x3F &&

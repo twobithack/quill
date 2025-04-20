@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 
 using OpenTK.Audio.OpenAL;
+using Quill.Common;
 
 namespace Quill.Client;
 
@@ -23,7 +24,7 @@ public class Audio
   private bool _playing;
   #endregion
 
-  public Audio(int sampleRate, Func<byte[]> requestNextBuffer)
+  public Audio(Func<byte[]> requestNextBuffer, Configuration config)
   {
     _device = ALC.OpenDevice(null);
     var context = ALC.CreateContext(_device, (int[])null);
@@ -35,7 +36,7 @@ public class Audio
     _buffers = AL.GenBuffers(BUFFER_COUNT);
     _source = AL.GenSource();
 
-    _sampleRate = sampleRate;
+    _sampleRate = config.AudioSampleRate;
     _format = ALFormat.Mono16;
     
     var silence = new byte[(_sampleRate / 100) * sizeof(short)];

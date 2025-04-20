@@ -1,34 +1,45 @@
 using System;
 
 using OpenTK.Graphics.OpenGL4;
-using Quill.Core;
+using OpenTK.Mathematics;
+using Quill.Common;
 
 namespace Quill.Client;
 
 public class Graphics
 {
+  #region Constants
   private const int FRAMEBUFFER_WIDTH = 256;
   private const int FRAMEBUFFER_HEIGHT = 240;
   private const int BOTTOM_BORDER_HEIGHT = 48;
   private const int LEFT_BORDER_WIDTH = 8;
+  #endregion
 
+  #region Fields
   private readonly Func<byte[]> _requestNextFrame;
-  private readonly Configuration _config;
+  private readonly Configuration _configuration;
   
-  private byte[] _framebuffer;
+  private readonly byte[] _framebuffer;
   private int _texture;
   private int _vao;
   private int _vbo;
   private int _shaderProgram;
+  #endregion
 
-  public Graphics(Configuration config, Func<byte[]> requestNextFrame)
+  public Graphics(Func<byte[]> requestNextFrame, Configuration config)
   {
     _requestNextFrame = requestNextFrame;
-    _config = config;
-
+    _configuration = config;
+    
     _framebuffer = new byte[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT * 4];
   }
 
+  #region Properties
+  private int TextureWidth => FRAMEBUFFER_WIDTH - (_configuration.CropLeftBorder ? LEFT_BORDER_WIDTH : 0);
+  private int TextureHeight => FRAMEBUFFER_HEIGHT - (_configuration.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0);
+  #endregion
+
+  #region Methods
   public void Initialize()
   {
     GL.ClearColor(0f, 0f, 0f, 1f);
@@ -41,11 +52,11 @@ public class Graphics
                   FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, 0,
                   PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
 
-    var uMin = _config.CropLeftBorder
+    var uMin = _configuration.CropLeftBorder
                ? (float) LEFT_BORDER_WIDTH / FRAMEBUFFER_WIDTH
                : 0f;
 
-    var vMax = _config.CropBottomBorder
+    var vMax = _configuration.CropBottomBorder
                ? (float) (FRAMEBUFFER_HEIGHT - BOTTOM_BORDER_HEIGHT) / FRAMEBUFFER_HEIGHT
                : 1f;
 
@@ -103,7 +114,29 @@ public class Graphics
     GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
   }
 
-  public void ResizeViewport(int x, int y, int width, int height) => GL.Viewport(x, y, width, height);
+  public void ResizeViewport(Vector2i dimensions)
+  {
+    var textureAR = (float) TextureWidth / TextureHeight;
+    var viewportAR = (float) dimensions.X / dimensions.Y;
+
+    int width, height, x, y;
+    if (viewportAR > textureAR)
+    {
+      height = dimensions.Y;
+      width = (int)(height * textureAR);
+      x = (dimensions.X - width) / 2;
+      y = 0;
+    }
+    else
+    {
+      width = dimensions.X;
+      height = (int)(width / textureAR);
+      y = (dimensions.Y - height) / 2;
+      x = 0;
+    }
+    
+    GL.Viewport(x, y, width, height);
+  }
  
   public void Stop()
   {
@@ -113,7 +146,7 @@ public class Graphics
     GL.DeleteProgram(_shaderProgram);
   }
 
-  private int CreateProgram()
+  private static int CreateProgram()
   {
     var vs = GL.CreateShader(ShaderType.VertexShader);
     GL.ShaderSource(vs, VertexShaderSource);
@@ -131,7 +164,9 @@ public class Graphics
     GL.DeleteShader(fs);
     return program;
   }
+  #endregion
 
+  #region Shaders
   private const string VertexShaderSource = @"#version 330 core
                                             layout(location = 0) in vec2 aPosition;
                                             layout(location = 1) in vec2 aTexCoord;
@@ -148,4 +183,5 @@ public class Graphics
                                               void main() {
                                                   FragColor = texture(uTexture, vTexCoord);
                                               }";
+  #endregion
 }
