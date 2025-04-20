@@ -122,7 +122,7 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SaveState(ref Snapshot snapshot)
+  public void SaveState(Snapshot snapshot)
   {
     Array.Copy(_registers, snapshot.VRegisters, _registers.Length);
     Array.Copy(_palette, snapshot.Palette, _palette.Length);

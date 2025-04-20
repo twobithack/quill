@@ -40,7 +40,7 @@ unsafe public class Emulator
     _io = new Ports();
     _rom = rom;
 
-    _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
+    _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE, preallocate: true);
     _frameLock = new object();
   }
 
@@ -101,8 +101,8 @@ unsafe public class Emulator
       }
       else if (frameCounter >= FRAMES_PER_REWIND)
       {
-        var state = cpu.SaveState();
-        _history.Push(state);
+        var slot = _history.AcquireSlot();
+        cpu.SaveState(slot);
         frameCounter = 0;
       }
     }

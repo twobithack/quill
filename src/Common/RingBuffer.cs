@@ -1,33 +1,46 @@
 ﻿namespace Quill.Common;
 
-public sealed class RingBuffer<T>
+public sealed class RingBuffer<T> where T : new()
 {
   private readonly T[] _buffer;
-  private int _bufferPosition;
-  private int _bufferEnd;
+  private int _head;
+  private int _tail;
 
-  public RingBuffer(int capacity)
+  public RingBuffer(int capacity, bool preallocate)
   {
     _buffer = new T[capacity];
+
+    if (preallocate)
+      for (var i = 0; i < capacity; i++)
+        _buffer[i] = new T();
   }
 
   public T Pop()
   {
-    if (_bufferPosition != _bufferEnd)
+    if (_head != _tail)
     {
-      _bufferPosition--;
-      if (_bufferPosition < 0)
-        _bufferPosition = _buffer.Length - 1;
+      _head--;
+      if (_head < 0)
+        _head = _buffer.Length - 1;
     }
 
-    return _buffer[_bufferPosition];
+    return _buffer[_head];
   }
 
   public void Push(T item)
   {
-    _buffer[_bufferPosition] = item;
-    _bufferPosition = (_bufferPosition + 1) % _buffer.Length;
-    if (_bufferEnd == _bufferPosition)
-      _bufferEnd = (_bufferEnd + 1) % _buffer.Length;
+    _buffer[_head] = item;
+    _head = (_head + 1) % _buffer.Length;
+    if (_tail == _head)
+      _tail = (_tail + 1) % _buffer.Length;
+  }
+
+  public ref T AcquireSlot()
+  {
+    ref T slot = ref _buffer[_head];
+    _head = (_head + 1) % _buffer.Length;
+    if (_tail == _head)
+      _tail = (_tail + 1) % _buffer.Length;
+    return ref slot;
   }
 }

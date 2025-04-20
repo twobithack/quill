@@ -321,7 +321,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private byte ReadPort(byte port) => port switch
+  private readonly byte ReadPort(byte port) => port switch
   {
     0x3E => 0xFF,
     0x3F => 0xFF,
@@ -415,7 +415,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void WritePort(byte port, byte value)
+  private readonly void WritePort(byte port, byte value)
   {
     switch (port)
     {
@@ -502,7 +502,7 @@ unsafe public ref partial struct Z80
   private static bool CheckParity(uint value) => BitOperations.PopCount(value) % 2 == 0;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private bool GetFlag(Flags flag) => (_flags & flag) != 0;
+  private readonly bool GetFlag(Flags flag) => (_flags & flag) != 0;
   private void SetFlag(Flags flag, bool value) => _flags = value
                                                 ? _flags | flag 
                                                 : _flags & ~flag;
