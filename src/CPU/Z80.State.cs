@@ -208,7 +208,7 @@ unsafe public ref partial struct Z80
     _vdp.LoadState(state);
   }
 
-  public Snapshot SaveState()
+  public readonly Snapshot SaveState()
   {
     var state = new Snapshot
     {
@@ -235,7 +235,7 @@ unsafe public ref partial struct Z80
     return state;
   }
 
-  public Snapshot SaveState(Snapshot state)
+  public readonly Snapshot SaveState(Snapshot state)
   {
     state.AF = AF;
     state.BC = BC;
@@ -260,7 +260,7 @@ unsafe public ref partial struct Z80
     return state;
   }
 
-  public string DumpRegisters()
+  public readonly string DumpRegisters()
   {
     return "╒══════════╤══════════╤══════════╤══════════╤═══════════╕\r\n" +
            $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {IX.ToHex()} │ IY: {IY.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
@@ -269,12 +269,12 @@ unsafe public ref partial struct Z80
            "╘══════════╧══════════╧══════════╧══════════╧═══════════╛";
   }
 
-  public void DumpMemory(string path) => _memory.DumpRAM(path);
-  public void DumpROM(string path) => _memory.DumpROM(path);
-
-  public override string ToString() => DumpRegisters() + "\r\n" +
-                                       $"Flags: {_flags} | CIR: {_instruction}\r\n" +
-                                       _memory.ToString() + "\r\n" +
-                                       _vdp.ToString() + "\r\n";
+  public readonly void DumpMemory(string path) => _memory.DumpRAM(path);
+  public readonly void DumpROM(string path) => _memory.DumpROM(path);
+  
+  public override readonly string ToString() => DumpRegisters() + "\r\n" +
+                                                $"Flags: {_flags} | CIR: {_instruction}\r\n" +
+                                                _memory.ToString() + "\r\n" +
+                                                _vdp.ToString() + "\r\n";
   #endregion
 }

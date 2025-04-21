@@ -6,41 +6,32 @@ public sealed class RingBuffer<T> where T : new()
   private int _head;
   private int _tail;
 
-  public RingBuffer(int capacity, bool preallocate)
+  public RingBuffer(int capacity)
   {
     _buffer = new T[capacity];
-
-    if (preallocate)
-      for (var i = 0; i < capacity; i++)
-        _buffer[i] = new T();
-  }
-
-  public T Pop()
-  {
-    if (_head != _tail)
-    {
-      _head--;
-      if (_head < 0)
-        _head = _buffer.Length - 1;
-    }
-
-    return _buffer[_head];
-  }
-
-  public void Push(T item)
-  {
-    _buffer[_head] = item;
-    _head = (_head + 1) % _buffer.Length;
-    if (_tail == _head)
-      _tail = (_tail + 1) % _buffer.Length;
+    for (var i = 0; i < capacity; i++)
+      _buffer[i] = new T();
   }
 
   public ref T AcquireSlot()
   {
     ref T slot = ref _buffer[_head];
-    _head = (_head + 1) % _buffer.Length;
-    if (_tail == _head)
-      _tail = (_tail + 1) % _buffer.Length;
+    
+    _head = Increment(_head);
+    if (_head == _tail)
+      _tail = Increment(_tail);
+
     return ref slot;
   }
+
+  public T Pop()
+  {
+    if (_head != _tail)
+      _head = Decrement(_head);
+
+    return _buffer[_head];
+  }
+
+  private int Increment(int index) => (index + 1) % _buffer.Length;
+  private int Decrement(int index) => (index + _buffer.Length - 1) % _buffer.Length;
 }

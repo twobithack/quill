@@ -39,7 +39,7 @@ unsafe public class Emulator
     _io = new Ports();
     _rom = rom;
 
-    _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE, preallocate: true);
+    _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
     _frameLock = new object();
   }
 
