@@ -3,7 +3,7 @@
 using Quill.Common.Extensions;
 using Quill.Core;
 using Quill.CPU.Definitions;
-using Quill.Input;
+using Quill.IO;
 using Quill.Sound;
 using Quill.Video;
 
@@ -13,9 +13,9 @@ unsafe public ref partial struct Z80
 {
   #region Fields
   private Memory _memory;
-  private readonly IO _input;
   private readonly PSG _psg;
   private readonly VDP _vdp;
+  private readonly Ports _ports;
 
   private Instruction _instruction;
   private ushort? _memPtr = null;
@@ -51,7 +51,7 @@ unsafe public ref partial struct Z80
   private bool SignFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Sign);
+    readonly get => GetFlag(Flags.Sign);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Sign, value);
@@ -60,7 +60,7 @@ unsafe public ref partial struct Z80
   private bool ZeroFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Zero);
+    readonly get => GetFlag(Flags.Zero);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Zero, value);
@@ -69,7 +69,7 @@ unsafe public ref partial struct Z80
   private bool HalfcarryFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Halfcarry);
+    readonly get => GetFlag(Flags.Halfcarry);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Halfcarry, value);
@@ -78,7 +78,7 @@ unsafe public ref partial struct Z80
   private bool ParityFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Parity);
+    readonly get => GetFlag(Flags.Parity);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Parity, value);
@@ -87,7 +87,7 @@ unsafe public ref partial struct Z80
   private bool NegativeFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Negative);
+    readonly get => GetFlag(Flags.Negative);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Negative, value);
@@ -96,7 +96,7 @@ unsafe public ref partial struct Z80
   private bool CarryFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _flags.HasFlag(Flags.Carry);
+    readonly get => GetFlag(Flags.Carry);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Flags.Carry, value);
@@ -105,7 +105,7 @@ unsafe public ref partial struct Z80
   private ushort AF
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _a.Concat((byte)_flags);
+    readonly get => _a.Concat((byte)_flags);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
@@ -118,7 +118,7 @@ unsafe public ref partial struct Z80
   private ushort BC
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _b.Concat(_c);
+    readonly get => _b.Concat(_c);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
@@ -131,7 +131,7 @@ unsafe public ref partial struct Z80
   private ushort DE
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _d.Concat(_e);
+    readonly get => _d.Concat(_e);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
@@ -144,7 +144,7 @@ unsafe public ref partial struct Z80
   private ushort HL
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _h.Concat(_l);
+    readonly get => _h.Concat(_l);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
@@ -157,7 +157,7 @@ unsafe public ref partial struct Z80
   private ushort IX
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _ixh.Concat(_ixl);
+    readonly get => _ixh.Concat(_ixl);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
@@ -170,7 +170,7 @@ unsafe public ref partial struct Z80
   private ushort IY
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _iyh.Concat(_iyl);
+    readonly get => _iyh.Concat(_iyl);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set
@@ -208,7 +208,7 @@ unsafe public ref partial struct Z80
     _vdp.LoadState(state);
   }
 
-  public Snapshot SaveState()
+  public readonly Snapshot SaveState()
   {
     var state = new Snapshot
     {
@@ -230,12 +230,37 @@ unsafe public ref partial struct Z80
       IFF1 = _iff1,
       IFF2 = _iff2
     };
-    _memory.SaveState(ref state);
-    _vdp.SaveState(ref state);
+    _memory.SaveState(state);
+    _vdp.SaveState(state);
     return state;
   }
 
-  public string DumpRegisters()
+  public readonly Snapshot SaveState(Snapshot state)
+  {
+    state.AF = AF;
+    state.BC = BC;
+    state.DE = DE;
+    state.HL = HL;
+    state.IX = IX;
+    state.IY = IY;
+    state.I = _i;
+    state.R = _r;
+    state.PC = _pc;
+    state.SP = _sp;
+    state.AFs = _afShadow;
+    state.BCs = _bcShadow;
+    state.DEs = _deShadow;
+    state.HLs = _hlShadow;
+    state.Halt = _halt;
+    state.IFF1 = _iff1;
+    state.IFF2 = _iff2;
+
+    _memory.SaveState(state);
+    _vdp.SaveState(state);
+    return state;
+  }
+
+  public readonly string DumpRegisters()
   {
     return "╒══════════╤══════════╤══════════╤══════════╤═══════════╕\r\n" +
            $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {IX.ToHex()} │ IY: {IY.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
@@ -244,12 +269,12 @@ unsafe public ref partial struct Z80
            "╘══════════╧══════════╧══════════╧══════════╧═══════════╛";
   }
 
-  public void DumpMemory(string path) => _memory.DumpRAM(path);
-  public void DumpROM(string path) => _memory.DumpROM(path);
-
-  public override string ToString() => DumpRegisters() + "\r\n" +
-                                       $"Flags: {_flags} | CIR: {_instruction}\r\n" +
-                                       _memory.ToString() + "\r\n" +
-                                       _vdp.ToString() + "\r\n";
+  public readonly void DumpMemory(string path) => _memory.DumpRAM(path);
+  public readonly void DumpROM(string path) => _memory.DumpROM(path);
+  
+  public override readonly string ToString() => DumpRegisters() + "\r\n" +
+                                                $"Flags: {_flags} | CIR: {_instruction}\r\n" +
+                                                _memory.ToString() + "\r\n" +
+                                                _vdp.ToString() + "\r\n";
   #endregion
 }

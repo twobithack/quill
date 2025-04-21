@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading;
 
+using Quill.Common;
 using Quill.Common.Extensions;
 
 namespace Quill.Sound;
@@ -35,15 +35,15 @@ public sealed class PSG
   private readonly int _sampleRate;
   private readonly int _decimationFactor;
   private readonly double _decimationRemainder;
-  private int _masterClockCycles;
   private double _phase;
 
-  private event Action FrameTimeElapsed;
+  private readonly Action _onFrameTimeElapsed;
   private readonly int _samplesPerFrame;
   private int _sampleCounter;
+  private int _cycleCounter;
   #endregion
 
-  public PSG(int sampleRate, int frameRate, Action frameTimeElapsed)
+  public PSG(Action onFrameTimeElapsed, Configuration config)
   {
     _channels = new Channel[CHANNEL_COUNT];
     _channels[TONE0] = new Channel();
@@ -56,9 +56,9 @@ public sealed class PSG
     _rawBuffer = new short[BUFFER_SIZE];
     _copyBuffer = new byte[BUFFER_SIZE * 2];
 
-    _sampleRate = sampleRate;
-    _samplesPerFrame = _sampleRate / frameRate;
-    FrameTimeElapsed = frameTimeElapsed;
+    _sampleRate = config.AudioSampleRate;
+    _samplesPerFrame = _sampleRate / config.FrameRate;
+    _onFrameTimeElapsed = onFrameTimeElapsed;
 
     var ratio = CLOCK_RATE / _sampleRate;
     _decimationFactor = (int)ratio;
@@ -113,17 +113,17 @@ public sealed class PSG
 
   public void Step(int cycles)
   {
-    _masterClockCycles += cycles;
-    while (_masterClockCycles >= MASTER_CLOCK_DIVIDER)
+    _cycleCounter += cycles;
+    while (_cycleCounter >= MASTER_CLOCK_DIVIDER)
     {
       GenerateSample();
-      _masterClockCycles -= MASTER_CLOCK_DIVIDER;
+      _cycleCounter -= MASTER_CLOCK_DIVIDER;
     }
     
     if (_sampleCounter == _samplesPerFrame)
     {
-      FrameTimeElapsed?.Invoke();
-      _sampleCounter -= _samplesPerFrame;
+      _onFrameTimeElapsed.Invoke();
+      _sampleCounter = 0;
     }
   }
 

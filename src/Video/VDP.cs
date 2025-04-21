@@ -86,22 +86,42 @@ public sealed partial class VDP
     IncrementAddress();
   }
 
-  public void RenderScanline()
+  public void Step(int clockCycles)
+  {
+    _hCounter += (ushort)(clockCycles * 3);
+
+    if (_hCounter < HCOUNTER_MAX)
+      return;
+      
+    _hCounter -= HCOUNTER_MAX;
+    RenderScanline();
+  }
+
+  public void AcknowledgeFrame() => FrameCompleted = false;
+
+  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
+
+  private void RenderScanline()
   {
     IncrementScanline();
     UpdateInterrupts();
         
-    if (_displayEnabled &&
-        _vCounter < _vCounterActive)
+    if (_vCounter < _vCounterActive)
       RasterizeScanline();
   }
-
-  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementScanline()
   {
-    if (_vCounter == _vCounterJumpFrom)
+    if (_vCounter == VCOUNTER_MAX)
+    {
+      _vCounter = 0;
+      _vCounterJumped = false;
+      _vScroll = _registers[0x9];
+      FrameCompleted = true;
+      return;
+    }
+    else if (_vCounter == _vCounterJumpFrom)
     {
       if (!_vCounterJumped)
       {
@@ -110,14 +130,8 @@ public sealed partial class VDP
         return;
       }
     }
-    else if (_vCounter == VCOUNTER_MAX)
-    {
-      _vCounter = 0;
-      _vCounterJumped = false;
-      _vScroll = _registers[0x9];
-      return;
-    }
-    else if (_vCounter == _vCounterActive)
+    
+    if (_vCounter == _vCounterActive)
     {
       _framebuffer.PushFrame();
       VBlank = true;
@@ -151,6 +165,12 @@ public sealed partial class VDP
   { 
     _hScroll = _registers[0x8];
     
+    if (!_displayEnabled)
+    {
+      FillScanline();
+      return;
+    }
+
     if (DisplayMode4)
     {
       RasterizeSprites();
@@ -161,6 +181,13 @@ public sealed partial class VDP
       RasterizeLegacySprites();
       RasterizeLegacyBackground();
     }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void FillScanline()
+  {
+    for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
+      SetPixel(x, _vCounter, _registers[0x7], false);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -452,6 +479,9 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetLegacyPixel(int x, int y, byte color, bool isSprite) => _framebuffer.SetPixel(x, y, Color.ToLegacyRGBA(color), isSprite);
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool GetFlag(Status flag) => (_status & flag) != 0;
+  
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetFlag(Status flag, bool value) => _status = value
                                                  ? _status | flag

@@ -73,7 +73,7 @@ unsafe public ref struct Memory
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public byte ReadByte(ushort address)
+  public readonly byte ReadByte(ushort address)
   {
     if (address < PAGING_START)
       return _rom[0x00, address];
@@ -171,7 +171,7 @@ unsafe public ref struct Memory
     _bankSelect = state.BankSelect;
   }
 
-  public void SaveState(ref Snapshot state)
+  public readonly void SaveState(Snapshot state)
   {
     _ram.CopyTo(state.RAM);
     _ramBank0.CopyTo(state.Bank0);
@@ -183,7 +183,7 @@ unsafe public ref struct Memory
     state.BankSelect= _bankSelect;
   }
 
-  public void DumpRAM(string path)
+  public readonly void DumpRAM(string path)
   {
     var memory = new List<string>();
     var row = string.Empty;
@@ -201,7 +201,7 @@ unsafe public ref struct Memory
     File.WriteAllLines(path, memory);
   }
 
-  public void DumpROM(string path)
+  public readonly void DumpROM(string path)
   {
     var dump = new List<string>();
     for (byte page = 0; page < 0x40; page++)
@@ -220,9 +220,11 @@ unsafe public ref struct Memory
     File.WriteAllLines(path, dump);
   }
 
-  public override string ToString()
+  public override readonly string ToString()
   {
-    var banking = (_bankEnable ? $"enabled (Bank {_bankSelect.ToBit()})" : "disabled");
+    var banking = _bankEnable
+                ? $"enabled (Bank {_bankSelect.ToBit()})" 
+                : "disabled";
     return $"Memory: RAM banking {banking} | P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
   }
 }
