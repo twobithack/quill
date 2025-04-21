@@ -106,8 +106,7 @@ public sealed partial class VDP
     IncrementScanline();
     UpdateInterrupts();
         
-    if (_displayEnabled &&
-        _vCounter < _vCounterActive)
+    if (_vCounter < _vCounterActive)
       RasterizeScanline();
   }
 
@@ -166,6 +165,12 @@ public sealed partial class VDP
   { 
     _hScroll = _registers[0x8];
     
+    if (!_displayEnabled)
+    {
+      FillScanline();
+      return;
+    }
+
     if (DisplayMode4)
     {
       RasterizeSprites();
@@ -176,6 +181,13 @@ public sealed partial class VDP
       RasterizeLegacySprites();
       RasterizeLegacyBackground();
     }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void FillScanline()
+  {
+    for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
+      SetPixel(x, _vCounter, _registers[0x7], false);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -323,5 +323,5 @@
 * Yamato (background tiles)
 
 ## BROKEN
-* James Bomd 007 (sound only)
-* Pop Flamer (sound only)
+* James Bond 007
+* Pop Flamer
