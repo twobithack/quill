@@ -11,7 +11,6 @@ namespace Quill.Core;
 unsafe public class Emulator
 {
   #region Constants
-  private const int CYCLES_PER_SCANLINE = 228;
   private const int REWIND_BUFFER_SIZE = 1000;
   private const int FRAMES_PER_REWIND = 3;
   #endregion
@@ -35,7 +34,7 @@ unsafe public class Emulator
 
   public Emulator(byte[] rom, Configuration config)
   {
-    _audio = new PSG(OnFrameTimeElapsed, config);
+    _audio = new PSG(HandleFrameTimeElapsed, config);
     _video = new VDP();
     _io = new Ports();
     _rom = rom;
@@ -48,7 +47,6 @@ unsafe public class Emulator
   public void Run()
   {
     var cpu = new Z80(_rom, _audio, _video, _io);
-    var cycleCounter = 0;
     var frameCounter = 0;
 
     _frameTimeElapsed = true;
@@ -56,30 +54,16 @@ unsafe public class Emulator
 
     while (_running)
     {
-      lock (_frameLock)
-      {
-        while (!_frameTimeElapsed)
-          Monitor.Wait(_frameLock);
+      WaitForFrameTimeElapsed();
 
-        _frameTimeElapsed = false;
+      while (!_video.FrameCompleted)
+      {
+        var clockCycles = cpu.Step();
+        _audio.Step(clockCycles);
+        _video.Step(clockCycles);
       }
       
-      var scanlines = _video.ScanlinesPerFrame;
-      while (scanlines > 0)
-      {
-        if (cycleCounter < CYCLES_PER_SCANLINE)
-        {
-          var clockCycles = cpu.Step();
-          cycleCounter += clockCycles;
-          _audio.Step(clockCycles);
-          continue;
-        }
-        
-        _video.RenderScanline();
-        cycleCounter -= CYCLES_PER_SCANLINE;
-        scanlines--;
-      }
-
+      _video.AcknowledgeFrame();
       frameCounter++;
 
       if (_rewinding)
@@ -110,9 +94,9 @@ unsafe public class Emulator
 
   public void Stop() => _running = false;
 
-  public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
-
   public byte[] ReadAudioBuffer() => _audio.ReadBuffer();
+
+  public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
 
   public void SetJoypadState(int joypad, JoypadState state)
   {
@@ -138,12 +122,23 @@ unsafe public class Emulator
     _saveRequested = true;
   }
 
-  private void OnFrameTimeElapsed()
+  private void HandleFrameTimeElapsed()
   {
     lock (_frameLock)
     {
       _frameTimeElapsed = true;
       Monitor.Pulse(_frameLock);
+    }
+  }
+
+  private void WaitForFrameTimeElapsed()
+  {
+    lock (_frameLock)
+    {
+      while (!_frameTimeElapsed)
+        Monitor.Wait(_frameLock);
+
+      _frameTimeElapsed = false;
     }
   }
 

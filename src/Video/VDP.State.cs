@@ -20,14 +20,15 @@ public sealed partial class VDP
   private const int BACKGROUND_COLUMNS = 32;
   private const int HSCROLL_LIMIT = 1;
   private const int VSCROLL_LIMIT = 24;
+  private const int HCOUNTER_MAX = 684;
   private const int VCOUNTER_MAX = byte.MaxValue;
   private const byte DISABLE_SPRITES = 0xD0;
   private const byte TRANSPARENT = 0x00;
   #endregion
 
   #region Fields
+  public bool FrameCompleted;
   public bool IRQ;
-  public byte HCounter;
 
   private readonly Framebuffer _framebuffer;
   private readonly int[] _palette;
@@ -45,6 +46,7 @@ public sealed partial class VDP
   private ushort _spriteAttributeTableAddress;
   private ushort _spriteGeneratorTableAddress;
   
+  private ushort _hCounter;
   private ushort _vCounter;
   private byte _lineInterrupt;
   private byte _hScroll;
@@ -73,7 +75,8 @@ public sealed partial class VDP
 
   #region Properties
   public int ScanlinesPerFrame => VCOUNTER_MAX + (_vCounterJumpFrom - _vCounterJumpTo) + 2;
-  public byte VCounter => (byte)Math.Min(_vCounter, byte.MaxValue);
+  public byte HCounter => (byte)(_hCounter >> 1);
+  public byte VCounter => (byte)_vCounter;
 
   private bool SpriteCollision
   {

@@ -35,15 +35,15 @@ public sealed class PSG
   private readonly int _sampleRate;
   private readonly int _decimationFactor;
   private readonly double _decimationRemainder;
-  private int _masterClockCycles;
   private double _phase;
 
-  private readonly Action FrameTimeElapsed;
+  private readonly Action _onFrameTimeElapsed;
   private readonly int _samplesPerFrame;
   private int _sampleCounter;
+  private int _cycleCounter;
   #endregion
 
-  public PSG(Action frameTimeElapsed, Configuration config)
+  public PSG(Action onFrameTimeElapsed, Configuration config)
   {
     _channels = new Channel[CHANNEL_COUNT];
     _channels[TONE0] = new Channel();
@@ -58,7 +58,7 @@ public sealed class PSG
 
     _sampleRate = config.AudioSampleRate;
     _samplesPerFrame = _sampleRate / config.FrameRate;
-    FrameTimeElapsed = frameTimeElapsed;
+    _onFrameTimeElapsed = onFrameTimeElapsed;
 
     var ratio = CLOCK_RATE / _sampleRate;
     _decimationFactor = (int)ratio;
@@ -113,17 +113,17 @@ public sealed class PSG
 
   public void Step(int cycles)
   {
-    _masterClockCycles += cycles;
-    while (_masterClockCycles >= MASTER_CLOCK_DIVIDER)
+    _cycleCounter += cycles;
+    while (_cycleCounter >= MASTER_CLOCK_DIVIDER)
     {
       GenerateSample();
-      _masterClockCycles -= MASTER_CLOCK_DIVIDER;
+      _cycleCounter -= MASTER_CLOCK_DIVIDER;
     }
     
     if (_sampleCounter == _samplesPerFrame)
     {
-      FrameTimeElapsed?.Invoke();
-      _sampleCounter -= _samplesPerFrame;
+      _onFrameTimeElapsed.Invoke();
+      _sampleCounter = 0;
     }
   }
 

@@ -86,7 +86,22 @@ public sealed partial class VDP
     IncrementAddress();
   }
 
-  public void RenderScanline()
+  public void Step(int clockCycles)
+  {
+    _hCounter += (ushort)(clockCycles * 3);
+
+    if (_hCounter < HCOUNTER_MAX)
+      return;
+      
+    _hCounter -= HCOUNTER_MAX;
+    RenderScanline();
+  }
+
+  public void AcknowledgeFrame() => FrameCompleted = false;
+
+  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
+
+  private void RenderScanline()
   {
     IncrementScanline();
     UpdateInterrupts();
@@ -96,8 +111,6 @@ public sealed partial class VDP
       RasterizeScanline();
   }
 
-  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementScanline()
   {
@@ -106,6 +119,7 @@ public sealed partial class VDP
       _vCounter = 0;
       _vCounterJumped = false;
       _vScroll = _registers[0x9];
+      FrameCompleted = true;
       return;
     }
     else if (_vCounter == _vCounterJumpFrom)
