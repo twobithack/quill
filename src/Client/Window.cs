@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.IO;
 using System.Threading;
 
@@ -32,23 +32,8 @@ public sealed class Window : GameWindow
   private bool _savesEnabled;
   #endregion
 
-  public Window(string romPath, Configuration config)
-    : base(
-      GameWindowSettings.Default,
-      new NativeWindowSettings
-      {
-        Title = "Quill",
-        ClientSize = new Vector2i(
-          config.ScaleFactor * (FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0)),
-          config.ScaleFactor * (FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0)) 
-        ),
-        AspectRatio = (FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0), 
-                       FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0)),
-        WindowBorder = WindowBorder.Resizable,
-        APIVersion = new Version(3, 3),
-        Profile = ContextProfile.Core,
-        Vsync = VSyncMode.On
-      })
+  public Window(string romPath, Configuration config) 
+    : base(GameWindowSettings.Default, CreateWindowSettings(config))
   {
     var rom = File.ReadAllBytes(romPath);
     _romName = Path.GetFileNameWithoutExtension(romPath);
@@ -105,6 +90,24 @@ public sealed class Window : GameWindow
     base.OnResize(e);
     _graphics.ResizeViewport(FramebufferSize);
 
+  }
+
+  private static NativeWindowSettings CreateWindowSettings(Configuration config)
+  {
+    var frameWidth = FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0);
+    var frameHeight = FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0);
+    var initialClientSize = new Vector2i(frameWidth * config.ScaleFactor, frameHeight * config.ScaleFactor);
+
+    return new NativeWindowSettings
+    {
+      Title = "Quill",
+      ClientSize = initialClientSize,
+      AspectRatio = (frameWidth, frameHeight),
+      WindowBorder = WindowBorder.Resizable,
+      APIVersion = new Version(3, 3),
+      Profile = ContextProfile.Core,
+      Vsync = VSyncMode.On
+    };
   }
 
   private void HandleSnapshotRequest(bool loadRequested,
