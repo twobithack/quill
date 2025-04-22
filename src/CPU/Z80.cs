@@ -465,7 +465,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private bool EvaluateCondition() => _instruction.Source switch
+  private readonly bool EvaluateCondition() => _instruction.Source switch
   {
     Operand.Carry     => CarryFlag,
     Operand.NonCarry  => !CarryFlag,

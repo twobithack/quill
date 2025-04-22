@@ -142,7 +142,7 @@ unsafe public ref struct Memory
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public ushort ReadWord(ushort address)
+  public readonly ushort ReadWord(ushort address)
   {
     var lowByte = ReadByte(address);
     var highByte = ReadByte(address.Increment());

@@ -1,21 +1,19 @@
-﻿using System.Numerics;
-
-using Quill.Common.Extensions;
+﻿using Quill.Common.Extensions;
 
 namespace Quill.Sound;
 
-public struct Channel
+public sealed class Channel
 {
   #region Constants
   private const ushort INITIAL_LFSR = 0x8000;
   private const byte LFSR_TAPPED_BITS = 0b_1001;
-  private static readonly short[] ATTENUATION_TABLE = new short[]
-  {
+  private static readonly short[] ATTENUATION_TABLE =
+  [
     8191, 6507, 5168, 4105,
     3261, 2590, 2057, 1642,
     1298, 1031, 819,  650,
     516,  410,  326,  0
-  };
+  ];
   #endregion
 
   #region Fields

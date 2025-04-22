@@ -6,7 +6,7 @@ using Quill.Common;
 
 namespace Quill.Client;
 
-public class Audio
+public sealed class Audio
 {
   #region Constants
   private const int BUFFER_COUNT = 4;

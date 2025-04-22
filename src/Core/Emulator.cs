@@ -8,7 +8,7 @@ using Quill.Video;
 
 namespace Quill.Core;
 
-unsafe public class Emulator
+unsafe public sealed class Emulator
 {
   #region Constants
   private const int REWIND_BUFFER_SIZE = 1000;

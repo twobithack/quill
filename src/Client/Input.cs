@@ -5,7 +5,7 @@ using Quill.IO;
 
 namespace Quill.Client;
 
-public class Input
+public sealed class Input
 {
   #region Constants
   private const int PLAYER_1 = 0;

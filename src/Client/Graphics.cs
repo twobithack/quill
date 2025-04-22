@@ -6,7 +6,7 @@ using Quill.Common;
 
 namespace Quill.Client;
 
-public class Graphics
+public sealed class Graphics
 {
   #region Constants
   private const int FRAMEBUFFER_WIDTH = 256;
