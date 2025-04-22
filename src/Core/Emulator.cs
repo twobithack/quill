@@ -16,6 +16,7 @@ unsafe public sealed class Emulator
   #endregion
 
   #region Fields  
+  private readonly Resampler _resampler;
   private readonly PSG _audio;
   private readonly VDP _video;
   private readonly Ports _io;
@@ -33,8 +34,9 @@ unsafe public sealed class Emulator
   #endregion
 
   public Emulator(byte[] rom, Configuration config)
-  {
-    _audio = new PSG(HandleFrameTimeElapsed, config);
+  { 
+    _resampler = new Resampler(HandleFrameTimeElapsed, config);
+    _audio = new PSG(_resampler.HandleSampleGenerated);
     _video = new VDP();
     _io = new Ports();
     _rom = rom;
@@ -94,7 +96,7 @@ unsafe public sealed class Emulator
 
   public void Stop() => _running = false;
 
-  public byte[] ReadAudioBuffer() => _audio.ReadBuffer();
+  public byte[] ReadAudioBuffer() => _resampler.ReadBuffer();
 
   public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
 

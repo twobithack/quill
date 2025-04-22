@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Threading;
 
-using Quill.Common;
 using Quill.Common.Extensions;
 
 namespace Quill.Sound;
@@ -9,10 +7,7 @@ namespace Quill.Sound;
 public sealed class PSG
 {
   #region Constants
-  private const int MASTER_CLOCK = 3579545;
   private const int MASTER_CLOCK_DIVIDER = 16;
-  private const double CLOCK_RATE = (double) MASTER_CLOCK / MASTER_CLOCK_DIVIDER;
-  private const int BUFFER_SIZE = 440;
   private const int CHANNEL_COUNT = 4;
   private const int TONE0 = 0b_00;
   private const int TONE1 = 0b_01;
@@ -25,25 +20,11 @@ public sealed class PSG
   private int _channelLatch;
   private bool _volumeLatch;
 
-  private readonly short[] _buffer;
-  private readonly short[] _rawBuffer;
-  private readonly byte[] _copyBuffer;
-  private readonly object _bufferLock;
-  private volatile int _bufferPosition;
-  private int _rawBufferPosition;
-
-  private readonly int _sampleRate;
-  private readonly int _decimationFactor;
-  private readonly double _decimationRemainder;
-  private double _phase;
-
-  private readonly Action _onFrameTimeElapsed;
-  private readonly int _samplesPerFrame;
-  private int _sampleCounter;
+  private readonly Action<short> _onSampleGenerated;
   private int _cycleCounter;
   #endregion
 
-  public PSG(Action onFrameTimeElapsed, Configuration config)
+  public PSG(Action<short> onSampleGenerated)
   {
     _channels = new Channel[CHANNEL_COUNT];
     _channels[TONE0] = new Channel();
@@ -51,18 +32,7 @@ public sealed class PSG
     _channels[TONE2] = new Channel();
     _channels[NOISE] = new Channel();
 
-    _bufferLock = new object();
-    _buffer = new short[BUFFER_SIZE];
-    _rawBuffer = new short[BUFFER_SIZE];
-    _copyBuffer = new byte[BUFFER_SIZE * 2];
-
-    _sampleRate = config.AudioSampleRate;
-    _samplesPerFrame = _sampleRate / config.FrameRate;
-    _onFrameTimeElapsed = onFrameTimeElapsed;
-
-    var ratio = CLOCK_RATE / _sampleRate;
-    _decimationFactor = (int)ratio;
-    _decimationRemainder = ratio - _decimationFactor;
+    _onSampleGenerated = onSampleGenerated;
   }
 
   #region Methods
@@ -119,73 +89,17 @@ public sealed class PSG
       GenerateSample();
       _cycleCounter -= MASTER_CLOCK_DIVIDER;
     }
-    
-    if (_sampleCounter == _samplesPerFrame)
-    {
-      _onFrameTimeElapsed.Invoke();
-      _sampleCounter = 0;
-    }
-  }
-
-  public byte[] ReadBuffer()
-  {
-    lock (_bufferLock)
-    {
-      while (_bufferPosition < BUFFER_SIZE)
-        Monitor.Wait(_bufferLock);
-
-      Buffer.BlockCopy(_buffer, 0, _copyBuffer, 0, _copyBuffer.Length);
-      _bufferPosition = 0;
-
-      Monitor.Pulse(_bufferLock);
-      return _copyBuffer;
-    }
   }
 
   private void GenerateSample()
   {
-    _rawBuffer[_rawBufferPosition] = GenerateRawSample();
-    _rawBufferPosition++;
-
-    var sampleCount = _phase >= 1
-                    ? _decimationFactor + 1
-                    : _decimationFactor;
-
-    if (_rawBufferPosition == sampleCount)
-    {
-      var sample = 0;
-      for (var index = 0; index < sampleCount; index++)
-        sample += _rawBuffer[index];
-
-      lock (_bufferLock)
-      {
-        while (_bufferPosition == BUFFER_SIZE)
-          Monitor.Wait(_bufferLock);
-
-        _buffer[_bufferPosition] = (short)(sample / sampleCount);
-        _bufferPosition++;
-
-        if (_bufferPosition == BUFFER_SIZE)
-          Monitor.Pulse(_bufferLock);
-      }
-
-      if (_phase >= 1)
-        _phase -= 1;
-      
-      _phase += _decimationRemainder;
-      _rawBufferPosition = 0;
-      _sampleCounter++;
-    }
-  }
-
-  private short GenerateRawSample()
-  {
-    var sample = 0;
+    short sample = 0;
     sample += _channels[TONE0].GenerateTone();
     sample += _channels[TONE1].GenerateTone();
     sample += _channels[TONE2].GenerateTone();
     sample += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
-    return (short)sample;
+    
+    _onSampleGenerated.Invoke(sample);
   }
   #endregion
 }
