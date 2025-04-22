@@ -53,19 +53,19 @@ public sealed class Graphics
                   PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
 
     var uMin = _configuration.CropLeftBorder
-               ? (float) LEFT_BORDER_WIDTH / FRAMEBUFFER_WIDTH
-               : 0f;
+             ? (float) LEFT_BORDER_WIDTH / FRAMEBUFFER_WIDTH
+             : 0f;
 
     var vMax = _configuration.CropBottomBorder
-               ? (float) (FRAMEBUFFER_HEIGHT - BOTTOM_BORDER_HEIGHT) / FRAMEBUFFER_HEIGHT
-               : 1f;
+             ? (float) (FRAMEBUFFER_HEIGHT - BOTTOM_BORDER_HEIGHT) / FRAMEBUFFER_HEIGHT
+             : 1f;
 
-    float[] vertices = {
+    float[] vertices = [
       -1f,   1f, uMin,   0f,
       -1f,  -1f, uMin, vMax,
        1f,   1f,   1f,   0f,
        1f,  -1f,   1f, vMax
-    };
+    ];
 
     _shaderProgram = CreateProgram();
     _vao = GL.GenVertexArray();

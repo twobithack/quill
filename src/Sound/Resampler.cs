@@ -1,15 +1,15 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
+
 using Quill.Common;
+using Quill.Core;
 
 namespace Quill.Sound;
 
 public sealed class Resampler
 {
   #region Constants
-  private const int MASTER_CLOCK = 3579545;
-  private const int MASTER_CLOCK_DIVIDER = 16;
-  private const double CLOCK_RATE = (double) MASTER_CLOCK / MASTER_CLOCK_DIVIDER;
   private const int BUFFER_SIZE = 440;
   #endregion
 
@@ -24,22 +24,16 @@ public sealed class Resampler
   private int _rawSampleAccumulator;
   private int _rawSampleCounter;
   private double _phase;
-
-  private readonly Action _onFrameTimeElapsed;
-  private readonly int _samplesPerFrame;
-  private int _sampleCounter;
   #endregion
 
-  public Resampler(Action onFrameTimeElapsed, Configuration config)
+  public Resampler(Configuration config)
   {
     _bufferLock = new object();
     _buffer = new short[BUFFER_SIZE];
     _copyBuffer = new byte[BUFFER_SIZE * 2];
 
-    _samplesPerFrame = config.AudioSampleRate / config.FrameRate;
-    _onFrameTimeElapsed = onFrameTimeElapsed;
-
-    var ratio = CLOCK_RATE / config.AudioSampleRate;
+    var rawSampleRate = (double) Clock.CYCLES_PER_SECOND / PSG.CYCLES_PER_SAMPLE;
+    var ratio = rawSampleRate / config.AudioSampleRate;
     _decimationFactor = (int)ratio;
     _decimationRemainder = ratio - _decimationFactor;
   }
@@ -54,16 +48,8 @@ public sealed class Resampler
     _rawSampleAccumulator += rawSample;
     _rawSampleCounter++;
 
-    if (_rawSampleCounter != RawSamplesNeeded)
-      return;
-
-    GenerateDecimatedSample();
-
-    if (_sampleCounter == _samplesPerFrame)
-    {
-      _onFrameTimeElapsed.Invoke();
-      _sampleCounter = 0;
-    }
+    if (_rawSampleCounter == RawSamplesNeeded)
+      GenerateDecimatedSample();
   }
 
   public byte[] ReadBuffer()
@@ -80,7 +66,8 @@ public sealed class Resampler
       return _copyBuffer;
     }
   }
-
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void GenerateDecimatedSample()
   {
     lock (_bufferLock)
@@ -101,7 +88,6 @@ public sealed class Resampler
     _phase += _decimationRemainder;
     _rawSampleAccumulator = 0;
     _rawSampleCounter = 0;
-    _sampleCounter++;
   }
   #endregion
 }

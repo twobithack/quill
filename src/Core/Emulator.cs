@@ -15,11 +15,12 @@ unsafe public sealed class Emulator
   private const int FRAMES_PER_REWIND = 3;
   #endregion
 
-  #region Fields  
-  private readonly Resampler _resampler;
+  #region Fields
   private readonly PSG _audio;
   private readonly VDP _video;
   private readonly Ports _io;
+  private readonly Clock _clock;
+  private readonly Resampler _resampler;
   private readonly byte[] _rom;
 
   private readonly object _frameLock;
@@ -35,11 +36,16 @@ unsafe public sealed class Emulator
 
   public Emulator(byte[] rom, Configuration config)
   { 
-    _resampler = new Resampler(HandleFrameTimeElapsed, config);
-    _audio = new PSG(_resampler.HandleSampleGenerated);
+    _audio = new PSG();
     _video = new VDP();
     _io = new Ports();
+    _clock = new Clock(config);
+    _resampler = new Resampler(config);
     _rom = rom;
+
+    _audio.OnSampleGenerated += _clock.HandleSampleGenerated;
+    _audio.OnSampleGenerated += _resampler.HandleSampleGenerated;
+    _clock.OnFrameTimeElapsed += HandleFrameTimeElapsed;
 
     _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
     _frameLock = new object();

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
 
@@ -7,7 +8,8 @@ namespace Quill.Sound;
 public sealed class PSG
 {
   #region Constants
-  private const int MASTER_CLOCK_DIVIDER = 16;
+  public const int CYCLES_PER_SAMPLE = 16;
+
   private const int CHANNEL_COUNT = 4;
   private const int TONE0 = 0b_00;
   private const int TONE1 = 0b_01;
@@ -16,23 +18,21 @@ public sealed class PSG
   #endregion
 
   #region Fields
+  public event Action<short> OnSampleGenerated;
+
   private readonly Channel[] _channels;
   private int _channelLatch;
   private bool _volumeLatch;
-
-  private readonly Action<short> _onSampleGenerated;
   private int _cycleCounter;
   #endregion
 
-  public PSG(Action<short> onSampleGenerated)
+  public PSG()
   {
     _channels = new Channel[CHANNEL_COUNT];
     _channels[TONE0] = new Channel();
     _channels[TONE1] = new Channel();
     _channels[TONE2] = new Channel();
     _channels[NOISE] = new Channel();
-
-    _onSampleGenerated = onSampleGenerated;
   }
 
   #region Methods
@@ -84,13 +84,14 @@ public sealed class PSG
   public void Step(int cycles)
   {
     _cycleCounter += cycles;
-    while (_cycleCounter >= MASTER_CLOCK_DIVIDER)
+    while (_cycleCounter >= CYCLES_PER_SAMPLE)
     {
       GenerateSample();
-      _cycleCounter -= MASTER_CLOCK_DIVIDER;
+      _cycleCounter -= CYCLES_PER_SAMPLE;
     }
   }
-
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void GenerateSample()
   {
     short sample = 0;
@@ -99,7 +100,7 @@ public sealed class PSG
     sample += _channels[TONE2].GenerateTone();
     sample += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
     
-    _onSampleGenerated.Invoke(sample);
+    OnSampleGenerated(sample);
   }
   #endregion
 }
