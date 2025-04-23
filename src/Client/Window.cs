@@ -131,6 +131,7 @@ public sealed class Window : GameWindow
     }
     else if (saveRequested)
     {
+      Directory.CreateDirectory(_savesDirectory);
       _emulator.SaveState(SnapshotFilepath);
       _savesEnabled = false;
     }
