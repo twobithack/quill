@@ -12,8 +12,9 @@ namespace Quill.CPU;
 unsafe public ref struct Memory
 {
   #region Constants
+  public const ushort PAGE_SIZE = 0x4000;
+  
   private const ushort HEADER_SIZE = 0x200;
-  private const ushort PAGE_SIZE = 0x4000;
   private const ushort PAGING_START = 0x400;
   private const ushort MIRROR_SIZE = 0x2000;
   private const ushort MIRROR_START = 0xE000;

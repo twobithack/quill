@@ -19,6 +19,7 @@ public sealed class Channel
   #region Fields
   public byte Volume;
   public ushort Tone;
+  
   private ushort _counter;
   private ushort _lfsr;
   private bool _polarity;

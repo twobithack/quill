@@ -206,6 +206,7 @@ unsafe public ref partial struct Z80
     _iff2 = state.IFF2;
     _memory.LoadState(state);
     _vdp.LoadState(state);
+    _psg.LoadState(state);
   }
 
   public readonly Snapshot SaveState()
@@ -232,10 +233,11 @@ unsafe public ref partial struct Z80
     };
     _memory.SaveState(state);
     _vdp.SaveState(state);
+    _psg.SaveState(state);
     return state;
   }
 
-  public readonly Snapshot SaveState(Snapshot state)
+  public readonly void SaveState(Snapshot state)
   {
     state.AF = AF;
     state.BC = BC;
@@ -257,7 +259,7 @@ unsafe public ref partial struct Z80
 
     _memory.SaveState(state);
     _vdp.SaveState(state);
-    return state;
+    _psg.SaveState(state);
   }
 
   public readonly string DumpRegisters()

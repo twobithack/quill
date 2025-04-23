@@ -12,9 +12,10 @@ namespace Quill.Video;
 public sealed partial class VDP
 {
   #region Constants
-  private const int VRAM_SIZE = 0x4000;
-  private const int CRAM_SIZE = 0x20;
-  private const int REGISTER_COUNT = 11;
+  public const int VRAM_SIZE = 0x4000;
+  public const int CRAM_SIZE = 0x20;
+  public const int REGISTER_COUNT = 11;
+  
   private const int HORIZONTAL_RESOLUTION = 256;
   private const int TILE_SIZE = 8;
   private const int BACKGROUND_COLUMNS = 32;
@@ -107,7 +108,6 @@ public sealed partial class VDP
   #endregion
 
   #region Methods
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void LoadState(Snapshot snapshot)
   {
     for (byte register = 0; register < REGISTER_COUNT; register++)
@@ -124,7 +124,6 @@ public sealed partial class VDP
     _controlWritePending = snapshot.ControlWritePending;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SaveState(Snapshot snapshot)
   {
     Array.Copy(_registers, snapshot.VRegisters, _registers.Length);

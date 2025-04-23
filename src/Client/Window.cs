@@ -96,17 +96,18 @@ public sealed class Window : GameWindow
   {
     var frameWidth = FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0);
     var frameHeight = FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0);
-    var initialClientSize = new Vector2i(frameWidth * config.ScaleFactor, frameHeight * config.ScaleFactor);
+    var initialClientSize = new Vector2i(frameWidth * config.ScaleFactor, 
+                                         frameHeight * config.ScaleFactor);
 
     return new NativeWindowSettings
     {
-      Title = "Quill",
-      ClientSize = initialClientSize,
-      AspectRatio = (frameWidth, frameHeight),
-      WindowBorder = WindowBorder.Resizable,
       APIVersion = new Version(3, 3),
+      AspectRatio = (frameWidth, frameHeight),
+      ClientSize = initialClientSize,
       Profile = ContextProfile.Core,
-      Vsync = VSyncMode.On
+      Title = "Quill",
+      Vsync = VSyncMode.On,
+      WindowBorder = WindowBorder.Resizable
     };
   }
 

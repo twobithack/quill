@@ -1,6 +1,9 @@
 ﻿using System.IO;
 
 using MessagePack;
+using Quill.CPU;
+using Quill.Sound;
+using Quill.Video;
 using Quill.Video.Definitions;
 
 namespace Quill.Core;
@@ -8,12 +11,6 @@ namespace Quill.Core;
 [MessagePackObject]
 public sealed class Snapshot
 {
-  #region Constants
-  private const ushort MEMORY_SIZE = 0x4000;
-  private const int PALETTE_SIZE = 0x20;
-  private const int VDP_REGISTER_COUNT = 11;
-  #endregion
-
   #region Fields
   [Key(0)]  public ushort AF;
   [Key(1)]  public ushort BC;
@@ -52,16 +49,23 @@ public sealed class Snapshot
   [Key(32)] public byte HScroll;
   [Key(33)] public byte VScroll;
   [Key(34)] public bool ControlWritePending;
+
+  [Key(35)] public ushort[] Tones;
+  [Key(36)] public byte[] Volumes;
+  [Key(37)] public int ChannelLatch;
+  [Key(38)] public bool VolumeLatch;
   #endregion
 
   public Snapshot()
   {
-    RAM = new byte[MEMORY_SIZE];
-    Bank0 = new byte[MEMORY_SIZE];
-    Bank1 = new byte[MEMORY_SIZE];
-    Palette = new int[PALETTE_SIZE];
-    VRAM = new byte[MEMORY_SIZE];
-    VRegisters = new byte[VDP_REGISTER_COUNT];
+    RAM = new byte[Memory.PAGE_SIZE];
+    Bank0 = new byte[Memory.PAGE_SIZE];
+    Bank1 = new byte[Memory.PAGE_SIZE];
+    Palette = new int[VDP.CRAM_SIZE];
+    VRAM = new byte[VDP.VRAM_SIZE];
+    VRegisters = new byte[VDP.REGISTER_COUNT];
+    Tones = new ushort[PSG.CHANNEL_COUNT];
+    Volumes = new byte[PSG.CHANNEL_COUNT];
   }
   
   #region Methods
