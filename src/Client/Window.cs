@@ -89,21 +89,24 @@ public sealed class Window : GameWindow
   {
     base.OnResize(e);
     _graphics.ResizeViewport(FramebufferSize);
-
   }
 
   private static NativeWindowSettings CreateWindowSettings(Configuration config)
   {
     var frameWidth = FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0);
     var frameHeight = FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0);
-    var initialClientSize = new Vector2i(frameWidth * config.ScaleFactor, 
-                                         frameHeight * config.ScaleFactor);
+    
+    var clientWidth = frameWidth * config.ScaleFactor;
+    var clientHeight = frameHeight * config.ScaleFactor;
+
+    if (config.FixAspectRatio)
+      clientWidth = (int)(clientWidth * (8f / 7f));
 
     return new NativeWindowSettings
     {
       APIVersion = new Version(3, 3),
-      AspectRatio = (frameWidth, frameHeight),
-      ClientSize = initialClientSize,
+      AspectRatio = (clientWidth, clientHeight),
+      ClientSize = new Vector2i(clientWidth, clientHeight),
       Profile = ContextProfile.Core,
       Title = "Quill",
       Vsync = VSyncMode.On,

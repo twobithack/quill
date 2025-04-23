@@ -116,8 +116,11 @@ public sealed class Graphics
 
   public void ResizeViewport(Vector2i dimensions)
   {
-    var textureAR = (float) TextureWidth / TextureHeight;
     var viewportAR = (float) dimensions.X / dimensions.Y;
+    var textureAR = (float) TextureWidth / TextureHeight;
+
+    if (_configuration.FixAspectRatio)
+      textureAR *= (8f / 7f);
 
     int width, height, x, y;
     if (viewportAR > textureAR)

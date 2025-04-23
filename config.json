@@ -2,6 +2,7 @@
   "audioSampleRate":  44100,
   "cropBottomBorder": true,
   "cropLeftBorder":   true,
-  "frameRate":        60,
-  "scaleFactor":      4
+  "fixAspectRatio":   true,
+  "framesPerSecond":  60,
+  "scaleFactor":      5
 }

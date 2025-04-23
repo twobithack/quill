@@ -21,7 +21,7 @@ public sealed class Clock
   public Clock(Configuration config)
   {
     var samplesPerSecond = (double) CYCLES_PER_SECOND / PSG.CYCLES_PER_SAMPLE;
-    _samplesPerFrame = samplesPerSecond / config.FrameRate;
+    _samplesPerFrame = samplesPerSecond / config.FramesPerSecond;
   }
 
   #region Methods
