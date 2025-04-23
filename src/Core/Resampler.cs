@@ -3,9 +3,9 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using Quill.Common;
-using Quill.Core;
+using Quill.Sound;
 
-namespace Quill.Sound;
+namespace Quill.Core;
 
 public sealed class Resampler
 {

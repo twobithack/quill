@@ -187,6 +187,7 @@
 * The Simpsons: Bart vs. the World
 * Sítio do Picapau Amarelo
 * Solomon no Kagi: Oujo Rihita no Namida
+* Sonic Blast
 * Sonic Chaos
 * Sonic the Hedgehog
 * Sonic the Hedgehog 2
@@ -235,44 +236,37 @@
 * Zillion
 * Zillion II: The Tri-Formation Cycle
 
-## AUDIO BUGS
-* Sonic Blast (no startup jingle)
-
-## VISUAL BUGS
-* Cool Spot (sprite flickering)
-
-## BROKEN
-* Ace of Aces
-* Alibaba and 40 Thieves
-* Alien Storm
-* Bank Panic
-* Block Hole
-* California Games II
-* Desert Speedtrap Starring Roadrunner
-* King & Road
-* Knightmare II: The Maze of Galious
-* Parlour Games 
-* Sega Chess
-* Zool: Warrior of the "Nth" Dimension
-
 ## UNSUPPORTED
+* Ace of Aces (PAL)
 * Alex Kidd BMX Trial (paddle)
+* Alibaba and 40 Thieves (custom mapper)
+* Alien Storm (PAL)
+* Bank Panic (PAL)
+* Block Hole (custom mapper)
+* California Games II (PAL)
+* Cool Spot (PAL)
 * Cosmic Spacehead (Codemasters mapper)
+* Desert Speedtrap Starring Roadrunner (PAL)
 * Excellent Dizzy Collection (Codemasters mapper)
 * Galactic Protector (paddle)
 * Gangster Town (phaser)
+* King & Balloon (custom mapper)
+* Knightmare II: The Maze of Galious
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
 * Missile Defence 3D (phaser)
 * Operation: Wolf (phaser)
+* Parlour Games (custom mapper)
 * Rambo III (phaser)
 * Rescue Mission (phaser)
 * Safari Hunt (phaser)
+* Sega Chess (PAL)
 * Shooting Galery (phaser)
 * Space Gun (phaser)
 * Trap Shooting (phaser)
 * Wanted! (phaser)
 * Woody Pop (paddle)
+* Zool: Warrior of the "Nth" Dimension (PAL)
 
 # SG-1000
 
@@ -316,12 +310,10 @@
 * Star Jacker 
 * Wonder Boy
 
-## VISUAL BUGS
-* Bomberman Special (menu logo)
-* Exerion (no sprites)
-* Rock n' Bolt (sprite sorting)
-* Yamato (background tiles)
-
-## BROKEN
+## NOT WORKING
+* Bomberman Special
+* Exerion
 * James Bond 007
 * Pop Flamer
+* Rock n' Bolt
+* Yamato

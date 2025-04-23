@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -105,7 +106,7 @@ public sealed partial class VDP
   {
     IncrementScanline();
     UpdateInterrupts();
-        
+    
     if (_vCounter < _vCounterActive)
       RasterizeScanline();
   }
@@ -170,7 +171,7 @@ public sealed partial class VDP
       FillScanline();
       return;
     }
-
+    
     if (DisplayMode4)
     {
       RasterizeSprites();
@@ -187,7 +188,7 @@ public sealed partial class VDP
   private void FillScanline()
   {
     for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
-      SetPixel(x, _vCounter, _registers[0x7], false);
+      SetPixel(x, _vCounter, BackgroundColor, false);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

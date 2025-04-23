@@ -75,7 +75,6 @@ public sealed partial class VDP
   #endregion
 
   #region Properties
-  public int ScanlinesPerFrame => VCOUNTER_MAX + (_vCounterJumpFrom - _vCounterJumpTo) + 2;
   public byte HCounter => (byte)(_hCounter >> 1);
   public byte VCounter => (byte)_vCounter;
 
@@ -105,6 +104,7 @@ public sealed partial class VDP
 
   private bool VSyncPending => _vSyncEnabled && VBlank;
   private bool DisplayMode4 => (_displayMode & DisplayMode.Mode_4) != 0;
+  private int BackgroundColor => _registers[0x7] & 0b_0111;
   #endregion
 
   #region Methods
