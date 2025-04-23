@@ -19,11 +19,12 @@ public sealed class Resampler
   private readonly byte[] _copyBuffer;
   private volatile int _bufferPosition;
 
-  private readonly int _decimationFactor;
-  private readonly double _decimationRemainder;
+  private readonly double _decimationFactor;
+  private double _phase;
+
   private int _rawSampleAccumulator;
   private int _rawSampleCounter;
-  private double _phase;
+  private int _rawSamplesNeeded;
   #endregion
 
   public Resampler(Configuration config)
@@ -33,22 +34,17 @@ public sealed class Resampler
     _copyBuffer = new byte[BUFFER_SIZE * 2];
 
     var rawSampleRate = (double) Clock.CYCLES_PER_SECOND / PSG.CYCLES_PER_SAMPLE;
-    var ratio = rawSampleRate / config.AudioSampleRate;
-    _decimationFactor = (int)ratio;
-    _decimationRemainder = ratio - _decimationFactor;
+    _decimationFactor = rawSampleRate / config.AudioSampleRate;
+    _rawSamplesNeeded = (int)_decimationFactor;
   }
-
-  private int RawSamplesNeeded => _phase >= 1
-                                ? _decimationFactor + 1
-                                : _decimationFactor;
-
+  
   #region Methods
   public void HandleSampleGenerated(short rawSample)
   {
     _rawSampleAccumulator += rawSample;
     _rawSampleCounter++;
 
-    if (_rawSampleCounter == RawSamplesNeeded)
+    if (_rawSampleCounter == _rawSamplesNeeded)
       GenerateDecimatedSample();
   }
 
@@ -82,10 +78,8 @@ public sealed class Resampler
         Monitor.Pulse(_bufferLock);
     }
 
-    if (_phase >= 1)
-      _phase -= 1;
-    
-    _phase += _decimationRemainder;
+    _phase += _decimationFactor - _rawSamplesNeeded;
+    _rawSamplesNeeded = (int)(_decimationFactor + _phase);
     _rawSampleAccumulator = 0;
     _rawSampleCounter = 0;
   }

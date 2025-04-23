@@ -33,7 +33,7 @@ public sealed class Clock
       return;
 
     _sampleCounter -= _samplesPerFrame;
-    OnFrameTimeElapsed.Invoke();
+    OnFrameTimeElapsed();
   }
   #endregion
 }
