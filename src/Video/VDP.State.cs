@@ -1,31 +1,35 @@
-﻿using Quill.Common.Extensions;
-using Quill.Core;
-using Quill.Video.Definitions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+
+using Quill.Common.Extensions;
+using Quill.Core;
+using Quill.Video.Definitions;
 
 namespace Quill.Video;
 
 public sealed partial class VDP
 {
   #region Constants
-  private const int VRAM_SIZE = 0x4000;
-  private const int CRAM_SIZE = 0x20;
-  private const int REGISTER_COUNT = 11;
+  public const int VRAM_SIZE = 0x4000;
+  public const int CRAM_SIZE = 0x20;
+  public const int REGISTER_COUNT = 11;
+  
   private const int HORIZONTAL_RESOLUTION = 256;
   private const int TILE_SIZE = 8;
   private const int BACKGROUND_COLUMNS = 32;
   private const int HSCROLL_LIMIT = 1;
   private const int VSCROLL_LIMIT = 24;
+  private const int HCOUNTER_MAX = 684;
+  private const int VCOUNTER_MAX = byte.MaxValue;
   private const byte DISABLE_SPRITES = 0xD0;
   private const byte TRANSPARENT = 0x00;
   #endregion
 
   #region Fields
+  public bool FrameCompleted;
   public bool IRQ;
-  public byte HCounter;
 
   private readonly Framebuffer _framebuffer;
   private readonly int[] _palette;
@@ -43,6 +47,7 @@ public sealed partial class VDP
   private ushort _spriteAttributeTableAddress;
   private ushort _spriteGeneratorTableAddress;
   
+  private ushort _hCounter;
   private ushort _vCounter;
   private byte _lineInterrupt;
   private byte _hScroll;
@@ -62,17 +67,16 @@ public sealed partial class VDP
   private bool _useSecondPatternTable;
 
   private DisplayMode _displayMode;
-  private readonly int _backgroundRows = 28; // 32
-  private readonly int _vCounterMax;
-  private readonly byte _vCounterActive = 192; // 224
-  private readonly byte _vCounterJumpFrom = 0xDA; // 0xEA
-  private readonly byte _vCounterJumpTo = 0xD5; // 0xE5
+  private readonly int _backgroundRows = 28;      // 32
+  private readonly byte _vCounterActive = 192;    // 224
+  private readonly byte _vCounterJumpFrom = 218;  // 234
+  private readonly byte _vCounterJumpTo = 213;    // 229
   private bool _vCounterJumped;
   #endregion
 
   #region Properties
-  public int ScanlinesPerFrame => _vCounterMax + (_vCounterJumpFrom - _vCounterJumpTo);
-  public byte VCounter => (byte)Math.Min(_vCounter, byte.MaxValue);
+  public byte HCounter => (byte)(_hCounter >> 1);
+  public byte VCounter => (byte)_vCounter;
 
   private bool SpriteCollision
   {
@@ -83,7 +87,7 @@ public sealed partial class VDP
   private bool SpriteOverflow
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _status.HasFlag(Status.Overflow);
+    get => GetFlag(Status.Overflow);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Status.Overflow, value);
@@ -92,18 +96,18 @@ public sealed partial class VDP
   private bool VBlank
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get => _status.HasFlag(Status.VBlank);
+    get => GetFlag(Status.VBlank);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Status.VBlank, value);
   }
 
   private bool VSyncPending => _vSyncEnabled && VBlank;
-  private bool DisplayMode4 => _displayMode.HasFlag(DisplayMode.Mode_4);
+  private bool DisplayMode4 => (_displayMode & DisplayMode.Mode_4) != 0;
+  private int BackgroundColor => _registers[0x7] & 0b_0111;
   #endregion
 
   #region Methods
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void LoadState(Snapshot snapshot)
   {
     for (byte register = 0; register < REGISTER_COUNT; register++)
@@ -120,8 +124,7 @@ public sealed partial class VDP
     _controlWritePending = snapshot.ControlWritePending;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SaveState(ref Snapshot snapshot)
+  public void SaveState(Snapshot snapshot)
   {
     Array.Copy(_registers, snapshot.VRegisters, _registers.Length);
     Array.Copy(_palette, snapshot.Palette, _palette.Length);

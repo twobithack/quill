@@ -1,10 +1,10 @@
 namespace Quill.CPU.Definitions;
 
-public static class Opcodes
+public readonly struct Opcodes
 {
   #region Fields
-  public static readonly Instruction[] Main = new Instruction[]
-  {
+  public static readonly Instruction[] Main =
+  [
     // Opcodes 0x00 - 0x0F
     new(Operation.NOP,    Operand.Implied,    Operand.Implied,     4),
     new(Operation.LD16,   Operand.BC,         Operand.Immediate,  10),
@@ -292,10 +292,10 @@ public static class Opcodes
     new(),  
     new(Operation.CP,     Operand.Implied,    Operand.Immediate,   7),
     new(Operation.RST,    (Operand) 0x38,     Operand.Implied,    11),
-  };
+  ];
 
-  public static readonly Instruction[ ] CB = new Instruction[]
-  {
+  public static readonly Instruction[ ] CB =
+  [
     // Opcodes 0x00 - 0x0F
     new(Operation.RLC,    Operand.B,          Operand.Implied,     8),
     new(Operation.RLC,    Operand.C,          Operand.Implied,     8),
@@ -583,10 +583,10 @@ public static class Opcodes
     new(Operation.SET7,   Operand.L,          Operand.Implied,     8),
     new(Operation.SET7,   Operand.HLi,        Operand.Implied,    15),
     new(Operation.SET7,   Operand.A,          Operand.Implied,     8),
-  };
+  ];
 
-  public static readonly Instruction[ ] DD = new Instruction[]
-  {
+  public static readonly Instruction[ ] DD =
+  [
     // Opcodes 0x00 - 0x0F
     new(),
     new(),  
@@ -874,10 +874,10 @@ public static class Opcodes
     new(),
     new(),
     new()
-  };
+  ];
   
-  public static readonly Instruction[ ] DDCB = new Instruction[]
-  {
+  public static readonly Instruction[ ] DDCB =
+  [
     // Opcodes 0x00 - 0x0F
     new(Operation.RLC,    Operand.IXd,        Operand.B,          23),
     new(Operation.RLC,    Operand.IXd,        Operand.C,          23),
@@ -1165,10 +1165,10 @@ public static class Opcodes
     new(Operation.SET7,   Operand.IXd,        Operand.L,          23),
     new(Operation.SET7,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.SET7,   Operand.IXd,        Operand.A,          23),
-  };
+  ];
   
-  public static readonly Instruction[ ] ED = new Instruction[]
-  {
+  public static readonly Instruction[ ] ED =
+  [
     // Opcodes 0x00 - 0x0F
     new(),
     new(),
@@ -1384,10 +1384,10 @@ public static class Opcodes
     new(),  
     new(),  
     new()
-  };
+  ];
   
-  public static readonly Instruction[ ] FD = new Instruction[]
-  {
+  public static readonly Instruction[ ] FD =
+  [
     // Opcodes 0x00 - 0x0F
     new(),
     new(),  
@@ -1675,10 +1675,10 @@ public static class Opcodes
     new(),
     new(),
     new()
-  };
+  ];
   
-  public static readonly Instruction[ ] FDCB = new Instruction[]
-  {
+  public static readonly Instruction[ ] FDCB =
+  [
     // Opcodes 0x00 - 0x0F
     new(Operation.RLC,    Operand.IYd,        Operand.B,          23),
     new(Operation.RLC,    Operand.IYd,        Operand.C,          23),
@@ -1966,6 +1966,6 @@ public static class Opcodes
     new(Operation.SET7,   Operand.IYd,        Operand.L,          23),
     new(Operation.SET7,   Operand.IYd,        Operand.Implied,    23),
     new(Operation.SET7,   Operand.IYd,        Operand.A,          23),
-  };
+  ];
   #endregion
 }

@@ -1,9 +1,9 @@
-﻿using Quill.Core;
-using Quill.UI;
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 
-namespace Quill;
+using Quill.Common;
+
+namespace Quill.Client;
 
 public static class Program
 {
@@ -15,7 +15,7 @@ public static class Program
     var romPath = args[0];
     var config = LoadConfiguration();
 
-    using var quill = new Client(romPath, config);
+    using var quill = new Window(romPath, config);
     quill.Run();
   }
 

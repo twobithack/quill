@@ -37,6 +37,7 @@
 * Black Belt
 * Bomber Raid
 * Bonanza Bros
+* Bram Stoker's Dracula
 * Bubble Bobble
 * Buggy Run
 * California Games
@@ -186,6 +187,7 @@
 * The Simpsons: Bart vs. the World
 * Sítio do Picapau Amarelo
 * Solomon no Kagi: Oujo Rihita no Namida
+* Sonic Blast
 * Sonic Chaos
 * Sonic the Hedgehog
 * Sonic the Hedgehog 2
@@ -234,45 +236,37 @@
 * Zillion
 * Zillion II: The Tri-Formation Cycle
 
-## AUDIO BUGS
-* Sonic Blast (no startup jingle)
-
-## VISUAL BUGS
-* Bram Stoker's Dracula (sprite flickering)
-* California Games II (garbled screens)
-* Cool Spot (sprite flickering)
-
-## BROKEN
-* Ace of Aces
-* Alibaba and 40 Thieves
-* Alien Storm
-* Bank Panic
-* Block Hole
-* Desert Speedtrap Starring Roadrunner (nothing after menus)
-* King & Road
-* Knightmare II: The Maze of Galious
-* Parlour Games 
-* Sega Chess (nothing after splash screen)
-* Zool: Warrior of the "Nth" Dimension (character won't load)
-
 ## UNSUPPORTED
+* Ace of Aces (PAL)
 * Alex Kidd BMX Trial (paddle)
+* Alibaba and 40 Thieves (custom mapper)
+* Alien Storm (PAL)
+* Bank Panic (PAL)
+* Block Hole (custom mapper)
+* California Games II (PAL)
+* Cool Spot (PAL)
 * Cosmic Spacehead (Codemasters mapper)
+* Desert Speedtrap Starring Roadrunner (PAL)
 * Excellent Dizzy Collection (Codemasters mapper)
 * Galactic Protector (paddle)
 * Gangster Town (phaser)
+* King & Balloon (custom mapper)
+* Knightmare II: The Maze of Galious
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
 * Missile Defence 3D (phaser)
 * Operation: Wolf (phaser)
+* Parlour Games (custom mapper)
 * Rambo III (phaser)
 * Rescue Mission (phaser)
 * Safari Hunt (phaser)
+* Sega Chess (PAL)
 * Shooting Galery (phaser)
 * Space Gun (phaser)
 * Trap Shooting (phaser)
 * Wanted! (phaser)
 * Woody Pop (paddle)
+* Zool: Warrior of the "Nth" Dimension (PAL)
 
 # SG-1000
 
@@ -293,6 +287,7 @@
 * Elevator Action
 * Flicky
 * Girl's Garden
+* Golgo 13
 * Gulkave
 * Guzzler
 * Hang-On II
@@ -313,15 +308,12 @@
 * Space Slalom
 * Star Force
 * Star Jacker 
+* Wonder Boy
 
-## VISUAL BUGS
-* Bomberman Special (menu logo)
-* Exerion (no sprites)
-* Golgo 13 (sprite wrapping)
-* Rock n' Bolt (sprite sorting)
-* Wonder Boy (sprite wrapping)
-* Yamato (background tiles)
-
-## BROKEN
-* James Bomd 007 (sound only)
-* Pop Flamer (sound only)
+## NOT WORKING
+* Bomberman Special
+* Exerion
+* James Bond 007
+* Pop Flamer
+* Rock n' Bolt
+* Yamato

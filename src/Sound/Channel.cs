@@ -1,24 +1,25 @@
-﻿using System.Numerics;
+﻿using Quill.Common.Extensions;
 
 namespace Quill.Sound;
 
-public struct Channel
+public sealed class Channel
 {
   #region Constants
-  private const ushort INITIAL_LFSR = 0x2000;
+  private const ushort INITIAL_LFSR = 0x8000;
   private const byte LFSR_TAPPED_BITS = 0b_1001;
-  private static readonly short[] VOLUME_TABLE = new short[]
-  {
+  private static readonly short[] ATTENUATION_TABLE =
+  [
     8191, 6507, 5168, 4105,
     3261, 2590, 2057, 1642,
     1298, 1031, 819,  650,
-    516,  1642, 410,  0
-  };
+    516,  410,  326,  0
+  ];
   #endregion
 
   #region Fields
   public byte Volume;
   public ushort Tone;
+  
   private ushort _counter;
   private ushort _lfsr;
   private bool _polarity;
@@ -33,31 +34,28 @@ public struct Channel
     _lfsr = INITIAL_LFSR;
   }
 
+  private bool WhiteNoiseMode => Tone.TestBit(2);
+
   #region Methods
   public short GenerateTone()
   {
-    if (Tone == 0)
-      return 0;
-
+    if (Tone <= 1)
+      return ATTENUATION_TABLE[Volume];
+      
     _counter--;
-
     if (_counter <= 0)
     {
       _counter = Tone;
       _polarity = !_polarity;
     }
-
-    if (_polarity)
-      return VOLUME_TABLE[Volume];
-    else
-      return (short)-VOLUME_TABLE[Volume];
+    
+    return _polarity 
+      ? ATTENUATION_TABLE[Volume] 
+      : (short)-ATTENUATION_TABLE[Volume];
   }
 
   public short GenerateNoise(ushort tone2)
   {
-    if (Tone == 0)
-      return 0;
-
     _counter--;
     if (_counter <= 0)
     {
@@ -72,19 +70,27 @@ public struct Channel
       _polarity = !_polarity;
       if (_polarity)
       {
-        var isWhiteNoise = ((Tone >> 2) & 1) > 0;
-        var input = isWhiteNoise
+        var input = WhiteNoiseMode
                   ? Parity(_lfsr & LFSR_TAPPED_BITS)
                   : (_lfsr & 1);
-        _lfsr = (ushort)((input << 15 ) | (_lfsr >> 1));
+        _lfsr = (ushort)((_lfsr >> 1) | (input << 15));
       }
     }
 
-    return (short)(VOLUME_TABLE[Volume] * (_lfsr & 1));
+    return _lfsr.TestBit(0)
+      ? ATTENUATION_TABLE[Volume] 
+      : (short)-ATTENUATION_TABLE[Volume];
   }
 
   public void ResetLFSR() => _lfsr = INITIAL_LFSR;
 
-  private static int Parity(int value) => 1 - (BitOperations.PopCount((uint)value) % 2);
+  private static int Parity(int value)
+  {
+     value ^= value >> 8;
+     value ^= value >> 4;
+     value ^= value >> 2;
+     value ^= value >> 1;
+     return value & 1;
+  }
   #endregion
 }

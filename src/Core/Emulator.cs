@@ -1,74 +1,80 @@
+using System.Threading;
+
 using Quill.Common;
 using Quill.CPU;
-using Quill.Input;
+using Quill.IO;
 using Quill.Sound;
 using Quill.Video;
-using System.Diagnostics;
 
 namespace Quill.Core;
 
-unsafe public class Emulator
+unsafe public sealed class Emulator
 {
   #region Constants
-  private const double FRAME_INTERVAL_MS = 1000d / 60d;
-  private const int CYCLES_PER_SCANLINE = 228;
   private const int REWIND_BUFFER_SIZE = 1000;
   private const int FRAMES_PER_REWIND = 3;
   #endregion
 
   #region Fields
-  public bool FastForwarding;
-  public bool Rewinding;
-
-  private readonly RingBuffer<Snapshot> _history;
-  private readonly IO _input;
   private readonly PSG _audio;
   private readonly VDP _video;
+  private readonly Ports _io;
+  private readonly Clock _clock;
+  private readonly Resampler _resampler;
   private readonly byte[] _rom;
+
+  private readonly object _frameLock;
+  private bool _frameTimeElapsed;
+  private bool _running;
+
+  private readonly RingBuffer<Snapshot> _history;
   private string _snapshotPath;
   private bool _loadRequested;
   private bool _saveRequested;
-  private bool _running;
+  private bool _rewinding;
   #endregion
 
-  public Emulator(byte[] rom, int sampleRate, int virtualScanlines)
-  {
-    _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
-    _input = new IO();
-    _audio = new PSG(sampleRate);
-    _video = new VDP(virtualScanlines);
+  public Emulator(byte[] rom, Configuration config)
+  { 
+    _audio = new PSG();
+    _video = new VDP();
+    _io = new Ports();
+    _clock = new Clock(config);
+    _resampler = new Resampler(config);
     _rom = rom;
+
+    _audio.OnSampleGenerated += _clock.HandleSampleGenerated;
+    _audio.OnSampleGenerated += _resampler.HandleSampleGenerated;
+    _clock.OnFrameTimeElapsed += HandleFrameTimeElapsed;
+
+    _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
+    _frameLock = new object();
   }
 
   #region Methods
   public void Run()
   {
-    var cpu = new Z80(_rom, _input, _audio, _video);
-    _running = true;
-    _audio.Play();
+    var cpu = new Z80(_rom, _audio, _video, _io);
+    var frameCounter = 0;
 
-    var frameCount = 0;
-    var frameTime = new Stopwatch();
-    frameTime.Start();
+    _frameTimeElapsed = true;
+    _running = true;
 
     while (_running)
     {
-      if (!FastForwarding && 
-          frameTime.Elapsed.TotalMilliseconds < FRAME_INTERVAL_MS)
-        continue;
+      WaitForFrameTimeElapsed();
 
-      frameTime.Restart();
-      frameCount++;
-
-      var scanlines = _video.ScanlinesPerFrame;
-      while (scanlines > 0)
+      while (!_video.FrameCompleted)
       {
-        cpu.Run(CYCLES_PER_SCANLINE);
-        _video.RenderScanline();
-        scanlines--;
+        var clockCycles = cpu.Step();
+        _audio.Step(clockCycles);
+        _video.Step(clockCycles);
       }
+      
+      _video.AcknowledgeFrame();
+      frameCounter++;
 
-      if (Rewinding)
+      if (_rewinding)
       {
         var state = _history.Pop();
         cpu.LoadState(state);
@@ -85,39 +91,32 @@ unsafe public class Emulator
         SaveSnapshot(state);
         _saveRequested = false;
       }
-      else if (frameCount >= FRAMES_PER_REWIND)
+      else if (frameCounter >= FRAMES_PER_REWIND)
       {
-        var state = cpu.SaveState();
-        _history.Push(state);
-        frameCount = 0;
+        var slot = _history.AcquireSlot();
+        cpu.SaveState(slot);
+        frameCounter = 0;
       }
     }
-
-    _audio.Stop();
   }
 
   public void Stop() => _running = false;
 
+  public byte[] ReadAudioBuffer() => _resampler.ReadBuffer();
+
   public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
 
-  public byte[] ReadAudioBuffer() => _audio.ReadBuffer();
-
-  public void SetJoypadState(int joypad,
-                             bool up, 
-                             bool down, 
-                             bool left, 
-                             bool right, 
-                             bool fireA, 
-                             bool fireB,
-                             bool pause)
+  public void SetJoypadState(int joypad, JoypadState state)
   {
     if (joypad == 0)
-      _input.SetJoypad1State(up, down, left, right, fireA, fireB, pause);
+      _io.SetJoypad1State(state);
     else
-      _input.SetJoypad2State(up, down, left, right, fireA, fireB, pause);
+      _io.SetJoypad2State(state);
   }
 
-  public void SetResetButtonState(bool reset) => _input.SetResetButtonState(reset);
+  public void SetResetButtonState(bool reset) => _io.SetResetButtonState(reset);
+
+  public void SetRewinding(bool rewinding) => _rewinding = rewinding;
 
   public void LoadState(string path)
   {
@@ -129,6 +128,26 @@ unsafe public class Emulator
   {
     _snapshotPath = path;
     _saveRequested = true;
+  }
+
+  private void HandleFrameTimeElapsed()
+  {
+    lock (_frameLock)
+    {
+      _frameTimeElapsed = true;
+      Monitor.Pulse(_frameLock);
+    }
+  }
+
+  private void WaitForFrameTimeElapsed()
+  {
+    lock (_frameLock)
+    {
+      while (!_frameTimeElapsed)
+        Monitor.Wait(_frameLock);
+
+      _frameTimeElapsed = false;
+    }
   }
 
   private Snapshot LoadSnapshot() => Snapshot.ReadFromFile(_snapshotPath);

@@ -1,31 +1,32 @@
-﻿using Quill.Common.Extensions;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+
+using Quill.Common.Extensions;
 
 namespace Quill.Video;
 
 public readonly struct Pattern
 {
-  private readonly byte Bitplane0;
-  private readonly byte Bitplane1;
-  private readonly byte Bitplane2;
-  private readonly byte Bitplane3;
+  private readonly byte _bitplane0;
+  private readonly byte _bitplane1;
+  private readonly byte _bitplane2;
+  private readonly byte _bitplane3;
 
   public Pattern(byte bp0, byte bp1, byte bp2, byte bp3)
   {
-    Bitplane0 = bp0;
-    Bitplane1 = bp1;
-    Bitplane2 = bp2;
-    Bitplane3 = bp3;
+    _bitplane0 = bp0;
+    _bitplane1 = bp1;
+    _bitplane2 = bp2;
+    _bitplane3 = bp3;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte GetPaletteIndex(int column)
   {
     byte paletteIndex = 0x00;
-    if (Bitplane0.TestBit(column)) paletteIndex |= 0b_0001;
-    if (Bitplane1.TestBit(column)) paletteIndex |= 0b_0010;
-    if (Bitplane2.TestBit(column)) paletteIndex |= 0b_0100;
-    if (Bitplane3.TestBit(column)) paletteIndex |= 0b_1000;
+    if (_bitplane0.TestBit(column)) paletteIndex |= 0b_0001;
+    if (_bitplane1.TestBit(column)) paletteIndex |= 0b_0010;
+    if (_bitplane2.TestBit(column)) paletteIndex |= 0b_0100;
+    if (_bitplane3.TestBit(column)) paletteIndex |= 0b_1000;
     return paletteIndex;
   }
 }

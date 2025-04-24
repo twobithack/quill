@@ -1,2 +1,2 @@
 # Quill &middot; [![build](https://github.com/digitmancer/quill/actions/workflows/dotnet.yml/badge.svg)](https://github.com/digitmancer/quill/actions/workflows/dotnet.yml)
-A cross-platform Master System emulator built on .NET 7 and MonoGame.
+A cross-platform Master System emulator built on .NET and OpenTK.
