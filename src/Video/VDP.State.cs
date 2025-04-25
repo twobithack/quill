@@ -48,7 +48,7 @@ public sealed partial class VDP
   private ushort _spriteGeneratorTableAddress;
   
   private ushort _hCounter;
-  private ushort _vCounter;
+  private byte _vCounter;
   private byte _lineInterrupt;
   private byte _hScroll;
   private byte _vScroll;
@@ -68,7 +68,7 @@ public sealed partial class VDP
 
   private DisplayMode _displayMode;
   private readonly int _backgroundRows = 28;      // 32
-  private readonly byte _vCounterActive = 192;    // 224
+  private readonly byte _vCounterActive = 191;    // 224
   private readonly byte _vCounterJumpFrom = 218;  // 234
   private readonly byte _vCounterJumpTo = 213;    // 229
   private bool _vCounterJumped;
@@ -76,8 +76,8 @@ public sealed partial class VDP
 
   #region Properties
   public byte HCounter => (byte)(_hCounter >> 1);
-  public byte VCounter => (byte)_vCounter;
-
+  public byte VCounter => _vCounter;
+  
   private bool SpriteCollision
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -104,7 +104,6 @@ public sealed partial class VDP
 
   private bool VSyncPending => _vSyncEnabled && VBlank;
   private bool DisplayMode4 => (_displayMode & DisplayMode.Mode_4) != 0;
-  private int BackgroundColor => _registers[0x7] & 0b_0111;
   #endregion
 
   #region Methods

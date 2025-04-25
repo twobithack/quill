@@ -106,21 +106,21 @@ public sealed partial class VDP
   {
     IncrementScanline();
     UpdateInterrupts();
-    
-    if (_vCounter < _vCounterActive)
+
+    if (_vCounter <= _vCounterActive)
       RasterizeScanline();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementScanline()
   {
-    if (_vCounter == VCOUNTER_MAX)
+    if (_vCounter == _vCounterActive)
     {
-      _vCounter = 0;
-      _vCounterJumped = false;
-      _vScroll = _registers[0x9];
-      FrameCompleted = true;
-      return;
+      _framebuffer.PushFrame();
+    }
+    if (_vCounter == _vCounterActive + 1)
+    {
+      VBlank = true;
     }
     else if (_vCounter == _vCounterJumpFrom)
     {
@@ -131,11 +131,11 @@ public sealed partial class VDP
         return;
       }
     }
-    
-    if (_vCounter == _vCounterActive)
+    else if (_vCounter == VCOUNTER_MAX)
     {
-      _framebuffer.PushFrame();
-      VBlank = true;
+      _vCounterJumped = false;
+      _vScroll = _registers[0x9];
+      FrameCompleted = true;
     }
     
     _vCounter++;
@@ -146,7 +146,8 @@ public sealed partial class VDP
   {
     IRQ = VSyncPending;
 
-    if (_vCounter > _vCounterActive)
+    if (_vCounter > _vCounterActive + 1 && 
+        _vCounter <= VCOUNTER_MAX)
     {
       _lineInterrupt = _registers[0xA];
     }
@@ -164,8 +165,6 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   { 
-    _hScroll = _registers[0x8];
-    
     if (!_displayEnabled)
     {
       FillScanline();
@@ -188,7 +187,7 @@ public sealed partial class VDP
   private void FillScanline()
   {
     for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
-      SetPixel(x, _vCounter, BackgroundColor, false);
+      SetPixel(x, _vCounter, _blankColor, false);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -271,7 +270,7 @@ public sealed partial class VDP
 
     for (int backgroundColumn = 0; backgroundColumn < BACKGROUND_COLUMNS; backgroundColumn++)
     {
-      var tilemapY = _vCounter;
+      ushort tilemapY = _vCounter;
       if (!_limitVScroll ||
           backgroundColumn < VSCROLL_LIMIT)
         tilemapY += _vScroll;
@@ -291,8 +290,8 @@ public sealed partial class VDP
 
       var tileData = GetTileData(tileAddress);
       var tileOffset = tileData.VerticalFlip
-                 ? 7 - (tilemapY % TILE_SIZE)
-                 : tilemapY % TILE_SIZE;
+                     ? 7 - (tilemapY % TILE_SIZE)
+                     : tilemapY % TILE_SIZE;
 
       var patternAddress = (tileData.PatternIndex * 32) + (tileOffset * 4);
       var patternData = GetPatternData(patternAddress);
@@ -569,6 +568,11 @@ public sealed partial class VDP
 
       case 0x7:
         _blankColor = (byte)(value & 0b_1111);
+        _blankColor |= 0b_0001_0000;
+        return;
+
+      case 0x8:
+        _hScroll = value;
         return;
     };
   }

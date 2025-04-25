@@ -1,5 +1,3 @@
-using System.Threading;
-
 using Quill.Common;
 using Quill.CPU;
 using Quill.IO;
