@@ -1,5 +1,6 @@
 {
   "audioSampleRate":  44100,
+  "clockRate":        3579545,
   "cropBottomBorder": true,
   "cropLeftBorder":   true,
   "fixAspectRatio":   true,

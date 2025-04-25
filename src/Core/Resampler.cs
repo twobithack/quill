@@ -33,7 +33,7 @@ public sealed class Resampler
     _buffer = new short[BUFFER_SIZE];
     _copyBuffer = new byte[BUFFER_SIZE * 2];
 
-    var rawSampleRate = (double) Clock.CYCLES_PER_SECOND / PSG.CYCLES_PER_SAMPLE;
+    var rawSampleRate = (double) config.ClockRate / PSG.CYCLES_PER_SAMPLE;
     _decimationFactor = rawSampleRate / config.AudioSampleRate;
     _rawSamplesNeeded = (int)_decimationFactor;
   }
