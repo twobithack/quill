@@ -21,7 +21,8 @@ public sealed class Audio
   private readonly int _sampleRate;
   private readonly int[] _buffers;
   private readonly int _source;
-  private bool _playing;
+  
+  private volatile bool _playing;
   #endregion
 
   public Audio(Func<byte[]> requestNextBuffer, Configuration config)

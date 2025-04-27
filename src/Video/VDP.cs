@@ -578,8 +578,7 @@ public sealed partial class VDP
 
       case 0x7:
         _legacyBlankColor = (byte)(value & 0b_1111);
-        _blankColor = _legacyBlankColor;
-        _blankColor |= 0b_0001_0000;
+        _blankColor = _legacyBlankColor.SetBit(4);
         return;
 
       case 0x8:

@@ -72,7 +72,7 @@ public sealed class Channel
       {
         var input = WhiteNoiseMode
                   ? Parity(_lfsr & LFSR_TAPPED_BITS)
-                  : (_lfsr & 1);
+                  : _lfsr & 1;
         _lfsr = (ushort)((_lfsr >> 1) | (input << 15));
       }
     }

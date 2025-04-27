@@ -25,7 +25,8 @@ unsafe public sealed class Emulator
   private bool _loadRequested;
   private bool _saveRequested;
   private bool _rewinding;
-  private bool _running;
+  
+  private volatile bool _running;
   #endregion
 
   public Emulator(byte[] rom, Configuration config)
