@@ -49,21 +49,23 @@ public sealed partial class VDP
   
   private ushort _hCounter;
   private byte _vCounter;
-  private byte _lineInterrupt;
+  private byte _hLineCounter;
   private byte _hScroll;
   private byte _vScroll;
   private byte _blankColor;
+  private byte _legacyBlankColor;
 
   private bool _controlWritePending;
-  private bool _shiftX;
-  private bool _lineInterruptEnabled;
-  private bool _maskLeftBorder;
-  private bool _limitHScroll;
-  private bool _limitVScroll;
+  private bool _hLineInterruptPending;
+  private bool _hLineInterruptEnabled;
+  private bool _vBlankInterruptEnabled;
+  private bool _displayEnabled;
+  private bool _spriteShift;
+  private bool _leftColumnBlank;
+  private bool _hScrollInhibit;
+  private bool _vScrollInhibit;
   private bool _zoomSprites;
   private bool _stretchSprites;
-  private bool _vSyncEnabled;
-  private bool _displayEnabled;
   private bool _useSecondPatternTable;
 
   private DisplayMode _displayMode;
@@ -102,7 +104,8 @@ public sealed partial class VDP
     set => SetFlag(Status.VBlank, value);
   }
 
-  private bool VSyncPending => _vSyncEnabled && VBlank;
+  private bool HLinePending => _hLineInterruptPending && _hLineInterruptEnabled;
+  private bool VSyncPending => VBlank && _vBlankInterruptEnabled;
   private bool DisplayMode4 => (_displayMode & DisplayMode.Mode_4) != 0;
   #endregion
 
@@ -115,7 +118,8 @@ public sealed partial class VDP
     Array.Copy(snapshot.VRAM, _vram, _vram.Length);
     _status = snapshot.VDPStatus;
     _dataBuffer = snapshot.DataPort;
-    _lineInterrupt = snapshot.LineInterrupt;
+    _hLineCounter = snapshot.HLineCounter;
+    _hLineInterruptPending = snapshot.HLinePending;
     _hScroll = snapshot.HScroll;
     _vScroll = snapshot.VScroll;
     _addressBus = (ushort)(snapshot.ControlWord & 0b_0011_1111_1111_1111);
@@ -130,7 +134,8 @@ public sealed partial class VDP
     Array.Copy(_vram, snapshot.VRAM, _vram.Length);
     snapshot.VDPStatus = _status;
     snapshot.DataPort = _dataBuffer;
-    snapshot.LineInterrupt = _lineInterrupt;
+    snapshot.HLineCounter = _hLineCounter;
+    snapshot.HLinePending = _hLineInterruptPending;
     snapshot.HScroll = _hScroll;
     snapshot.VScroll = _vScroll;
     snapshot.ControlWord = _addressBus;
