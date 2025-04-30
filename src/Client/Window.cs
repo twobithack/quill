@@ -4,6 +4,7 @@ using System.Threading;
 
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Common.Input;
 using OpenTK.Windowing.Desktop;
 using Quill.Common;
 using Quill.Core;
@@ -107,11 +108,19 @@ public sealed class Window : GameWindow
       APIVersion = new Version(3, 3),
       AspectRatio = (clientWidth, clientHeight),
       ClientSize = new Vector2i(clientWidth, clientHeight),
+      Icon = LoadIcon(),
       Profile = ContextProfile.Core,
       Title = "Quill",
       Vsync = VSyncMode.On,
       WindowBorder = WindowBorder.Resizable
     };
+  }
+
+  private static WindowIcon LoadIcon()
+  {
+    var bytes = File.ReadAllBytes("assets/icon.rgba");
+    var image = new Image(128, 128, bytes);
+    return new WindowIcon(image);
   }
 
   private void HandleSnapshotRequest(bool loadRequested,
