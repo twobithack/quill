@@ -1,5 +1,6 @@
 ﻿﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 using OpenTK.Mathematics;
@@ -118,6 +119,9 @@ public sealed class Window : GameWindow
 
   private static WindowIcon LoadIcon()
   {
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+      return null;
+
     var bytes = File.ReadAllBytes("assets/icon.rgba");
     var image = new Image(128, 128, bytes);
     return new WindowIcon(image);
