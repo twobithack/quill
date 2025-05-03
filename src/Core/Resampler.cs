@@ -9,14 +9,11 @@ namespace Quill.Core;
 
 public sealed class Resampler
 {
-  #region Constants
-  private const int BUFFER_SIZE = 440;
-  #endregion
-
   #region Fields
   private readonly object _bufferLock;
   private readonly short[] _buffer;
   private readonly byte[] _copyBuffer;
+  private readonly int _bufferSize;
   private volatile int _bufferPosition;
 
   private readonly double _decimationFactor;
@@ -30,8 +27,9 @@ public sealed class Resampler
   public Resampler(Configuration config)
   {
     _bufferLock = new object();
-    _buffer = new short[BUFFER_SIZE];
-    _copyBuffer = new byte[BUFFER_SIZE * 2];
+    _bufferSize = config.AudioBufferSize;
+    _buffer = new short[_bufferSize];
+    _copyBuffer = new byte[_bufferSize * 2];
 
     var rawSampleRate = (double) config.ClockRate / PSG.CYCLES_PER_SAMPLE;
     _decimationFactor = rawSampleRate / config.AudioSampleRate;
@@ -52,7 +50,7 @@ public sealed class Resampler
   {
     lock (_bufferLock)
     {
-      while (_bufferPosition < BUFFER_SIZE)
+      while (_bufferPosition < _bufferSize)
         Monitor.Wait(_bufferLock);
 
       Buffer.BlockCopy(_buffer, 0, _copyBuffer, 0, _copyBuffer.Length);
@@ -68,13 +66,13 @@ public sealed class Resampler
   {
     lock (_bufferLock)
     {
-      while (_bufferPosition == BUFFER_SIZE)
+      while (_bufferPosition == _bufferSize)
         Monitor.Wait(_bufferLock);
 
       _buffer[_bufferPosition] = (short)(_rawSampleAccumulator / _rawSampleCounter);
       _bufferPosition++;
 
-      if (_bufferPosition == BUFFER_SIZE)
+      if (_bufferPosition == _bufferSize)
         Monitor.Pulse(_bufferLock);
     }
 

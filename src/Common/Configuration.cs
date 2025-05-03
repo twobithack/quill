@@ -2,6 +2,8 @@ namespace Quill.Common;
 
 public class Configuration
 {
+  public int AudioBufferCount { get; set; } = 150; 
+  public int AudioBufferSize { get; set; } = 49;
   public int AudioSampleRate { get; set; } = 44100;
   public int ClockRate { get; set; } = 3579545;
   public bool CropBottomBorder { get; set; } = true;
