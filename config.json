@@ -6,6 +6,5 @@
   "cropBottomBorder": true,
   "cropLeftBorder":   true,
   "fixAspectRatio":   true,
-  "framesPerSecond":  60,
   "scaleFactor":      4
 }

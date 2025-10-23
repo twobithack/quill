@@ -9,6 +9,5 @@ public class Configuration
   public bool CropBottomBorder { get; set; } = true;
   public bool CropLeftBorder { get; set; } = true;
   public bool FixAspectRatio { get; set; } = true;
-  public int FramesPerSecond { get; set; } = 60;
   public int ScaleFactor { get; set; } = 1;
 }
