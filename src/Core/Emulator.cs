@@ -49,14 +49,13 @@ unsafe public sealed class Emulator
 
     while (_running)
     {
-      while (!_video.FrameCompleted)
+      while (!_video.FrameCompleted())
       {
         var clockCycles = cpu.Step();
         _audio.Step(clockCycles);
         _video.Step(clockCycles);
       }
-      
-      _video.AcknowledgeFrame();
+
       frameCounter++;
 
       if (_rewinding)

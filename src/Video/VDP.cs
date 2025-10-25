@@ -98,7 +98,14 @@ public sealed partial class VDP
     RenderScanline();
   }
 
-  public void AcknowledgeFrame() => FrameCompleted = false;
+  public bool FrameCompleted()
+  {
+    if (!_vBlankCompleted)
+      return false;
+      
+    _vBlankCompleted = false;
+    return true;
+  }
 
   public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
 
@@ -118,7 +125,7 @@ public sealed partial class VDP
     {
       _framebuffer.PushFrame();
     }
-    if (_vCounter == _vCounterActive + 1)
+    else if (_vCounter == _vCounterActive + 1)
     {
       VBlank = true;
     }
@@ -133,9 +140,9 @@ public sealed partial class VDP
     }
     else if (_vCounter == VCOUNTER_MAX)
     {
-      _vCounterJumped = false;
       _vScroll = _registers[0x9];
-      FrameCompleted = true;
+      _vCounterJumped = false;
+      _vBlankCompleted = true;
     }
     
     _vCounter++;
@@ -144,8 +151,7 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void UpdateInterrupts()
   {
-    if (_vCounter > _vCounterActive + 1 && 
-        _vCounter <= VCOUNTER_MAX)
+    if (_vCounter > _vCounterActive + 1)
     {
       _hLineCounter = _registers[0xA];
     }

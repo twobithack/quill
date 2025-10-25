@@ -28,7 +28,6 @@ public sealed partial class VDP
   #endregion
 
   #region Fields
-  public bool FrameCompleted;
   public bool IRQ;
 
   private readonly Framebuffer _framebuffer;
@@ -69,11 +68,12 @@ public sealed partial class VDP
   private bool _useSecondPatternTable;
 
   private DisplayMode _displayMode;
-  private readonly int _backgroundRows = 28;      // 32
-  private readonly byte _vCounterActive = 191;    // 224
-  private readonly byte _vCounterJumpFrom = 218;  // 234
-  private readonly byte _vCounterJumpTo = 213;    // 229
+  private readonly int _backgroundRows = 28;
+  private readonly byte _vCounterActive = 191;
+  private readonly byte _vCounterJumpFrom = 218;
+  private readonly byte _vCounterJumpTo = 213;
   private bool _vCounterJumped;
+  private bool _vBlankCompleted;
   #endregion
 
   #region Properties

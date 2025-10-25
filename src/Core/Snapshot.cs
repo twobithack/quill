@@ -75,18 +75,15 @@ public sealed class Snapshot
     if (!File.Exists(filepath))
       return null;
 
-    Snapshot state;
     try
     {
       using var stream = new FileStream(filepath, FileMode.Open);
-      state = MessagePackSerializer.Deserialize<Snapshot>(stream);
+      return MessagePackSerializer.Deserialize<Snapshot>(stream);
     }
     catch
     {
       return null;
     }
-    
-    return state;
   }
 
   public void WriteToFile(string filepath)

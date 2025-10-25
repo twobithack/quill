@@ -11,7 +11,8 @@ A cross-platform Master System emulator built on .NET and OpenTK.
 
 ## Compatibility
 
-Supports most Sega Master System and SG-1000 titles (see [`docs/compatibility.md`](/docs/compatibility.md)). Notable exceptions include titles that require accessories (3-D Glasses, Light Phaser, Paddle Control), use custom memory mappers (e.g., Codemasters), or are PAL-only.
+Supports most Sega Master System and SG-1000 titles (see [`docs/compatibility.md`](/docs/compatibility.md)). 
+Notable exceptions include titles that require accessories (3-D Glasses, Light Phaser, Paddle Control), use custom memory mappers (e.g., Codemasters titles), or are PAL-only.
 
 ## Getting Started
 
