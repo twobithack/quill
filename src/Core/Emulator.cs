@@ -1,4 +1,5 @@
 using Quill.Common;
+using Quill.Common.Definitions;
 using Quill.CPU;
 using Quill.IO;
 using Quill.Memory;
@@ -91,21 +92,21 @@ unsafe public sealed class Emulator
 
   public byte[] ReadFramebuffer() => _vdp.ReadFramebuffer();
 
-  public void UpdateInput(InputState state)
+  public void UpdateInput(InputState input)
   {
-    _ports.UpdateInput(state);
-    _rewinding = state.RewindPressed;
+    _ports.UpdateInput(input);
+    _rewinding = input.IsButtonDown(Commands.Rewind);
 
     if (!_savingEnabled)
     {
-      _savingEnabled = !state.QuickloadPressed &&
-                       !state.QuicksavePressed;
+      _savingEnabled = !input.IsButtonDown(Commands.Quickload) &&
+                       !input.IsButtonDown(Commands.Quicksave);
       return;
     }
 
-    if (state.QuickloadPressed)
+    if (input.IsButtonDown(Commands.Quickload))
       _loadRequested = true;
-    else if (state.QuicksavePressed)
+    else if (input.IsButtonDown(Commands.Quicksave))
       _saveRequested = true;
   }
 

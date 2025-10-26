@@ -13,12 +13,12 @@ public sealed partial class VDP
   public const int CRAM_SIZE = 0x20;
   public const int REGISTER_COUNT = 11;
   
-  private const int PIXELS_PER_CYCLE = 3;
   private const int HORIZONTAL_RESOLUTION = 256;
   private const int TILE_SIZE = 8;
   private const int BACKGROUND_COLUMNS = 32;
   private const int HSCROLL_LIMIT = 1;
   private const int VSCROLL_LIMIT = 24;
+  private const int HCOUNT_PER_CYCLE = 3;
   private const int HCOUNTER_MAX = 684;
   private const int VCOUNTER_MAX = byte.MaxValue;
   private const byte DISABLE_SPRITES = 0xD0;
@@ -106,7 +106,7 @@ public sealed partial class VDP
 
   public void Step(int cycles)
   {
-    _hCounter += (ushort)(cycles * PIXELS_PER_CYCLE);
+    _hCounter += (ushort)(cycles * HCOUNT_PER_CYCLE);
 
     if (_hCounter < HCOUNTER_MAX)
       return;

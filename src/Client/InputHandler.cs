@@ -16,32 +16,37 @@ public sealed class InputHandler
 
   public void ReadInput(KeyboardState kb)
   {
-    var console = ConsoleButtons.None;
-    if (kb.IsKeyDown(Keys.Space))       console |= ConsoleButtons.Pause;
-    if (kb.IsKeyDown(Keys.Escape))      console |= ConsoleButtons.Reset;
+    var input = new InputState();
+
+    input.SetJoypad1State(
+      up:    kb.IsKeyDown(Keys.W),
+      down:  kb.IsKeyDown(Keys.S),
+      left:  kb.IsKeyDown(Keys.A),
+      right: kb.IsKeyDown(Keys.D),
+      fireA: kb.IsKeyDown(Keys.F),
+      fireB: kb.IsKeyDown(Keys.G)
+    );
     
-    var player1 = JoypadButtons.None;
-    if (kb.IsKeyDown(Keys.W))           player1 |= JoypadButtons.Up;
-    if (kb.IsKeyDown(Keys.S))           player1 |= JoypadButtons.Down;
-    if (kb.IsKeyDown(Keys.A))           player1 |= JoypadButtons.Left;
-    if (kb.IsKeyDown(Keys.D))           player1 |= JoypadButtons.Right;
-    if (kb.IsKeyDown(Keys.F))           player1 |= JoypadButtons.FireA;
-    if (kb.IsKeyDown(Keys.G))           player1 |= JoypadButtons.FireB;
+    input.SetJoypad2State(
+      up:    kb.IsKeyDown(Keys.I),
+      down:  kb.IsKeyDown(Keys.K),
+      left:  kb.IsKeyDown(Keys.J),
+      right: kb.IsKeyDown(Keys.L),
+      fireA: kb.IsKeyDown(Keys.Semicolon),
+      fireB: kb.IsKeyDown(Keys.Apostrophe)
+    );
 
-    var player2 = JoypadButtons.None;
-    if (kb.IsKeyDown(Keys.I))           player2 |= JoypadButtons.Up;
-    if (kb.IsKeyDown(Keys.K))           player2 |= JoypadButtons.Down;
-    if (kb.IsKeyDown(Keys.J))           player2 |= JoypadButtons.Left;
-    if (kb.IsKeyDown(Keys.L))           player2 |= JoypadButtons.Right;
-    if (kb.IsKeyDown(Keys.Semicolon))   player2 |= JoypadButtons.FireA;
-    if (kb.IsKeyDown(Keys.Apostrophe))  player2 |= JoypadButtons.FireB;
+    input.SetConsoleState(
+      pause: kb.IsKeyDown(Keys.Space),
+      reset: kb.IsKeyDown(Keys.Escape)
+    );
 
-    var commands = Commands.None;
-    if (kb.IsKeyDown(Keys.R))           commands |= Commands.Rewind;
-    if (kb.IsKeyDown(Keys.Backspace))   commands |= Commands.Quickload;
-    if (kb.IsKeyDown(Keys.Enter))       commands |= Commands.Quicksave;
+    input.SetCommandState(
+      rewind:    kb.IsKeyDown(Keys.R),
+      quickload: kb.IsKeyDown(Keys.Backspace),
+      quicksave: kb.IsKeyDown(Keys.Enter)
+    );
 
-    var state = new InputState(console, player1, player2, commands);
-    _updateInput(state);
+    _updateInput(input);
   }
 }

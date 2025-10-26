@@ -42,23 +42,25 @@ public sealed class Ports
     SetPin(PortB.TH2, TH2);
   }
   
-  public void UpdateInput(InputState state)
+  public void UpdateInput(InputState input)
   {
-    SetPin(PortA.Joy1Up,    state.Joypad1Pressed(JoypadButtons.Up));
-    SetPin(PortA.Joy1Down,  state.Joypad1Pressed(JoypadButtons.Down));
-    SetPin(PortA.Joy1Left,  state.Joypad1Pressed(JoypadButtons.Left));
-    SetPin(PortA.Joy1Right, state.Joypad1Pressed(JoypadButtons.Right));
-    SetPin(PortA.Joy1FireA, state.Joypad1Pressed(JoypadButtons.FireA));
-    SetPin(PortA.Joy1FireB, state.Joypad1Pressed(JoypadButtons.FireB));
-    SetPin(PortA.Joy2Up,    state.Joypad2Pressed(JoypadButtons.Up));
-    SetPin(PortA.Joy2Down,  state.Joypad2Pressed(JoypadButtons.Down));
-    SetPin(PortB.Joy2Left,  state.Joypad2Pressed(JoypadButtons.Left));
-    SetPin(PortB.Joy2Right, state.Joypad2Pressed(JoypadButtons.Right));
-    SetPin(PortB.Joy2FireA, state.Joypad2Pressed(JoypadButtons.FireA));
-    SetPin(PortB.Joy2FireB, state.Joypad2Pressed(JoypadButtons.FireB));
-    SetPin(PortB.Reset,     state.ResetPressed);
+    SetPin(PortA.Joy1Up,    input.IsJ1ButtonDown(JoypadButtons.Up));
+    SetPin(PortA.Joy1Down,  input.IsJ1ButtonDown(JoypadButtons.Down));
+    SetPin(PortA.Joy1Left,  input.IsJ1ButtonDown(JoypadButtons.Left));
+    SetPin(PortA.Joy1Right, input.IsJ1ButtonDown(JoypadButtons.Right));
+    SetPin(PortA.Joy1FireA, input.IsJ1ButtonDown(JoypadButtons.FireA));
+    SetPin(PortA.Joy1FireB, input.IsJ1ButtonDown(JoypadButtons.FireB));
 
-    if (!state.PausePressed)
+    SetPin(PortA.Joy2Up,    input.IsJ2ButtonDown(JoypadButtons.Up));
+    SetPin(PortA.Joy2Down,  input.IsJ2ButtonDown(JoypadButtons.Down));
+    SetPin(PortB.Joy2Left,  input.IsJ2ButtonDown(JoypadButtons.Left));
+    SetPin(PortB.Joy2Right, input.IsJ2ButtonDown(JoypadButtons.Right));
+    SetPin(PortB.Joy2FireA, input.IsJ2ButtonDown(JoypadButtons.FireA));
+    SetPin(PortB.Joy2FireB, input.IsJ2ButtonDown(JoypadButtons.FireB));
+    
+    SetPin(PortB.Reset,     input.IsButtonDown(ConsoleButtons.Reset));
+
+    if (!input.IsButtonDown(ConsoleButtons.Pause))
     {
       _pausingEnabled = true;
     }
