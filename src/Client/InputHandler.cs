@@ -1,42 +1,47 @@
 using System;
 
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Quill.IO;
-using Quill.IO.Definitions;
+using Quill.Common;
+using Quill.Common.Definitions;
 
 namespace Quill.Client;
 
 public sealed class InputHandler
 {
   #region Fields
-  private readonly Action<Input> _setInput;
+  private readonly Action<InputState> _updateInput;
   #endregion
   
-  public InputHandler(Action<Input> inputSetter) => _setInput = inputSetter;
+  public InputHandler(Action<InputState> inputSetter) => _updateInput = inputSetter;
 
   public void ReadInput(KeyboardState kb)
   {
-    var state = new Input();
-
-    if (kb.IsKeyDown(Keys.W))           state.Joypad1 |= Buttons.Up;
-    if (kb.IsKeyDown(Keys.S))           state.Joypad1 |= Buttons.Down;
-    if (kb.IsKeyDown(Keys.A))           state.Joypad1 |= Buttons.Left;
-    if (kb.IsKeyDown(Keys.D))           state.Joypad1 |= Buttons.Right;
-    if (kb.IsKeyDown(Keys.F))           state.Joypad1 |= Buttons.FireA;
-    if (kb.IsKeyDown(Keys.G))           state.Joypad1 |= Buttons.FireB;
-    if (kb.IsKeyDown(Keys.I))           state.Joypad2 |= Buttons.Up;
-    if (kb.IsKeyDown(Keys.K))           state.Joypad2 |= Buttons.Down;
-    if (kb.IsKeyDown(Keys.J))           state.Joypad2 |= Buttons.Left;
-    if (kb.IsKeyDown(Keys.L))           state.Joypad2 |= Buttons.Right;
-    if (kb.IsKeyDown(Keys.Semicolon))   state.Joypad2 |= Buttons.FireA;
-    if (kb.IsKeyDown(Keys.Apostrophe))  state.Joypad2 |= Buttons.FireB;
-
-    state.PausePressed = kb.IsKeyDown(Keys.Space);
-    state.ResetPressed = kb.IsKeyDown(Keys.Escape);
-    state.RewindPressed = kb.IsKeyDown(Keys.R);
-    state.QuickloadPressed = kb.IsKeyDown(Keys.Backspace);
-    state.QuicksavePressed = kb.IsKeyDown(Keys.Enter);
+    var console = ConsoleButtons.None;
+    if (kb.IsKeyDown(Keys.Space))       console |= ConsoleButtons.Pause;
+    if (kb.IsKeyDown(Keys.Escape))      console |= ConsoleButtons.Reset;
     
-    _setInput(state);
+    var player1 = JoypadButtons.None;
+    if (kb.IsKeyDown(Keys.W))           player1 |= JoypadButtons.Up;
+    if (kb.IsKeyDown(Keys.S))           player1 |= JoypadButtons.Down;
+    if (kb.IsKeyDown(Keys.A))           player1 |= JoypadButtons.Left;
+    if (kb.IsKeyDown(Keys.D))           player1 |= JoypadButtons.Right;
+    if (kb.IsKeyDown(Keys.F))           player1 |= JoypadButtons.FireA;
+    if (kb.IsKeyDown(Keys.G))           player1 |= JoypadButtons.FireB;
+
+    var player2 = JoypadButtons.None;
+    if (kb.IsKeyDown(Keys.I))           player2 |= JoypadButtons.Up;
+    if (kb.IsKeyDown(Keys.K))           player2 |= JoypadButtons.Down;
+    if (kb.IsKeyDown(Keys.J))           player2 |= JoypadButtons.Left;
+    if (kb.IsKeyDown(Keys.L))           player2 |= JoypadButtons.Right;
+    if (kb.IsKeyDown(Keys.Semicolon))   player2 |= JoypadButtons.FireA;
+    if (kb.IsKeyDown(Keys.Apostrophe))  player2 |= JoypadButtons.FireB;
+
+    var commands = Commands.None;
+    if (kb.IsKeyDown(Keys.R))           commands |= Commands.Rewind;
+    if (kb.IsKeyDown(Keys.Backspace))   commands |= Commands.Quickload;
+    if (kb.IsKeyDown(Keys.Enter))       commands |= Commands.Quicksave;
+
+    var state = new InputState(console, player1, player2, commands);
+    _updateInput(state);
   }
 }

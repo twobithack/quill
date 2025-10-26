@@ -1,3 +1,7 @@
+using System.Runtime.CompilerServices;
+
+using Quill.Common;
+using Quill.Common.Definitions;
 using Quill.IO.Definitions;
 
 namespace Quill.IO;
@@ -20,11 +24,11 @@ public sealed class Ports
   }
 
   #region Properties
-  private bool TH1 => !GetBit(ControlPort.TH1_Input) &&
-                      !GetBit(ControlPort.TH1_Output);
+  private bool TH1 => !GetPin(ControlPort.TH1_Input) &&
+                      !GetPin(ControlPort.TH1_Output);
 
-  private bool TH2 => !GetBit(ControlPort.TH2_Input) &&
-                      !GetBit(ControlPort.TH2_Output);
+  private bool TH2 => !GetPin(ControlPort.TH2_Input) &&
+                      !GetPin(ControlPort.TH2_Output);
   #endregion
 
   #region Methods
@@ -34,25 +38,25 @@ public sealed class Ports
   public void WriteControl(byte value)
   {
     _control = (ControlPort)value;
-    SetBit(PortB.TH1, TH1);
-    SetBit(PortB.TH2, TH2);
+    SetPin(PortB.TH1, TH1);
+    SetPin(PortB.TH2, TH2);
   }
   
-  public void UpdateInput(Input state)
+  public void UpdateInput(InputState state)
   {
-    SetBit(PortA.Joy1Up,    state.Joypad1Pressed(Buttons.Up));
-    SetBit(PortA.Joy1Down,  state.Joypad1Pressed(Buttons.Down));
-    SetBit(PortA.Joy1Left,  state.Joypad1Pressed(Buttons.Left));
-    SetBit(PortA.Joy1Right, state.Joypad1Pressed(Buttons.Right));
-    SetBit(PortA.Joy1FireA, state.Joypad1Pressed(Buttons.FireA));
-    SetBit(PortA.Joy1FireB, state.Joypad1Pressed(Buttons.FireB));
-    SetBit(PortA.Joy2Up,    state.Joypad2Pressed(Buttons.Up));
-    SetBit(PortA.Joy2Down,  state.Joypad2Pressed(Buttons.Down));
-    SetBit(PortB.Joy2Left,  state.Joypad2Pressed(Buttons.Left));
-    SetBit(PortB.Joy2Right, state.Joypad2Pressed(Buttons.Right));
-    SetBit(PortB.Joy2FireA, state.Joypad2Pressed(Buttons.FireA));
-    SetBit(PortB.Joy2FireB, state.Joypad2Pressed(Buttons.FireB));
-    SetBit(PortB.Reset,     state.ResetPressed);
+    SetPin(PortA.Joy1Up,    state.Joypad1Pressed(JoypadButtons.Up));
+    SetPin(PortA.Joy1Down,  state.Joypad1Pressed(JoypadButtons.Down));
+    SetPin(PortA.Joy1Left,  state.Joypad1Pressed(JoypadButtons.Left));
+    SetPin(PortA.Joy1Right, state.Joypad1Pressed(JoypadButtons.Right));
+    SetPin(PortA.Joy1FireA, state.Joypad1Pressed(JoypadButtons.FireA));
+    SetPin(PortA.Joy1FireB, state.Joypad1Pressed(JoypadButtons.FireB));
+    SetPin(PortA.Joy2Up,    state.Joypad2Pressed(JoypadButtons.Up));
+    SetPin(PortA.Joy2Down,  state.Joypad2Pressed(JoypadButtons.Down));
+    SetPin(PortB.Joy2Left,  state.Joypad2Pressed(JoypadButtons.Left));
+    SetPin(PortB.Joy2Right, state.Joypad2Pressed(JoypadButtons.Right));
+    SetPin(PortB.Joy2FireA, state.Joypad2Pressed(JoypadButtons.FireA));
+    SetPin(PortB.Joy2FireB, state.Joypad2Pressed(JoypadButtons.FireB));
+    SetPin(PortB.Reset,     state.ResetPressed);
 
     if (!state.PausePressed)
     {
@@ -65,13 +69,16 @@ public sealed class Ports
     }
   }
 
-  private bool GetBit(ControlPort bit) => (_control & bit) != 0;
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool GetPin(ControlPort pin) => (_control & pin) != 0;
 
-  private void SetBit(PortA pin, bool state) => _portA = state
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetPin(PortA pin, bool state) => _portA = state
                                                        ? (_portA | pin)
                                                        : (_portA & ~pin);
-                                                         
-  private void SetBit(PortB pin, bool state) => _portB = state
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]                                         
+  private void SetPin(PortB pin, bool state) => _portB = state
                                                        ? (_portB | pin) 
                                                        : (_portB & ~pin);
   #endregion

@@ -7,7 +7,7 @@ namespace Quill.Sound;
 
 public sealed partial class PSG
 {
-  public PSG(Action<short> OnSampleGenerated)
+  public PSG(Action<short> sampleHandler)
   {
     _channels = new Channel[CHANNEL_COUNT];
     _channels[TONE0] = new Channel();
@@ -15,7 +15,7 @@ public sealed partial class PSG
     _channels[TONE2] = new Channel();
     _channels[NOISE] = new Channel();
     
-    _onSampleGenerated = OnSampleGenerated;
+    _onSampleGenerated = sampleHandler;
   }
 
   #region Methods

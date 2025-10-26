@@ -10,7 +10,6 @@ namespace Quill.CPU;
 unsafe public ref partial struct Z80
 {
   #region Fields
-  private Memory _memory;
   private Bus _bus;
 
   private Instruction _instruction;
@@ -200,7 +199,6 @@ unsafe public ref partial struct Z80
     _halt = state.Halt;
     _iff1 = state.IFF1;
     _iff2 = state.IFF2;
-    _memory.LoadState(state);
     _bus.LoadState(state);
   }
 
@@ -226,7 +224,6 @@ unsafe public ref partial struct Z80
       IFF1 = _iff1,
       IFF2 = _iff2
     };
-    _memory.SaveState(state);
     _bus.SaveState(state);
     return state;
   }
@@ -250,8 +247,6 @@ unsafe public ref partial struct Z80
     state.Halt = _halt;
     state.IFF1 = _iff1;
     state.IFF2 = _iff2;
-
-    _memory.SaveState(state);
     _bus.SaveState(state);
   }
 
@@ -264,11 +259,7 @@ unsafe public ref partial struct Z80
            "╘══════════╧══════════╧══════════╧══════════╧═══════════╛";
   }
 
-  public readonly void DumpMemory(string path) => _memory.DumpRAM(path);
-  public readonly void DumpROM(string path) => _memory.DumpROM(path);
-
   public override readonly string ToString() => DumpRegisters() + "\r\n" +
-                                                $"Flags: {_flags} | CIR: {_instruction}\r\n" +
-                                                _memory.ToString() + "\r\n";
+                                                $"Flags: {_flags} | CIR: {_instruction}";
   #endregion
 }

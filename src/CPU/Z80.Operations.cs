@@ -172,7 +172,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void CPD()
   {
-    var subtrahend = _memory.ReadByte(HL);
+    var subtrahend = _bus.ReadByte(HL);
     var difference = _a - subtrahend;
 
     HL--;
@@ -202,7 +202,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void CPI()
   {
-    var subtrahend = _memory.ReadByte(HL);
+    var subtrahend = _bus.ReadByte(HL);
     var difference = _a - subtrahend;
 
     HL++;
@@ -336,21 +336,21 @@ unsafe public ref partial struct Z80
       return;
     }
 
-    temp = _memory.ReadWord(_sp);
+    temp = _bus.ReadWord(_sp);
     switch (_instruction.Source)
     {
       case Operand.HL:
-        _memory.WriteWord(_sp, HL);
+        _bus.WriteWord(_sp, HL);
         HL = temp;
         return;
 
       case Operand.IX:
-        _memory.WriteWord(_sp, IX);
+        _bus.WriteWord(_sp, IX);
         IX = temp;
         return;
 
       case Operand.IY:
-        _memory.WriteWord(_sp, IY);
+        _bus.WriteWord(_sp, IY);
         IY = temp;
         return;
     }
@@ -438,7 +438,7 @@ unsafe public ref partial struct Z80
   private void IND()
   {
     var value = ReadPort(_c);
-    _memory.WriteByte(HL, value);
+    _bus.WriteByte(HL, value);
 
     HL--;
     _b--;
@@ -464,7 +464,7 @@ unsafe public ref partial struct Z80
   private void INI()
   {
     var value = ReadPort(_c);
-    _memory.WriteByte(HL, value);
+    _bus.WriteByte(HL, value);
 
     HL++;
     _b--;
@@ -519,8 +519,8 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void LDD()
   {
-    var value = _memory.ReadByte(HL);
-    _memory.WriteByte(DE, value);
+    var value = _bus.ReadByte(HL);
+    _bus.WriteByte(DE, value);
     
     DE--;
     HL--;
@@ -544,8 +544,8 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void LDI()
   {
-    var value = _memory.ReadByte(HL);
-    _memory.WriteByte(DE, value);
+    var value = _bus.ReadByte(HL);
+    _bus.WriteByte(DE, value);
     
     DE++;
     HL++;
@@ -612,7 +612,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void OUTD()
   {
-    var value = _memory.ReadByte(HL);
+    var value = _bus.ReadByte(HL);
     WritePort(_c, value);
 
     HL--;
@@ -638,7 +638,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void OUTI()
   {
-    var value = _memory.ReadByte(HL);
+    var value = _bus.ReadByte(HL);
     WritePort(_c, value);
 
     HL++;
@@ -787,7 +787,7 @@ unsafe public ref partial struct Z80
   private void RLD()
   {
     var address = HL;
-    var value = _memory.ReadByte(address);
+    var value = _bus.ReadByte(address);
     var highNibble = value.HighNibble();
 
     value = (byte)((value.LowNibble() << 4) + _a.LowNibble());
@@ -801,7 +801,7 @@ unsafe public ref partial struct Z80
     if (CarryFlag)
       flags |= Flags.Carry;
 
-    _memory.WriteByte(address, value);
+    _bus.WriteByte(address, value);
     _flags = flags;
   }
 
@@ -893,7 +893,7 @@ unsafe public ref partial struct Z80
   private void RRD()
   {
     var address = HL;
-    var value = _memory.ReadByte(address);
+    var value = _bus.ReadByte(address);
     var lowNibble = value.LowNibble();
 
     value = (byte)((_a.LowNibble() << 4) + value.HighNibble());
@@ -907,7 +907,7 @@ unsafe public ref partial struct Z80
     if (CarryFlag)
       flags |= Flags.Carry;
     
-    _memory.WriteByte(address, value);
+    _bus.WriteByte(address, value);
     _flags = flags;
   }
 

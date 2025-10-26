@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Quill.Video;
 
@@ -16,6 +17,7 @@ unsafe public sealed class Framebuffer
   private readonly byte[] _frontBuffer;
   private readonly int[] _backBuffer;
   private readonly bool[] _occupied;
+  private readonly Lock _bufferLock;
   #endregion
 
   public Framebuffer()
@@ -23,6 +25,7 @@ unsafe public sealed class Framebuffer
     _frontBuffer = new byte[FRONT_BUFFER_SIZE];
     _backBuffer = new int[BACK_BUFFER_SIZE];
     _occupied = new bool[BACK_BUFFER_SIZE];
+    _bufferLock = new Lock();
   }
 
   #region Methods
@@ -40,7 +43,7 @@ unsafe public sealed class Framebuffer
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void PushFrame()
   {
-    lock (_frontBuffer)
+    lock (_bufferLock)
       Buffer.BlockCopy(_backBuffer, 0, _frontBuffer, 0, FRONT_BUFFER_SIZE);
 
     Array.Clear(_backBuffer);
@@ -50,7 +53,7 @@ unsafe public sealed class Framebuffer
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte[] PopFrame()
   {
-    lock (_frontBuffer)
+    lock (_bufferLock)
       return _frontBuffer;
   }
 

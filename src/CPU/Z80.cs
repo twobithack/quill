@@ -10,11 +10,10 @@ namespace Quill.CPU;
 
 unsafe public ref partial struct Z80
 {
-  public Z80(byte[] rom, Bus bus)
+  public Z80(Bus bus)
   {
     _flags = Flags.None;
     _instruction = Opcodes.Main[0x00];
-    _memory = new Memory(rom);
     _bus = bus;
   }
 
@@ -68,7 +67,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private byte FetchByte() => _memory.ReadByte(_pc++);
+  private byte FetchByte() => _bus.ReadByte(_pc++);
     
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private sbyte FetchSignedByte() => (sbyte)FetchByte();
@@ -85,13 +84,13 @@ unsafe public ref partial struct Z80
   private void PushToStack(ushort value)
   {
     _sp -= 2;
-    _memory.WriteWord(_sp, value);
+    _bus.WriteWord(_sp, value);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private ushort PopFromStack()
   {
-    var value = _memory.ReadWord(_sp);
+    var value = _bus.ReadWord(_sp);
     _sp += 2;
     return value;
   }
@@ -291,7 +290,7 @@ unsafe public ref partial struct Z80
 
       default: throw new Exception($"Invalid byte operand: {_instruction}");
     }
-    return _memory.ReadByte(address);
+    return _bus.ReadByte(address);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -315,7 +314,7 @@ unsafe public ref partial struct Z80
 
       default: throw new Exception($"Invalid word operand: {_instruction}");
     }
-    return _memory.ReadWord(address); 
+    return _bus.ReadWord(address); 
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -359,7 +358,7 @@ unsafe public ref partial struct Z80
 
       default: throw new Exception($"Invalid byte destination: {destination}");
     }
-    _memory.WriteByte(address, value);
+    _bus.WriteByte(address, value);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -369,7 +368,7 @@ unsafe public ref partial struct Z80
     {
       case Operand.Indirect:
         var address = FetchWord();
-        _memory.WriteWord(address, value);
+        _bus.WriteWord(address, value);
         return;
 
       case Operand.AF:  AF = value;   return;

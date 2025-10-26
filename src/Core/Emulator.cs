@@ -1,6 +1,7 @@
 using Quill.Common;
 using Quill.CPU;
 using Quill.IO;
+using Quill.Memory;
 using Quill.Sound;
 using Quill.Video;
 
@@ -45,8 +46,9 @@ unsafe public sealed class Emulator
   #region Methods
   public void Run()
   {
-    var bus = new Bus(_ports, _psg, _vdp);
-    var cpu = new Z80(_rom, bus);
+    var memory = new Mapper(_rom);
+    var bus = new Bus(memory, _ports, _psg, _vdp);
+    var cpu = new Z80(bus);
     var frameCounter = 0;
 
     _running = true;
@@ -89,7 +91,7 @@ unsafe public sealed class Emulator
 
   public byte[] ReadFramebuffer() => _vdp.ReadFramebuffer();
 
-  public void UpdateInput(Input state)
+  public void UpdateInput(InputState state)
   {
     _ports.UpdateInput(state);
     _rewinding = state.RewindPressed;

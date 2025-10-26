@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 
 using CommunityToolkit.HighPerformance;
 using Quill.Common.Extensions;
 using Quill.Core;
 
-namespace Quill.CPU;
+namespace Quill.Memory;
 
-unsafe public ref struct Memory
+unsafe public ref struct Mapper
 {
   #region Constants
   public const ushort PAGE_SIZE = 0x4000;
@@ -37,7 +36,7 @@ unsafe public ref struct Memory
   private byte _page2;
   #endregion
 
-  public Memory(byte[] program)
+  public Mapper(byte[] program)
   {
     var headerOffset = (program.Length % PAGE_SIZE == HEADER_SIZE) ? HEADER_SIZE : 0;
     var pageCount = (program.Length + PAGE_SIZE - 1) / PAGE_SIZE;
@@ -73,7 +72,7 @@ unsafe public ref struct Memory
     _bankSelect = false;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  #region Methods
   public readonly byte ReadByte(ushort address)
   {
     if (address < PAGING_START)
@@ -86,7 +85,7 @@ unsafe public ref struct Memory
 
     if (address < PAGE_SIZE * 2)
       return _rom[_page1, index];
-      
+
     if (address < PAGE_SIZE * 3)
     {
       if (_bankEnable)
@@ -103,7 +102,6 @@ unsafe public ref struct Memory
     return _ram[index];
   }
   
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByte(ushort address, byte value)
   {
     if (address < PAGE_SIZE * 2)
@@ -142,21 +140,19 @@ unsafe public ref struct Memory
     _ram[index] = value;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly ushort ReadWord(ushort address)
   {
     var lowByte = ReadByte(address);
     var highByte = ReadByte(address.Increment());
     return highByte.Concat(lowByte);
   }
-  
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
   public void WriteWord(ushort address, ushort word)
   {
     WriteByte(address, word.LowByte());
     WriteByte(address.Increment(), word.HighByte());
   }
-
+  
   public void LoadState(Snapshot state)
   {
     for (var index = 0; index < PAGE_SIZE; index++)
@@ -224,8 +220,9 @@ unsafe public ref struct Memory
   public override readonly string ToString()
   {
     var banking = _bankEnable
-                ? $"enabled (Bank {_bankSelect.ToBit()})" 
+                ? $"enabled (Bank {_bankSelect.ToBit()})"
                 : "disabled";
     return $"Memory: RAM banking {banking} | P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
   }
+  #endregion
 }

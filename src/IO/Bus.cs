@@ -1,4 +1,5 @@
 using Quill.Core;
+using Quill.Memory;
 using Quill.Sound;
 using Quill.Video;
 
@@ -7,13 +8,15 @@ namespace Quill.IO;
 public ref struct Bus
 {
   #region Fields
+  private Mapper _memory;
   private readonly Ports _ports;
   private readonly PSG _psg;
   private readonly VDP _vdp;
   #endregion
 
-  public Bus(Ports ports, PSG psg, VDP vdp)
+  public Bus(Mapper memory, Ports ports, PSG psg, VDP vdp)
   {
+    _memory = memory;
     _ports = ports;
     _psg = psg;
     _vdp = vdp;
@@ -35,6 +38,11 @@ public ref struct Bus
     _psg.Step(cycles);
     _vdp.Step(cycles);
   }
+
+  public readonly byte ReadByte(ushort address) => _memory.ReadByte(address);
+  public readonly ushort ReadWord(ushort address) => _memory.ReadWord(address);
+  public void WriteByte(ushort address, byte value) => _memory.WriteByte(address, value);
+  public void WriteWord(ushort address, ushort word) => _memory.WriteWord(address, word);
 
   public readonly byte ReadPort(byte port) => port switch
   {
@@ -115,16 +123,18 @@ public ref struct Bus
     }
   }
   
-  public readonly void LoadState(Snapshot state)
+  public void LoadState(Snapshot state)
   {
-    _vdp.LoadState(state);
+    _memory.LoadState(state);
     _psg.LoadState(state);
+    _vdp.LoadState(state);
   }
 
   public readonly void SaveState(Snapshot state)
   {
-    _vdp.SaveState(state);
+    _memory.SaveState(state);
     _psg.SaveState(state);
+    _vdp.SaveState(state);
   }
   #endregion
 }

@@ -1,7 +1,7 @@
 ﻿using System.IO;
 
 using MessagePack;
-using Quill.CPU;
+using Quill.Memory;
 using Quill.Sound;
 using Quill.Video;
 using Quill.Video.Definitions;
@@ -59,9 +59,9 @@ public sealed class Snapshot
 
   public Snapshot()
   {
-    RAM = new byte[Memory.PAGE_SIZE];
-    Bank0 = new byte[Memory.PAGE_SIZE];
-    Bank1 = new byte[Memory.PAGE_SIZE];
+    RAM = new byte[Mapper.PAGE_SIZE];
+    Bank0 = new byte[Mapper.PAGE_SIZE];
+    Bank1 = new byte[Mapper.PAGE_SIZE];
     Palette = new int[VDP.CRAM_SIZE];
     VRAM = new byte[VDP.VRAM_SIZE];
     VRegisters = new byte[VDP.REGISTER_COUNT];
