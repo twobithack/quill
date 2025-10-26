@@ -45,15 +45,16 @@ public sealed class Snapshot
   [Key(28)] public Status VDPStatus;
   [Key(29)] public ushort ControlWord;
   [Key(30)] public byte DataPort;
-  [Key(31)] public byte LineInterrupt;
-  [Key(32)] public byte HScroll;
-  [Key(33)] public byte VScroll;
-  [Key(34)] public bool ControlWritePending;
+  [Key(31)] public byte HScroll;
+  [Key(32)] public byte VScroll;
+  [Key(33)] public byte HLineCounter;
+  [Key(34)] public bool HLinePending;
+  [Key(35)] public bool ControlWritePending;
 
-  [Key(35)] public ushort[] Tones;
-  [Key(36)] public byte[] Volumes;
-  [Key(37)] public int ChannelLatch;
-  [Key(38)] public bool VolumeLatch;
+  [Key(36)] public ushort[] Tones;
+  [Key(37)] public byte[] Volumes;
+  [Key(38)] public int ChannelLatch;
+  [Key(39)] public bool VolumeLatch;
   #endregion
 
   public Snapshot()
@@ -74,18 +75,15 @@ public sealed class Snapshot
     if (!File.Exists(filepath))
       return null;
 
-    Snapshot state;
     try
     {
       using var stream = new FileStream(filepath, FileMode.Open);
-      state = MessagePackSerializer.Deserialize<Snapshot>(stream);
+      return MessagePackSerializer.Deserialize<Snapshot>(stream);
     }
     catch
     {
       return null;
     }
-    
-    return state;
   }
 
   public void WriteToFile(string filepath)

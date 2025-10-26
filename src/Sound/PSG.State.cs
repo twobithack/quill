@@ -17,8 +17,7 @@ public sealed partial class PSG
   #endregion
 
   #region Fields
-  public event Action<short> OnSampleGenerated;
-
+  private readonly Action<short> _onSampleGenerated;
   private readonly Channel[] _channels;
   private int _channelLatch;
   private bool _volumeLatch;

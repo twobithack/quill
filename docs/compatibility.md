@@ -52,6 +52,7 @@
 * Chuck Rock II - Son of Chuck
 * Cloud Master
 * Columns
+* Cool Spot
 * The Cyber Shinobi
 * Daffy Duck in Hollywood
 * Danan: The Jungle Fighter
@@ -244,7 +245,6 @@
 * Bank Panic (PAL)
 * Block Hole (custom mapper)
 * California Games II (PAL)
-* Cool Spot (PAL)
 * Cosmic Spacehead (Codemasters mapper)
 * Desert Speedtrap Starring Roadrunner (PAL)
 * Excellent Dizzy Collection (Codemasters mapper)

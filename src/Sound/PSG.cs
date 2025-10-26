@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
 
@@ -6,13 +7,15 @@ namespace Quill.Sound;
 
 public sealed partial class PSG
 {
-  public PSG()
+  public PSG(Action<short> OnSampleGenerated)
   {
     _channels = new Channel[CHANNEL_COUNT];
     _channels[TONE0] = new Channel();
     _channels[TONE1] = new Channel();
     _channels[TONE2] = new Channel();
     _channels[NOISE] = new Channel();
+    
+    _onSampleGenerated = OnSampleGenerated;
   }
 
   #region Methods
@@ -80,7 +83,7 @@ public sealed partial class PSG
     sample += _channels[TONE2].GenerateTone();
     sample += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
     
-    OnSampleGenerated(sample);
+    _onSampleGenerated(sample);
   }
   #endregion
 }

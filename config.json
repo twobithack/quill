@@ -1,8 +1,10 @@
 {
+  "audioBufferCount": 150,
+  "audioBufferSize":  49,
   "audioSampleRate":  44100,
+  "clockRate":        3579540,
   "cropBottomBorder": true,
   "cropLeftBorder":   true,
   "fixAspectRatio":   true,
-  "framesPerSecond":  60,
-  "scaleFactor":      5
+  "scaleFactor":      4
 }

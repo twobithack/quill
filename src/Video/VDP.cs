@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -21,6 +20,7 @@ public sealed partial class VDP
   public byte ReadStatus()
   {
     _controlWritePending = false;
+    _hLineInterruptPending = false;
     IRQ = false;
 
     var value = (byte)_status;
@@ -98,7 +98,14 @@ public sealed partial class VDP
     RenderScanline();
   }
 
-  public void AcknowledgeFrame() => FrameCompleted = false;
+  public bool FrameCompleted()
+  {
+    if (!_vBlankCompleted)
+      return false;
+      
+    _vBlankCompleted = false;
+    return true;
+  }
 
   public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
 
@@ -106,21 +113,21 @@ public sealed partial class VDP
   {
     IncrementScanline();
     UpdateInterrupts();
-    
-    if (_vCounter < _vCounterActive)
+
+    if (_vCounter <= _vCounterActive)
       RasterizeScanline();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementScanline()
   {
-    if (_vCounter == VCOUNTER_MAX)
+    if (_vCounter == _vCounterActive)
     {
-      _vCounter = 0;
-      _vCounterJumped = false;
-      _vScroll = _registers[0x9];
-      FrameCompleted = true;
-      return;
+      _framebuffer.PushFrame();
+    }
+    else if (_vCounter == _vCounterActive + 1)
+    {
+      VBlank = true;
     }
     else if (_vCounter == _vCounterJumpFrom)
     {
@@ -131,11 +138,11 @@ public sealed partial class VDP
         return;
       }
     }
-    
-    if (_vCounter == _vCounterActive)
+    else if (_vCounter == VCOUNTER_MAX)
     {
-      _framebuffer.PushFrame();
-      VBlank = true;
+      _vScroll = _registers[0x9];
+      _vCounterJumped = false;
+      _vBlankCompleted = true;
     }
     
     _vCounter++;
@@ -144,31 +151,27 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void UpdateInterrupts()
   {
-    IRQ = VSyncPending;
-
-    if (_vCounter > _vCounterActive)
+    if (_vCounter > _vCounterActive + 1)
     {
-      _lineInterrupt = _registers[0xA];
+      _hLineCounter = _registers[0xA];
     }
-    else if (_lineInterrupt == 0)
+    else if (_hLineCounter == 0)
     {
-      _lineInterrupt = _registers[0xA];
-      IRQ |= _lineInterruptEnabled;
+      _hLineCounter = _registers[0xA];
+      _hLineInterruptPending = _hLineInterruptEnabled;
     }
     else
-    {
-      _lineInterrupt--;
-    }
+      _hLineCounter--;
+
+    IRQ = VSyncPending || HLinePending;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   { 
-    _hScroll = _registers[0x8];
-    
     if (!_displayEnabled)
     {
-      FillScanline();
+      BlankScanline();
       return;
     }
     
@@ -185,10 +188,18 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void FillScanline()
+  private void BlankScanline()
   {
-    for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
-      SetPixel(x, _vCounter, BackgroundColor, false);
+    if (DisplayMode4)
+    {
+      for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
+        SetPixel(x, _vCounter, _blankColor, false);
+    }
+    else
+    {
+      for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
+        SetLegacyPixel(x, _vCounter, _legacyBlankColor, false);
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -203,11 +214,7 @@ public sealed partial class VDP
     {
       ushort y = _vram[_spriteAttributeTableAddress + sprite];
       if (y == DISABLE_SPRITES)
-      {
-        // if (_displayMode != DisplayMode.Mode_4_224 &&
-        //     _displayMode != DisplayMode.Mode_4_240)
         return;
-      }
 
       y++;
       if (y >= DISABLE_SPRITES)
@@ -219,13 +226,16 @@ public sealed partial class VDP
 
       spriteCount++;
       if (spriteCount > 8)
+      {
         SpriteOverflow = true;
+        return;
+      }
 
       var offset = 0x80 + (sprite * 2);
       int x = _vram[_spriteAttributeTableAddress + offset];
       int patternIndex = _vram[_spriteAttributeTableAddress + offset + 1];
 
-      if (_shiftX)
+      if (_spriteShift)
         x -= TILE_SIZE;
 
       if (_useSecondPatternTable)
@@ -244,7 +254,7 @@ public sealed partial class VDP
         if (x >= HORIZONTAL_RESOLUTION)
           break;
 
-        if (x < 8 && _maskLeftBorder)
+        if (_leftColumnBlank && x < TILE_SIZE)
           continue;
 
         var paletteIndex = patternData.GetPaletteIndex(i);
@@ -266,13 +276,13 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeBackground()
   {
-    var allowHScroll = !_limitHScroll ||
+    var allowHScroll = !_hScrollInhibit ||
                        _vCounter / TILE_SIZE > HSCROLL_LIMIT;
 
     for (int backgroundColumn = 0; backgroundColumn < BACKGROUND_COLUMNS; backgroundColumn++)
     {
-      var tilemapY = _vCounter;
-      if (!_limitVScroll ||
+      ushort tilemapY = _vCounter;
+      if (!_vScrollInhibit ||
           backgroundColumn < VSCROLL_LIMIT)
         tilemapY += _vScroll;
 
@@ -291,8 +301,8 @@ public sealed partial class VDP
 
       var tileData = GetTileData(tileAddress);
       var tileOffset = tileData.VerticalFlip
-                 ? 7 - (tilemapY % TILE_SIZE)
-                 : tilemapY % TILE_SIZE;
+                     ? 7 - (tilemapY % TILE_SIZE)
+                     : tilemapY % TILE_SIZE;
 
       var patternAddress = (tileData.PatternIndex * 32) + (tileOffset * 4);
       var patternData = GetPatternData(patternAddress);
@@ -308,9 +318,11 @@ public sealed partial class VDP
           x += _hScroll;
         x %= HORIZONTAL_RESOLUTION;
 
-        if (x < TILE_SIZE && 
-            _maskLeftBorder)
+        if (_leftColumnBlank && x < TILE_SIZE)
+        {
+          SetPixel(x, _vCounter, _blankColor, false);
           continue;
+        }
 
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
 
@@ -454,7 +466,7 @@ public sealed partial class VDP
           continue;
         
         if (color == TRANSPARENT)
-          color = _blankColor;
+          color = _legacyBlankColor;
 
         SetLegacyPixel(x, _vCounter, color, false);
       }
@@ -522,20 +534,23 @@ public sealed partial class VDP
     switch (register)
     {
       case 0x0:
-        _shiftX = value.TestBit(3);
-        _lineInterruptEnabled = value.TestBit(4);
-        _maskLeftBorder = value.TestBit(5);
-        _limitHScroll = value.TestBit(6);
-        _limitVScroll = value.TestBit(7);
+        _spriteShift = value.TestBit(3);
+        _hLineInterruptEnabled = value.TestBit(4);
+        _leftColumnBlank = value.TestBit(5);
+        _hScrollInhibit = value.TestBit(6);
+        _vScrollInhibit = value.TestBit(7);
+        if (IRQ && !_hLineInterruptEnabled)
+          IRQ = VSyncPending;
         UpdateDisplayMode();
         return;
 
       case 0x1:
         _zoomSprites = value.TestBit(0);
         _stretchSprites = value.TestBit(1);
-        _vSyncEnabled = value.TestBit(5);
+        _vBlankInterruptEnabled = value.TestBit(5);
         _displayEnabled = value.TestBit(6);
-        IRQ = VSyncPending;
+        if (IRQ && !_vBlankInterruptEnabled)
+          IRQ = HLinePending;
         UpdateDisplayMode();
         return;
 
@@ -568,7 +583,12 @@ public sealed partial class VDP
         return;
 
       case 0x7:
-        _blankColor = (byte)(value & 0b_1111);
+        _legacyBlankColor = (byte)(value & 0b_1111);
+        _blankColor = _legacyBlankColor.SetBit(4);
+        return;
+
+      case 0x8:
+        _hScroll = value;
         return;
     };
   }

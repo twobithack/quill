@@ -8,20 +8,18 @@ namespace Quill.Client;
 
 public sealed class Audio
 {
-  #region Constants
-  private const int BUFFER_COUNT = 4;
-  #endregion
-
   #region Fields
   private readonly Func<byte[]> _requestNextBuffer;
   private readonly Thread _bufferingThread;
   private readonly ALDevice _device;
   private readonly ALFormat _format;
 
-  private readonly int _sampleRate;
   private readonly int[] _buffers;
+  private readonly int _bufferCount;
+  private readonly int _sampleRate;
   private readonly int _source;
-  private bool _playing;
+  
+  private volatile bool _playing;
   #endregion
 
   public Audio(Func<byte[]> requestNextBuffer, Configuration config)
@@ -33,16 +31,17 @@ public sealed class Audio
     _requestNextBuffer = requestNextBuffer;
     _bufferingThread = new Thread(BufferAudio) { IsBackground = true };
     
-    _buffers = AL.GenBuffers(BUFFER_COUNT);
+    _bufferCount = config.AudioBufferCount;
+    _buffers = AL.GenBuffers(_bufferCount);
     _source = AL.GenSource();
 
     _sampleRate = config.AudioSampleRate;
     _format = ALFormat.Mono16;
     
     var silence = new byte[(_sampleRate / 100) * sizeof(short)];
-    for (int buffer = 0; buffer < BUFFER_COUNT; buffer++)
+    for (int buffer = 0; buffer < _bufferCount; buffer++)
       AL.BufferData(_buffers[buffer], _format, silence, _sampleRate);
-    AL.SourceQueueBuffers(_source, BUFFER_COUNT, _buffers);
+    AL.SourceQueueBuffers(_source, _bufferCount, _buffers);
   }
 
   #region Methods
