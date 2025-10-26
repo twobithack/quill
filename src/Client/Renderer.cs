@@ -6,7 +6,7 @@ using Quill.Common;
 
 namespace Quill.Client;
 
-public sealed class Graphics
+public sealed class Renderer
 {
   #region Constants
   private const int FRAMEBUFFER_WIDTH = 256;
@@ -26,7 +26,7 @@ public sealed class Graphics
   private int _shaderProgram;
   #endregion
 
-  public Graphics(Func<byte[]> requestNextFrame, Configuration config)
+  public Renderer(Func<byte[]> requestNextFrame, Configuration config)
   {
     _requestNextFrame = requestNextFrame;
     _configuration = config;

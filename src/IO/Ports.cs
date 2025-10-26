@@ -7,10 +7,10 @@ public sealed class Ports
   #region Fields
   public bool NMI;
 
-  private bool _pauseEnabled;
   private ControlPort _control;
   private PortA _portA;
   private PortB _portB;
+  private bool _pausingEnabled;
   #endregion
 
   public Ports()
@@ -19,6 +19,14 @@ public sealed class Ports
     _portB = PortB.None;
   }
 
+  #region Properties
+  private bool TH1 => !GetBit(ControlPort.TH1_Input) &&
+                      !GetBit(ControlPort.TH1_Output);
+
+  private bool TH2 => !GetBit(ControlPort.TH2_Input) &&
+                      !GetBit(ControlPort.TH2_Output);
+  #endregion
+
   #region Methods
   public byte ReadPortA() => (byte)~_portA;
   public byte ReadPortB() => (byte)~_portB;
@@ -26,63 +34,45 @@ public sealed class Ports
   public void WriteControl(byte value)
   {
     _control = (ControlPort)value;
-    _portB &= PortB.Joy2;
-
-    if (!GetControlFlag(ControlPort.TH1_Input) &&
-        !GetControlFlag(ControlPort.TH1_Output))
-      _portB |= PortB.TH1;
-      
-    if (!GetControlFlag(ControlPort.TH2_Input) &&
-        !GetControlFlag(ControlPort.TH2_Output))
-      _portB |= PortB.TH2;
+    SetBit(PortB.TH1, TH1);
+    SetBit(PortB.TH2, TH2);
   }
-
-  public void SetJoypad1State(JoypadState joypad)
+  
+  public void UpdateInput(Input state)
   {
-    _portA &= ~PortA.Joy1;
+    SetBit(PortA.Joy1Up,    state.Joypad1Pressed(Buttons.Up));
+    SetBit(PortA.Joy1Down,  state.Joypad1Pressed(Buttons.Down));
+    SetBit(PortA.Joy1Left,  state.Joypad1Pressed(Buttons.Left));
+    SetBit(PortA.Joy1Right, state.Joypad1Pressed(Buttons.Right));
+    SetBit(PortA.Joy1FireA, state.Joypad1Pressed(Buttons.FireA));
+    SetBit(PortA.Joy1FireB, state.Joypad1Pressed(Buttons.FireB));
+    SetBit(PortA.Joy2Up,    state.Joypad2Pressed(Buttons.Up));
+    SetBit(PortA.Joy2Down,  state.Joypad2Pressed(Buttons.Down));
+    SetBit(PortB.Joy2Left,  state.Joypad2Pressed(Buttons.Left));
+    SetBit(PortB.Joy2Right, state.Joypad2Pressed(Buttons.Right));
+    SetBit(PortB.Joy2FireA, state.Joypad2Pressed(Buttons.FireA));
+    SetBit(PortB.Joy2FireB, state.Joypad2Pressed(Buttons.FireB));
+    SetBit(PortB.Reset,     state.ResetPressed);
 
-    if (joypad.Up)    _portA |= PortA.Joy1Up;
-    if (joypad.Down)  _portA |= PortA.Joy1Down;
-    if (joypad.Left)  _portA |= PortA.Joy1Left;
-    if (joypad.Right) _portA |= PortA.Joy1Right;
-    if (joypad.FireA) _portA |= PortA.Joy1FireA;
-    if (joypad.FireB) _portA |= PortA.Joy1FireB;
-
-    if (!joypad.Pause) 
-      _pauseEnabled = true;
-    else if (_pauseEnabled)
+    if (!state.PausePressed)
     {
-      _pauseEnabled = false;
+      _pausingEnabled = true;
+    }
+    else if (_pausingEnabled)
+    {
+      _pausingEnabled = false;
       NMI = true;
     }
   }
 
-  public void SetJoypad2State(JoypadState joypad)
-  {
-    _portA &= ~PortA.Joy2;
-    _portB &= ~PortB.Joy2;
+  private bool GetBit(ControlPort bit) => (_control & bit) != 0;
 
-    if (joypad.Up)    _portA |= PortA.Joy2Up;
-    if (joypad.Down)  _portA |= PortA.Joy2Down;
-    if (joypad.Left)  _portB |= PortB.Joy2Left;
-    if (joypad.Right) _portB |= PortB.Joy2Right;
-    if (joypad.FireA) _portB |= PortB.Joy2FireA;
-    if (joypad.FireB) _portB |= PortB.Joy2FireB;
-
-    if (joypad.Pause && _pauseEnabled)
-    {
-      _pauseEnabled = false;
-      NMI = true;
-    }
-  }
-
-  public void SetResetButtonState(bool reset)
-  {
-    _portB = reset 
-           ? (_portB | PortB.Reset) 
-           : (_portB & ~PortB.Reset);
-  }
-
-  private bool GetControlFlag(ControlPort flag) => (_control & flag) != 0;
+  private void SetBit(PortA pin, bool state) => _portA = state
+                                                       ? (_portA | pin)
+                                                       : (_portA & ~pin);
+                                                         
+  private void SetBit(PortB pin, bool state) => _portB = state
+                                                       ? (_portB | pin) 
+                                                       : (_portB & ~pin);
   #endregion
 }

@@ -15,46 +15,45 @@ unsafe public sealed class Emulator
 
   #region Fields
   private readonly Resampler _resampler;
-  private readonly PSG _audio;
-  private readonly VDP _video;
-  private readonly Ports _io;
+  private readonly PSG _psg;
+  private readonly VDP _vdp;
+  private readonly Ports _ports;
   private readonly byte[] _rom;
 
   private readonly RingBuffer<Snapshot> _history;
-  private string _snapshotPath;
+  private readonly string _snapshotPath;
+  private bool _rewinding;
   private bool _loadRequested;
   private bool _saveRequested;
-  private bool _rewinding;
+  private bool _savingEnabled;
   
   private volatile bool _running;
   #endregion
 
-  public Emulator(byte[] rom, Configuration config)
-  { 
+  public Emulator(byte[] rom, string savePath, Configuration config)
+  {
     _resampler = new Resampler(config);
-    _audio = new PSG(_resampler.HandleSampleGenerated);
-    _video = new VDP();
-    _io = new Ports();
+    _psg = new PSG(_resampler.HandleSampleGenerated);
+    _vdp = new VDP();
+    _ports = new Ports();
     _rom = rom;
 
     _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
+    _snapshotPath = savePath;
   }
 
   #region Methods
   public void Run()
   {
-    var cpu = new Z80(_rom, _audio, _video, _io);
+    var bus = new Bus(_ports, _psg, _vdp);
+    var cpu = new Z80(_rom, bus);
     var frameCounter = 0;
-    _running = true;
 
+    _running = true;
     while (_running)
     {
-      while (!_video.FrameCompleted())
-      {
-        var clockCycles = cpu.Step();
-        _audio.Step(clockCycles);
-        _video.Step(clockCycles);
-      }
+      while (!_vdp.FrameCompleted())
+        cpu.Step();
 
       frameCounter++;
 
@@ -88,30 +87,24 @@ unsafe public sealed class Emulator
 
   public byte[] ReadAudioBuffer() => _resampler.ReadBuffer();
 
-  public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
+  public byte[] ReadFramebuffer() => _vdp.ReadFramebuffer();
 
-  public void SetJoypadState(int joypad, JoypadState state)
+  public void UpdateInput(Input state)
   {
-    if (joypad == 0)
-      _io.SetJoypad1State(state);
-    else
-      _io.SetJoypad2State(state);
-  }
+    _ports.UpdateInput(state);
+    _rewinding = state.RewindPressed;
 
-  public void SetResetButtonState(bool reset) => _io.SetResetButtonState(reset);
+    if (!_savingEnabled)
+    {
+      _savingEnabled = !state.QuickloadPressed &&
+                       !state.QuicksavePressed;
+      return;
+    }
 
-  public void SetRewinding(bool rewinding) => _rewinding = rewinding;
-
-  public void LoadState(string path)
-  {
-    _snapshotPath = path;
-    _loadRequested = true;
-  }
-
-  public void SaveState(string path)
-  {
-    _snapshotPath = path;
-    _saveRequested = true;
+    if (state.QuickloadPressed)
+      _loadRequested = true;
+    else if (state.QuicksavePressed)
+      _saveRequested = true;
   }
 
   private Snapshot LoadSnapshot() => Snapshot.ReadFromFile(_snapshotPath);

@@ -5,49 +5,47 @@ using System.Runtime.CompilerServices;
 using Quill.Common.Extensions;
 using Quill.CPU.Definitions;
 using Quill.IO;
-using Quill.Sound;
-using Quill.Video;
 
 namespace Quill.CPU;
 
 unsafe public ref partial struct Z80
 {
-  public Z80(byte[] rom, PSG sound, VDP video, Ports io)
+  public Z80(byte[] rom, Bus bus)
   {
     _flags = Flags.None;
     _instruction = Opcodes.Main[0x00];
     _memory = new Memory(rom);
-    _psg = sound;
-    _vdp = video;
-    _ports = io;
+    _bus = bus;
   }
 
   #region Methods
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public int Step()
+  public void Step()
   {
     HandleInterrupts();
     if (_halt)
     {
       _r++;
-      return 0x04;
+      _bus.Step(0x04);
+      return;
     }
     DecodeInstruction();
     ExecuteInstruction();
-    return _instruction.Cycles;
+
+    _bus.Step(_instruction.Cycles);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void HandleInterrupts()
   {
-    if (_ports.NMI)
+    if (_bus.NMI)
     {
       PushToStack(_pc);
       _pc = 0x66;
       _halt = false;
       _iff2 = _iff1;
       _iff1 = false;
-      _ports.NMI = false;
+      _bus.NMI = false;
     }
 
     if (_eiPending)
@@ -58,7 +56,7 @@ unsafe public ref partial struct Z80
       return;
     }
 
-    if (_iff1 && _vdp.IRQ)
+    if (_iff1 && _bus.IRQ)
     {
       PushToStack(_pc);
       _pc = 0x38;
@@ -321,35 +319,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private readonly byte ReadPort(byte port) => port switch
-  {
-    0x3E => 0xFF,
-    0x3F => 0xFF,
-    0x7E => _vdp.VCounter,
-    0x7F => _vdp.HCounter,
-    0xBE => _vdp.ReadData(),
-    0xBF or 0xBD => _vdp.ReadStatus(),
-    0xDC or 0xC0 => _ports.ReadPortA(),
-    0xDD or 0xC1 => _ports.ReadPortB(),
-    byte mirror when mirror < 0x3E => 0xFF,
-    byte mirror when mirror > 0x3F &&
-                     mirror < 0x80 &&
-                     mirror % 2 == 0 => _vdp.VCounter,
-    byte mirror when mirror > 0x3F &&
-                     mirror < 0x80 &&
-                     mirror % 2 != 0 => _vdp.HCounter,
-    byte mirror when mirror > 0x7F &&
-                     mirror < 0xC0 &&
-                     mirror % 2 == 0 => _vdp.ReadData(),
-    byte mirror when mirror > 0x7F &&
-                     mirror < 0xC0 &&
-                     mirror % 2 != 0 => _vdp.ReadStatus(),
-    byte mirror when mirror > 0xC0 &&
-                     mirror % 2 == 0 => _ports.ReadPortA(),
-    byte mirror when mirror > 0xC1 &&
-                     mirror % 2 != 0 => _ports.ReadPortB(),
-    _ => 0xFF
-  };
+  private readonly byte ReadPort(byte port) => _bus.ReadPort(port);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteResult(byte value) => WriteByteResult(value, _instruction.Destination);
@@ -415,54 +385,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private readonly void WritePort(byte port, byte value)
-  {
-    switch (port)
-    {
-      case 0x7E:
-      case 0x7F:
-        _psg.WriteData(value);
-        return;
-
-      case 0xBD:
-      case 0xBF:
-        _vdp.WriteControl(value);
-        return;
-
-      case 0xBE:
-        _vdp.WriteData(value);
-        return;
-    
-      case 0x3E:
-      case byte mirror when mirror < 0x3E &&
-                            mirror % 2 == 0:
-        // Memory controller
-        return;
-    
-      case 0x3F:
-      case byte mirror when mirror < 0x3E &&
-                            mirror % 2 != 0:
-        _ports.WriteControl(value);
-        return;
-
-      case byte mirror when mirror > 0x3F &&
-                            mirror < 0x80:
-        _psg.WriteData(value);
-        return;
-
-      case byte mirror when mirror > 0x7F &&
-                            mirror < 0xC0 &&
-                            mirror % 2 != 0:
-        _vdp.WriteControl(value);
-        return;
-
-      case byte mirror when mirror > 0x7F &&
-                            mirror < 0xC0 &&
-                            mirror % 2 == 0:
-        _vdp.WriteData(value);
-        return;
-    }
-  }
+  private readonly void WritePort(byte port, byte value) => _bus.WritePort(port, value);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly bool EvaluateCondition() => _instruction.Source switch

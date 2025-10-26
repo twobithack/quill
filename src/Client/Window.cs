@@ -23,66 +23,52 @@ public sealed class Window : GameWindow
 
   #region Fields
   private readonly Audio _audio;
-  private readonly Graphics _graphics;
-  private readonly Input _input;
+  private readonly InputHandler _input;
+  private readonly Renderer _renderer;
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
   private readonly Configuration _configuration;
-
-  private readonly string _romName;
-  private readonly string _savesDirectory;
-  private bool _savesEnabled;
   #endregion
 
-  public Window(string romPath, Configuration config) 
+  public Window(Emulator emulator, Configuration config) 
     : base(GameWindowSettings.Default, CreateWindowSettings(config))
   {
-    var rom = File.ReadAllBytes(romPath);
-    _romName = Path.GetFileNameWithoutExtension(romPath);
-    _savesDirectory = Path.Combine(Path.GetDirectoryName(romPath), "saves");
     _configuration = config;
-
-    _emulator = new Emulator(rom, _configuration);
+    _emulator = emulator;
     _emulationThread = new Thread(_emulator.Run) { IsBackground = true };
 
     _audio = new Audio(_emulator.ReadAudioBuffer, _configuration);
-    _graphics = new Graphics(_emulator.ReadFramebuffer, _configuration);
-    _input = new Input(_emulator.SetJoypadState,
-                       _emulator.SetResetButtonState,
-                       _emulator.SetRewinding);
+    _renderer = new Renderer(_emulator.ReadFramebuffer, _configuration);
+    _input = new InputHandler(_emulator.UpdateInput);
   }
-
-  private string SnapshotFilepath => Path.Combine(_savesDirectory, _romName + ".save");
 
   #region Methods
   protected override void OnLoad()
   {
     base.OnLoad();
     _emulationThread.Start();
-    _graphics.Initialize();
+    _renderer.Initialize();
     _audio.Play();
   }
 
   protected override void OnUpdateFrame(FrameEventArgs args)
   {
     base.OnUpdateFrame(args);
-    _graphics.UpdateFrame();
-
-    var (loadRequested, saveRequested) = _input.HandleInput(KeyboardState);
-    HandleSnapshotRequest(loadRequested, saveRequested);
+    _renderer.UpdateFrame();
+    _input.ReadInput(KeyboardState);
   }
 
   protected override void OnRenderFrame(FrameEventArgs args)
   {
     base.OnRenderFrame(args);
-    _graphics.RenderFrame();
+    _renderer.RenderFrame();
     SwapBuffers();
   }
 
   protected override void OnUnload()
   {
     _audio.Stop();
-    _graphics.Stop();
+    _renderer.Stop();
     _emulator.Stop();
     base.OnUnload();
   }
@@ -90,7 +76,7 @@ public sealed class Window : GameWindow
   protected override void OnResize(ResizeEventArgs e)
   {
     base.OnResize(e);
-    _graphics.ResizeViewport(FramebufferSize);
+    _renderer.ResizeViewport(FramebufferSize);
   }
 
   private static NativeWindowSettings CreateWindowSettings(Configuration config)
@@ -125,29 +111,6 @@ public sealed class Window : GameWindow
     var bytes = File.ReadAllBytes("assets/icon.rgba");
     var image = new Image(128, 128, bytes);
     return new WindowIcon(image);
-  }
-
-  private void HandleSnapshotRequest(bool loadRequested,
-                                     bool saveRequested)
-  {
-    if (!_savesEnabled)
-    {
-      _savesEnabled = !loadRequested && 
-                      !saveRequested; 
-      return;
-    }
-
-    if (loadRequested)
-    {
-      _emulator.LoadState(SnapshotFilepath);
-      _savesEnabled = false;
-    }
-    else if (saveRequested)
-    {
-      Directory.CreateDirectory(_savesDirectory);
-      _emulator.SaveState(SnapshotFilepath);
-      _savesEnabled = false;
-    }
   }
   #endregion
 }
