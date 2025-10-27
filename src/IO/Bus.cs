@@ -33,12 +33,6 @@ public ref struct Bus
   #endregion
 
   #region Methods
-  public readonly void Step(int cycles)
-  {
-    _psg.Step(cycles);
-    _vdp.Step(cycles);
-  }
-
   public readonly byte ReadByte(ushort address) => _memory.ReadByte(address);
   public readonly ushort ReadWord(ushort address) => _memory.ReadWord(address);
   public void WriteByte(ushort address, byte value) => _memory.WriteByte(address, value);
@@ -121,6 +115,12 @@ public ref struct Bus
         _vdp.WriteData(value);
         return;
     }
+  }
+
+  public readonly void Step(int cycles)
+  {
+    _psg.Step(cycles);
+    _vdp.Step(cycles);
   }
   
   public void LoadState(Snapshot state)

@@ -155,12 +155,9 @@ unsafe public ref struct Mapper
   
   public void LoadState(Snapshot state)
   {
-    for (var index = 0; index < PAGE_SIZE; index++)
-    {
-      _ram[index] = state.RAM[index];
-      _ramBank0[index] = state.Bank0[index];
-      _ramBank1[index] = state.Bank1[index];
-    }
+    state.RAM.AsSpan().CopyTo(_ram);
+    state.Bank0.AsSpan().CopyTo(_ramBank0);
+    state.Bank1.AsSpan().CopyTo(_ramBank1);
     _page0 = state.Page0;
     _page1 = state.Page1;
     _page2 = state.Page2;
@@ -177,7 +174,7 @@ unsafe public ref struct Mapper
     state.Page1 = _page1;
     state.Page2 = _page2;
     state.BankEnable= _bankEnable;
-    state.BankSelect= _bankSelect;
+    state.BankSelect = _bankSelect;
   }
 
   public readonly void DumpRAM(string path)

@@ -14,19 +14,19 @@ unsafe public sealed class Framebuffer
   #endregion
 
   #region Fields
-  private bool _frontBufferToggle;
+  private readonly bool[] _occupied;
+  private readonly int[] _backBuffer;
   private readonly byte[] _frontBufferA;
   private readonly byte[] _frontBufferB;
-  private readonly int[] _backBuffer;
-  private readonly bool[] _occupied;
+  private bool _frontBufferToggle;
   #endregion
 
   public Framebuffer()
   {
+    _occupied = new bool[BACK_BUFFER_SIZE];
+    _backBuffer = new int[BACK_BUFFER_SIZE];
     _frontBufferA = new byte[FRONT_BUFFER_SIZE];
     _frontBufferB = new byte[FRONT_BUFFER_SIZE];
-    _backBuffer = new int[BACK_BUFFER_SIZE];
-    _occupied = new bool[BACK_BUFFER_SIZE];
   }
 
   #region Methods
@@ -45,11 +45,11 @@ unsafe public sealed class Framebuffer
   public void PushFrame()
   {
     var bufferToggle = Volatile.Read(ref _frontBufferToggle);
-    var frontBuffer = bufferToggle
-                    ? _frontBufferA
-                    : _frontBufferB;
+    var targetBuffer = bufferToggle
+                     ? _frontBufferA
+                     : _frontBufferB;
 
-    Buffer.BlockCopy(_backBuffer, 0, frontBuffer, 0, FRONT_BUFFER_SIZE);
+    Buffer.BlockCopy(_backBuffer, 0, targetBuffer, 0, FRONT_BUFFER_SIZE);
     Volatile.Write(ref _frontBufferToggle, !bufferToggle);
 
     Array.Clear(_backBuffer);
@@ -57,9 +57,9 @@ unsafe public sealed class Framebuffer
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public byte[] PopFrame() => !Volatile.Read(ref _frontBufferToggle) 
-                            ? _frontBufferA 
-                            : _frontBufferB;
+  public byte[] PopFrame() => Volatile.Read(ref _frontBufferToggle) 
+                            ? _frontBufferB
+                            : _frontBufferA;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private static int GetPixelIndex(int x, int y) => x + (y * FRAME_WIDTH);

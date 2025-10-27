@@ -344,7 +344,7 @@ public sealed partial class VDP
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
 
         if (_framebuffer.IsOccupied(x, _vCounter) &&
-            (!tileData.HighPriotity || paletteIndex == TRANSPARENT))
+            (!tileData.HighPriority || paletteIndex == TRANSPARENT))
           continue;
 
         if (tileData.UseSpritePalette)

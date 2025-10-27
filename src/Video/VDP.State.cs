@@ -98,8 +98,8 @@ public sealed partial class VDP
   {
     for (byte register = 0; register < REGISTER_COUNT; register++)
       WriteRegister(register, snapshot.VRegisters[register]);
-    Array.Copy(snapshot.Palette, _palette, _palette.Length);
-    Array.Copy(snapshot.VRAM, _vram, _vram.Length);
+    snapshot.Palette.AsSpan(0, _palette.Length).CopyTo(_palette);
+    snapshot.VRAM.AsSpan(0, _vram.Length).CopyTo(_vram);
     _status = snapshot.VDPStatus;
     _dataBuffer = snapshot.DataPort;
     _hLineCounter = snapshot.HLineCounter;
@@ -113,9 +113,9 @@ public sealed partial class VDP
 
   public void SaveState(Snapshot snapshot)
   {
-    Array.Copy(_registers, snapshot.VRegisters, _registers.Length);
-    Array.Copy(_palette, snapshot.Palette, _palette.Length);
-    Array.Copy(_vram, snapshot.VRAM, _vram.Length);
+    _registers.AsSpan().CopyTo(snapshot.VRegisters);
+    _palette.AsSpan().CopyTo(snapshot.Palette);
+    _vram.AsSpan().CopyTo(snapshot.VRAM);
     snapshot.VDPStatus = _status;
     snapshot.DataPort = _dataBuffer;
     snapshot.HLineCounter = _hLineCounter;
