@@ -24,12 +24,12 @@ unsafe public sealed class Emulator
 
   private readonly RingBuffer<Snapshot> _history;
   private readonly string _snapshotPath;
-  private bool _rewinding;
-  private bool _loadRequested;
-  private bool _saveRequested;
-  private bool _savingEnabled;
-  
+
   private volatile bool _running;
+  private volatile bool _rewinding;
+  private volatile bool _loadRequested;
+  private volatile bool _saveRequested;
+  private volatile bool _savingEnabled;
   #endregion
 
   public Emulator(byte[] rom, string savePath, Configuration config)
