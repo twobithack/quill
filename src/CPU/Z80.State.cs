@@ -43,6 +43,8 @@ unsafe public ref partial struct Z80
   #endregion
 
   #region Properties
+  public readonly ushort PC => _pc;
+
   private bool SignFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -248,6 +250,32 @@ unsafe public ref partial struct Z80
     state.IFF1 = _iff1;
     state.IFF2 = _iff2;
     _bus.SaveState(state);
+  }
+
+  public readonly Snapshot DumpState()
+  {
+    var state = new Snapshot
+    {
+      AF = AF,
+      BC = BC,
+      DE = DE,
+      HL = HL,
+      IX = IX,
+      IY = IY,
+      I = _i,
+      R = _r,
+      PC = _pc,
+      SP = _sp,
+      AFs = _afShadow,
+      BCs = _bcShadow,
+      DEs = _deShadow,
+      HLs = _hlShadow,
+      Halt = _halt,
+      IFF1 = _iff1,
+      IFF2 = _iff2
+    };
+    _bus.SaveState(state);
+    return state;
   }
 
   public readonly string DumpRegisters()

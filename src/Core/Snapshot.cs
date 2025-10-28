@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using static System.Collections.StructuralComparisons;
+using System.IO;
 
 using MessagePack;
 using Quill.Memory;
@@ -90,6 +91,35 @@ public sealed class Snapshot
   {
     using var stream = new FileStream(filepath, FileMode.Create);
     MessagePackSerializer.Serialize(stream, this);
+  }
+
+  public bool Equals(Snapshot other)
+  {
+    if (!StructuralEqualityComparer.Equals(RAM,        other.RAM))        return false;
+    if (!StructuralEqualityComparer.Equals(Bank0,      other.Bank0))      return false;
+    if (!StructuralEqualityComparer.Equals(Bank1,      other.Bank1))      return false;
+    if (!StructuralEqualityComparer.Equals(Palette,    other.Palette))    return false;
+    if (!StructuralEqualityComparer.Equals(VRAM,       other.VRAM))       return false;
+    if (!StructuralEqualityComparer.Equals(VRegisters, other.VRegisters)) return false;
+
+    if (AF   != other.AF)   return false;
+    if (BC   != other.BC)   return false;
+    if (DE   != other.DE)   return false;
+    if (HL   != other.HL)   return false;
+    if (IX   != other.IX)   return false;
+    if (IY   != other.IY)   return false;
+    if (PC   != other.PC)   return false;
+    if (SP   != other.SP)   return false;
+    if (AFs  != other.AFs)  return false;
+    if (BCs  != other.BCs)  return false;
+    if (DEs  != other.DEs)  return false;
+    if (HLs  != other.HLs)  return false;
+    if (I    != other.I)    return false;
+    if (R    != other.R)    return false;
+    if (IFF1 != other.IFF1) return false;
+    if (IFF2 != other.IFF2) return false;
+
+    return true;
   }
   #endregion
 }
