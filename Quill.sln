@@ -2,7 +2,9 @@
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quill", "Quill.csproj", "{A16536EE-C4FC-9D91-5ED9-C249EC71A88B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quill", "src/Quill.csproj", "{A16536EE-C4FC-9D91-5ED9-C249EC71A88B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Quill.Tests", "test/Quill.Tests.csproj", "{2F739614-9B4A-40A8-8DCD-624E19FD43CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +16,10 @@ Global
 		{A16536EE-C4FC-9D91-5ED9-C249EC71A88B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A16536EE-C4FC-9D91-5ED9-C249EC71A88B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A16536EE-C4FC-9D91-5ED9-C249EC71A88B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F739614-9B4A-40A8-8DCD-624E19FD43CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F739614-9B4A-40A8-8DCD-624E19FD43CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F739614-9B4A-40A8-8DCD-624E19FD43CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F739614-9B4A-40A8-8DCD-624E19FD43CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

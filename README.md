@@ -17,14 +17,13 @@ Notable exceptions include titles that require accessories (3-D Glasses, Light P
 ## Getting Started
 
 ### Prerequisites
-* **.NET SDK 9.0+**
-* **OpenAL** runtime (`openal`/`libopenal1`)
+* .NET SDK 9.0+
+* OpenAL runtime (`openal`/`libopenal1`)
 
 ### Build & Run
 
 ```
-$ dotnet build -c Release
-$ dotnet run -c Release -- /path/to/rom.sms
+$ dotnet run --project src/Quill.csproj -c Release /path/to/rom.sms
 ```
 
 ### Configuration
