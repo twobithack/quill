@@ -243,10 +243,7 @@ public sealed partial class VDP
 
       spriteCount++;
       if (spriteCount > 8)
-      {
         SpriteOverflow = true;
-        return;
-      }
 
       var offset = 0x80 + (sprite * 2);
       int x = _vram[_spriteAttributeTableAddress + offset];
