@@ -20,6 +20,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\Quill.csproj" />
+    <None Update="frames/*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="roms/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

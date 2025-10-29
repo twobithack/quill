@@ -1,11 +1,11 @@
-﻿using Quill.Common.Extensions;
+﻿using static System.Collections.StructuralComparisons;
+
 using Quill.Core;
 using Quill.CPU;
 using Quill.IO;
 using Quill.Memory;
 using Quill.Sound;
 using Quill.Video;
-using Xunit;
 
 namespace Quill.Tests;
 
@@ -24,8 +24,9 @@ public class SnapshotTests
   {
     var rom = File.ReadAllBytes("roms/SMSmemtest.sms");
     var memory = new Mapper(rom);
-    var psg = new PSG(_ => { });
-    var bus = new Bus(memory, new(), psg, new());
+    var psg = new PSG(new NullAudioSink());
+    var vdp = new VDP(new Framebuffer());
+    var bus = new Bus(memory, new(), psg, vdp);
     var cpu = new Z80(bus);
 
     var steps = 0;
@@ -34,12 +35,17 @@ public class SnapshotTests
       cpu.Step();
       steps++;
 
-      Assert.False(steps > TEST_CASE_STEP_LIMIT, $"SMSmemtest RAM test exceeded CPU step limit.");
+      Assert.False(steps > TEST_CASE_STEP_LIMIT, "CPU step limit exceeded.");
     }
     while (cpu.PC != SMSMEMTEST_RAM_TEST_HOOK);
 
-    var targetState = Snapshot.ReadFromFile($"states/SMSmemtest_RAM.state");
-    Assert.True(cpu.DumpState().Equals(targetState), $"SMSmemtest RAM test snapshot mismatch.");
+    var state = cpu.ReadState();
+    var targetState = LoadState("SMSmemtest_RAM");
+    Assert.True(state.Equals(targetState), "Snapshot mismatch.");
+
+    var frame = vdp.ReadFramebuffer();
+    var targetFrame = LoadFrame("SMSmemtest_RAM");
+    Assert.True(CompareFrames(frame, targetFrame), "Framebuffer mismatch.");
   }
 
   [Fact]
@@ -47,11 +53,12 @@ public class SnapshotTests
   {
     var rom = File.ReadAllBytes("roms/SMSmemtest.sms");
     var memory = new Mapper(rom);
-    var psg = new PSG(_ => { });
-    var bus = new Bus(memory, new(), psg, new());
+    var psg = new PSG(new NullAudioSink());
+    var vdp = new VDP(new Framebuffer());
+    var bus = new Bus(memory, new(), psg, vdp);
     var cpu = new Z80(bus);
 
-    var initialState = Snapshot.ReadFromFile("states/SMSmemtest_VRAM.state");
+    var initialState = LoadState("SMSmemtest_VRAM_init");
     cpu.LoadState(initialState);
 
     var steps = 0;
@@ -60,24 +67,30 @@ public class SnapshotTests
       cpu.Step();
       steps++;
 
-      Assert.False(steps > TEST_CASE_STEP_LIMIT, $"SMSmemtest VRAM test exceeded CPU step limit.");
+      Assert.False(steps > TEST_CASE_STEP_LIMIT, "CPU step limit exceeded.");
     }
     while (cpu.PC != SMSMEMTEST_VRAM_TEST_HOOK);
 
-    var targetState = Snapshot.ReadFromFile($"states/SMSmemtest_VRAM0.state");
-    Assert.True(cpu.DumpState().Equals(targetState), $"SMSmemtest VRAM test snapshot mismatch.");
+    var state = cpu.ReadState();
+    var targetState = LoadState("SMSmemtest_VRAM");
+    Assert.True(state.Equals(targetState), "Snapshot mismatch.");
+
+    var frame = vdp.ReadFramebuffer();
+    var targetFrame = LoadFrame("SMSmemtest_VRAM");
+    Assert.True(CompareFrames(frame, targetFrame), "Framebuffer mismatch.");
   }
-  
+
   [Fact]
   public void SMSmemtest_SRAM()
   {
     var rom = File.ReadAllBytes("roms/SMSmemtest.sms");
     var memory = new Mapper(rom);
-    var psg = new PSG(_ => { });
-    var bus = new Bus(memory, new(), psg, new());
+    var psg = new PSG(new NullAudioSink());
+    var vdp = new VDP(new Framebuffer());
+    var bus = new Bus(memory, new(), psg, vdp);
     var cpu = new Z80(bus);
 
-    var initialState = Snapshot.ReadFromFile("states/SMSmemtest_SRAM.state");
+    var initialState = LoadState("SMSmemtest_SRAM_init");
     cpu.LoadState(initialState);
 
     var steps = 0;
@@ -86,21 +99,27 @@ public class SnapshotTests
       cpu.Step();
       steps++;
 
-      Assert.False(steps > TEST_CASE_STEP_LIMIT, $"SMSmemtest SRAM test exceeded CPU step limit.");
+      Assert.False(steps > TEST_CASE_STEP_LIMIT, "CPU step limit exceeded.");
     }
     while (cpu.PC != SMSMEMTEST_SRAM_TEST_HOOK);
 
-    var targetState = Snapshot.ReadFromFile($"states/SMSmemtest_SRAM0.state");
-    Assert.True(cpu.DumpState().Equals(targetState), $"SMSmemtest SRAM test snapshot mismatch.");
+    var state = cpu.ReadState();
+    var targetState = LoadState("SMSmemtest_SRAM");
+    Assert.True(state.Equals(targetState), "Snapshot mismatch.");
+    
+    var frame = vdp.ReadFramebuffer();
+    var targetFrame = LoadFrame("SMSmemtest_SRAM");
+    Assert.True(CompareFrames(frame, targetFrame), "Framebuffer mismatch.");
   }
 
   [Fact]
-  public void ZexDoc()
+  public void Zexdoc()
   {
     var rom = File.ReadAllBytes("roms/zexdoc.sms");
     var memory = new Mapper(rom);
-    var psg = new PSG(_ => { });
-    var bus = new Bus(memory, new(), psg, new());
+    var psg = new PSG(new NullAudioSink());
+    var vdp = new VDP(new Framebuffer());
+    var bus = new Bus(memory, new(), psg, vdp);
     var cpu = new Z80(bus);
 
     for (int testCase = 0; testCase < 79; testCase++)
@@ -114,9 +133,21 @@ public class SnapshotTests
         Assert.False(steps > TEST_CASE_STEP_LIMIT, $"Test case {testCase:D2} exceeded CPU step limit.");
       }
       while (cpu.PC != ZEXDOC_TEST_CASE_HOOK);
-      
-      var targetState = Snapshot.ReadFromFile($"states/zexdoc_{testCase:D2}.state");
-      Assert.True(cpu.DumpState().Equals(targetState), $"Test case {testCase:D2} snapshot mismatch.");
+
+      var state = cpu.ReadState();
+      var targetState = LoadState($"zexdoc_{testCase:D2}");
+      Assert.True(state.Equals(targetState), $"Test case {testCase:D2} snapshot mismatch.");
+
+      var frame = vdp.ReadFramebuffer();
+      var targetFrame = LoadFrame($"zexdoc_{testCase:D2}");
+      Assert.True(CompareFrames(frame, targetFrame), $"Test case {testCase:D2} framebuffer mismatch.");
     }
   }
+
+  private static Snapshot LoadState(string name) => Snapshot.ReadFromFile($"states/{name}.state");
+
+  private static byte[] LoadFrame(string name) => File.ReadAllBytes($"frames/{name}.frame");
+
+  private static bool CompareFrames(byte[] framebuffer, byte[] targetbuffer) =>
+    StructuralEqualityComparer.Equals(framebuffer, targetbuffer);
 }

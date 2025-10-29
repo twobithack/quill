@@ -16,9 +16,8 @@ unsafe public sealed class Emulator
   #endregion
 
   #region Fields
+  private readonly Framebuffer _framebuffer;
   private readonly Resampler _resampler;
-  private readonly PSG _psg;
-  private readonly VDP _vdp;
   private readonly Ports _ports;
   private readonly byte[] _rom;
 
@@ -34,9 +33,8 @@ unsafe public sealed class Emulator
 
   public Emulator(byte[] rom, string savePath, Configuration config)
   {
+    _framebuffer = new Framebuffer();
     _resampler = new Resampler(config);
-    _psg = new PSG(_resampler.HandleSampleGenerated);
-    _vdp = new VDP();
     _ports = new Ports();
     _rom = rom;
 
@@ -48,14 +46,16 @@ unsafe public sealed class Emulator
   public void Run()
   {
     var memory = new Mapper(_rom);
-    var bus = new Bus(memory, _ports, _psg, _vdp);
+    var psg = new PSG(_resampler);
+    var vdp = new VDP(_framebuffer);
+    var bus = new Bus(memory, _ports, psg, vdp);
     var cpu = new Z80(bus);
     var frameCounter = 0;
 
     _running = true;
     while (_running)
     {
-      while (!_vdp.FrameCompleted())
+      while (!vdp.FrameCompleted())
         cpu.Step();
 
       frameCounter++;
@@ -90,7 +90,7 @@ unsafe public sealed class Emulator
 
   public byte[] ReadAudioBuffer() => _resampler.ReadBuffer();
 
-  public byte[] ReadFramebuffer() => _vdp.ReadFramebuffer();
+  public byte[] ReadFramebuffer() => _framebuffer.ReadFrame();
 
   public void UpdateInput(InputState input)
   {

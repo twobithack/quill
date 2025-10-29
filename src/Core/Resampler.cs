@@ -3,11 +3,12 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 
 using Quill.Common;
+using Quill.Common.Interfaces;
 using Quill.Sound;
 
 namespace Quill.Core;
 
-public sealed class Resampler
+public sealed class Resampler : IAudioSink
 {
   #region Fields
   private readonly object _bufferLock;
@@ -37,7 +38,7 @@ public sealed class Resampler
   }
   
   #region Methods
-  public void HandleSampleGenerated(short rawSample)
+  public void SubmitSample(short rawSample)
   {
     _rawSampleAccumulator += rawSample;
     _rawSampleCounter++;

@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
+using Quill.Common.Interfaces;
 using Quill.Core;
 using Quill.Video.Definitions;
 
@@ -14,7 +15,7 @@ public sealed partial class VDP
   #region Fields
   public bool IRQ;
 
-  private readonly Framebuffer _framebuffer;
+  private readonly IVideoSink _framebuffer;
   private readonly int[] _palette;
   private readonly byte[] _vram;
   private readonly byte[] _registers;

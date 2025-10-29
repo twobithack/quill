@@ -252,7 +252,7 @@ unsafe public ref partial struct Z80
     _bus.SaveState(state);
   }
 
-  public readonly Snapshot DumpState()
+  public readonly Snapshot ReadState()
   {
     var state = new Snapshot
     {

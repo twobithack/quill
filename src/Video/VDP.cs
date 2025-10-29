@@ -2,6 +2,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
+using Quill.Common.Interfaces;
 using Quill.Video.Definitions;
 
 namespace Quill.Video;
@@ -25,9 +26,9 @@ public sealed partial class VDP
   private const byte TRANSPARENT = 0x00;
   #endregion
 
-  public VDP()
+  public VDP(IVideoSink framebuffer)
   {
-    _framebuffer = new Framebuffer();
+    _framebuffer = framebuffer;
     _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
@@ -124,7 +125,7 @@ public sealed partial class VDP
     return true;
   }
 
-  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
+  public byte[] ReadFramebuffer() => _framebuffer.ReadFrame();
 
   private void RenderScanline()
   {
@@ -140,7 +141,7 @@ public sealed partial class VDP
   {
     if (_vCounter == _vCounterActive)
     {
-      _framebuffer.PushFrame();
+      _framebuffer.PublishFrame();
     }
     else if (_vCounter == _vCounterActive + 1)
     {
@@ -501,10 +502,10 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixel(int x, int y, int paletteIndex, bool isSprite) => _framebuffer.SetPixel(x, y, _palette[paletteIndex], isSprite);
+  private void SetPixel(int x, int y, int paletteIndex, bool isSprite) => _framebuffer.SubmitPixel(x, y, _palette[paletteIndex], isSprite);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacyPixel(int x, int y, byte color, bool isSprite) => _framebuffer.SetPixel(x, y, Color.ToLegacyRGBA(color), isSprite);
+  private void SetLegacyPixel(int x, int y, byte color, bool isSprite) => _framebuffer.SubmitPixel(x, y, Color.ToLegacyRGBA(color), isSprite);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private bool GetFlag(Status flag) => (_status & flag) != 0;

@@ -2,9 +2,11 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Quill.Video;
+using Quill.Common.Interfaces;
 
-unsafe public sealed class Framebuffer
+namespace Quill.Core;
+
+unsafe public sealed class Framebuffer : IVideoSink
 {
   #region Constants
   private const int FRAME_WIDTH = 256;
@@ -31,7 +33,7 @@ unsafe public sealed class Framebuffer
 
   #region Methods
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetPixel(int x, int y, int value, bool isSprite)
+  public void SubmitPixel(int x, int y, int value, bool isSprite)
   {
     var index = GetPixelIndex(x, y);
     _backBuffer[index] = value;
@@ -42,7 +44,7 @@ unsafe public sealed class Framebuffer
   public bool IsOccupied(int x, int y) => _occupied[GetPixelIndex(x, y)];
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void PushFrame()
+  public void PublishFrame()
   {
     var bufferToggle = Volatile.Read(ref _frontBufferToggle);
     var targetBuffer = bufferToggle
@@ -57,7 +59,7 @@ unsafe public sealed class Framebuffer
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public byte[] PopFrame() => Volatile.Read(ref _frontBufferToggle) 
+  public byte[] ReadFrame() => Volatile.Read(ref _frontBufferToggle) 
                             ? _frontBufferB
                             : _frontBufferA;
 
