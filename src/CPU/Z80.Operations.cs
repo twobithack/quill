@@ -605,7 +605,10 @@ unsafe public ref partial struct Z80
   private void OUT()
   {
     var port = ReadByteOperand(_instruction.Destination);
-    var value = ReadByteOperand(_instruction.Source);
+    var value = _instruction.Source == Operand.Implied
+              ? (byte)0x00
+              : ReadByteOperand(_instruction.Source);
+
     WritePort(port, value);
   }
 
