@@ -22,7 +22,7 @@ public class SnapshotTests
   [Fact]
   public void SMSmemtest_RAM()
   {
-    var rom = File.ReadAllBytes("roms/SMSmemtest.sms");
+    var rom = LoadROM("SMSmemtest");
     var memory = new Mapper(rom);
     var psg = new PSG(new NullAudioSink());
     var vdp = new VDP(new Framebuffer());
@@ -51,7 +51,7 @@ public class SnapshotTests
   [Fact]
   public void SMSmemtest_VRAM()
   {
-    var rom = File.ReadAllBytes("roms/SMSmemtest.sms");
+    var rom = LoadROM("SMSmemtest");
     var memory = new Mapper(rom);
     var psg = new PSG(new NullAudioSink());
     var vdp = new VDP(new Framebuffer());
@@ -83,7 +83,7 @@ public class SnapshotTests
   [Fact]
   public void SMSmemtest_SRAM()
   {
-    var rom = File.ReadAllBytes("roms/SMSmemtest.sms");
+    var rom = LoadROM("SMSmemtest");
     var memory = new Mapper(rom);
     var psg = new PSG(new NullAudioSink());
     var vdp = new VDP(new Framebuffer());
@@ -115,7 +115,7 @@ public class SnapshotTests
   [Fact]
   public void Zexdoc()
   {
-    var rom = File.ReadAllBytes("roms/zexdoc.sms");
+    var rom = LoadROM("zexdoc");
     var memory = new Mapper(rom);
     var psg = new PSG(new NullAudioSink());
     var vdp = new VDP(new Framebuffer());
@@ -144,10 +144,9 @@ public class SnapshotTests
     }
   }
 
+  private static byte[] LoadROM(string name) => File.ReadAllBytes($"roms/{name}.sms");
   private static Snapshot LoadState(string name) => Snapshot.ReadFromFile($"states/{name}.state");
-
   private static byte[] LoadFrame(string name) => File.ReadAllBytes($"frames/{name}.frame");
-
   private static bool CompareFrames(byte[] framebuffer, byte[] targetbuffer) =>
     StructuralEqualityComparer.Equals(framebuffer, targetbuffer);
 }
