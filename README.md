@@ -1,30 +1,29 @@
 # Quill &middot; [![build](https://github.com/twobithack/quill/actions/workflows/dotnet.yml/badge.svg)](https://github.com/twobithack/quill/actions/workflows/dotnet.yml)
-A cross-platform Master System emulator built on .NET and OpenTK.
+A cross-platform Sega Master System emulator built on .NET and OpenTK.
 
 ![Screenshot](/docs/screenshots/Sonic%20the%20Hedgehog.png)
 
 ## Features
 
-* Cycle-accurate emulation of Z80 CPU, VDP, and SN76489 PSG
+* Cycle-accurate emulation of Z80 CPU, 315-5124 VDP, and SN76489 PSG
 * Savestates: quicksave, quickload, and rewind functionality
 * Cross-platform: Windows, Linux, and macOS supported
 
 ## Compatibility
 
-Supports most Sega Master System and SG-1000 titles (see [`docs/compatibility.md`](/docs/compatibility.md)). 
+Supports most Master System and SG-1000 titles (see [`docs/compatibility.md`](/docs/compatibility.md)). 
 Notable exceptions include titles that require accessories (3-D Glasses, Light Phaser, Paddle Control), use custom memory mappers (e.g., Codemasters titles), or are PAL-only.
 
 ## Getting Started
 
 ### Prerequisites
-* **.NET SDK 9.0+**
-* **OpenAL** runtime (`openal`/`libopenal1`)
+* .NET SDK 9.0+
+* OpenAL runtime (`openal`/`libopenal1`)
 
 ### Build & Run
 
 ```
-$ dotnet build -c Release
-$ dotnet run -c Release -- /path/to/rom.sms
+$ dotnet run --project src/Quill.csproj -c Release /path/to/rom.sms
 ```
 
 ### Configuration

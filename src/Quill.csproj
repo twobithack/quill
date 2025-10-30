@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <RollForward>Major</RollForward>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <TieredCompilation>true</TieredCompilation>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ApplicationIcon>../assets/icon.ico</ApplicationIcon>
+    <ApplicationManifest>../app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="../assets/icon.bmp">
+      <IncludeInSingleFile>true</IncludeInSingleFile>
+      <LogicalName>icon.bmp</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../assets/icon.ico">
+      <IncludeInSingleFile>true</IncludeInSingleFile>
+      <LogicalName>icon.ico</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="../assets/icon.rgba">
+      <IncludeInSingleFile>true</IncludeInSingleFile>
+      <LogicalName>icon.rgba</LogicalName>
+    </EmbeddedResource>
+    <None Update="../config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0" />
+    <PackageReference Include="MessagePack" Version="3.1.3" />
+    <PackageReference Include="OpenTK" Version="4.9.4" />
+  </ItemGroup>
+
+</Project>

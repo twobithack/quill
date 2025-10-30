@@ -1,6 +1,8 @@
 using Quill.Common;
+using Quill.Common.Definitions;
 using Quill.CPU;
 using Quill.IO;
+using Quill.Memory;
 using Quill.Sound;
 using Quill.Video;
 
@@ -14,47 +16,47 @@ unsafe public sealed class Emulator
   #endregion
 
   #region Fields
+  private readonly Framebuffer _framebuffer;
   private readonly Resampler _resampler;
-  private readonly PSG _audio;
-  private readonly VDP _video;
-  private readonly Ports _io;
+  private readonly Ports _ports;
   private readonly byte[] _rom;
 
   private readonly RingBuffer<Snapshot> _history;
-  private string _snapshotPath;
-  private bool _loadRequested;
-  private bool _saveRequested;
-  private bool _rewinding;
-  
+  private readonly string _snapshotPath;
+
   private volatile bool _running;
+  private volatile bool _rewinding;
+  private volatile bool _loadRequested;
+  private volatile bool _saveRequested;
+  private volatile bool _savingEnabled;
   #endregion
 
-  public Emulator(byte[] rom, Configuration config)
-  { 
+  public Emulator(byte[] rom, string savePath, Configuration config)
+  {
+    _framebuffer = new Framebuffer();
     _resampler = new Resampler(config);
-    _audio = new PSG(_resampler.HandleSampleGenerated);
-    _video = new VDP();
-    _io = new Ports();
+    _ports = new Ports();
     _rom = rom;
 
     _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
+    _snapshotPath = savePath;
   }
 
   #region Methods
   public void Run()
   {
-    var cpu = new Z80(_rom, _audio, _video, _io);
+    var memory = new Mapper(_rom);
+    var psg = new PSG(_resampler);
+    var vdp = new VDP(_framebuffer);
+    var bus = new Bus(memory, _ports, psg, vdp);
+    var cpu = new Z80(bus);
     var frameCounter = 0;
-    _running = true;
 
+    _running = true;
     while (_running)
     {
-      while (!_video.FrameCompleted())
-      {
-        var clockCycles = cpu.Step();
-        _audio.Step(clockCycles);
-        _video.Step(clockCycles);
-      }
+      while (!vdp.FrameCompleted())
+        cpu.Step();
 
       frameCounter++;
 
@@ -88,30 +90,24 @@ unsafe public sealed class Emulator
 
   public byte[] ReadAudioBuffer() => _resampler.ReadBuffer();
 
-  public byte[] ReadFramebuffer() => _video.ReadFramebuffer();
+  public byte[] ReadFramebuffer() => _framebuffer.ReadFrame();
 
-  public void SetJoypadState(int joypad, JoypadState state)
+  public void UpdateInput(InputState input)
   {
-    if (joypad == 0)
-      _io.SetJoypad1State(state);
-    else
-      _io.SetJoypad2State(state);
-  }
+    _ports.UpdateInput(input);
+    _rewinding = input.IsButtonDown(Commands.Rewind);
 
-  public void SetResetButtonState(bool reset) => _io.SetResetButtonState(reset);
+    if (!_savingEnabled)
+    {
+      _savingEnabled = !input.IsButtonDown(Commands.Quickload) &&
+                       !input.IsButtonDown(Commands.Quicksave);
+      return;
+    }
 
-  public void SetRewinding(bool rewinding) => _rewinding = rewinding;
-
-  public void LoadState(string path)
-  {
-    _snapshotPath = path;
-    _loadRequested = true;
-  }
-
-  public void SaveState(string path)
-  {
-    _snapshotPath = path;
-    _saveRequested = true;
+    if (input.IsButtonDown(Commands.Quickload))
+      _loadRequested = true;
+    else if (input.IsButtonDown(Commands.Quicksave))
+      _saveRequested = true;
   }
 
   private Snapshot LoadSnapshot() => Snapshot.ReadFromFile(_snapshotPath);

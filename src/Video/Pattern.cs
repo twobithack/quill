@@ -4,20 +4,12 @@ using Quill.Common.Extensions;
 
 namespace Quill.Video;
 
-public readonly struct Pattern
+public readonly struct Pattern(byte bp0, byte bp1, byte bp2, byte bp3)
 {
-  private readonly byte _bitplane0;
-  private readonly byte _bitplane1;
-  private readonly byte _bitplane2;
-  private readonly byte _bitplane3;
-
-  public Pattern(byte bp0, byte bp1, byte bp2, byte bp3)
-  {
-    _bitplane0 = bp0;
-    _bitplane1 = bp1;
-    _bitplane2 = bp2;
-    _bitplane3 = bp3;
-  }
+  private readonly byte _bitplane0 = bp0;
+  private readonly byte _bitplane1 = bp1;
+  private readonly byte _bitplane2 = bp2;
+  private readonly byte _bitplane3 = bp3;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte GetPaletteIndex(int column)

@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
+using Quill.Common.Interfaces;
 using Quill.Core;
 using Quill.Video.Definitions;
 
@@ -11,29 +12,14 @@ namespace Quill.Video;
 
 public sealed partial class VDP
 {
-  #region Constants
-  public const int VRAM_SIZE = 0x4000;
-  public const int CRAM_SIZE = 0x20;
-  public const int REGISTER_COUNT = 11;
-  
-  private const int HORIZONTAL_RESOLUTION = 256;
-  private const int TILE_SIZE = 8;
-  private const int BACKGROUND_COLUMNS = 32;
-  private const int HSCROLL_LIMIT = 1;
-  private const int VSCROLL_LIMIT = 24;
-  private const int HCOUNTER_MAX = 684;
-  private const int VCOUNTER_MAX = byte.MaxValue;
-  private const byte DISABLE_SPRITES = 0xD0;
-  private const byte TRANSPARENT = 0x00;
-  #endregion
-
   #region Fields
   public bool IRQ;
 
-  private readonly Framebuffer _framebuffer;
+  private readonly IVideoSink _framebuffer;
   private readonly int[] _palette;
   private readonly byte[] _vram;
   private readonly byte[] _registers;
+  private readonly bool[] _spriteMask;
 
   private ControlCode _controlCode;
   private Status _status;
@@ -114,8 +100,8 @@ public sealed partial class VDP
   {
     for (byte register = 0; register < REGISTER_COUNT; register++)
       WriteRegister(register, snapshot.VRegisters[register]);
-    Array.Copy(snapshot.Palette, _palette, _palette.Length);
-    Array.Copy(snapshot.VRAM, _vram, _vram.Length);
+    snapshot.Palette.AsSpan(0, _palette.Length).CopyTo(_palette);
+    snapshot.VRAM.AsSpan(0, _vram.Length).CopyTo(_vram);
     _status = snapshot.VDPStatus;
     _dataBuffer = snapshot.DataPort;
     _hLineCounter = snapshot.HLineCounter;
@@ -129,9 +115,9 @@ public sealed partial class VDP
 
   public void SaveState(Snapshot snapshot)
   {
-    Array.Copy(_registers, snapshot.VRegisters, _registers.Length);
-    Array.Copy(_palette, snapshot.Palette, _palette.Length);
-    Array.Copy(_vram, snapshot.VRAM, _vram.Length);
+    _registers.AsSpan().CopyTo(snapshot.VRegisters);
+    _palette.AsSpan().CopyTo(snapshot.Palette);
+    _vram.AsSpan().CopyTo(snapshot.VRAM);
     snapshot.VDPStatus = _status;
     snapshot.DataPort = _dataBuffer;
     snapshot.HLineCounter = _hLineCounter;

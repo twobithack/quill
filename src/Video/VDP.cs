@@ -1,19 +1,39 @@
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
+using Quill.Common.Interfaces;
 using Quill.Video.Definitions;
 
 namespace Quill.Video;
 
 public sealed partial class VDP
 {
-  public VDP()
+  #region Constants
+  public const int VRAM_SIZE = 0x4000;
+  public const int CRAM_SIZE = 0x20;
+  public const int REGISTER_COUNT = 11;
+  
+  private const int HORIZONTAL_RESOLUTION = 256;
+  private const int TILE_SIZE = 8;
+  private const int BACKGROUND_COLUMNS = 32;
+  private const int HSCROLL_LIMIT = 1;
+  private const int VSCROLL_LIMIT = 24;
+  private const int HCOUNT_PER_CYCLE = 3;
+  private const int HCOUNTER_MAX = 684;
+  private const int VCOUNTER_MAX = byte.MaxValue;
+  private const byte DISABLE_SPRITES = 0xD0;
+  private const byte TRANSPARENT = 0x00;
+  #endregion
+
+  public VDP(IVideoSink framebuffer)
   {
-    _framebuffer = new Framebuffer();
+    _framebuffer = framebuffer;
     _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
+    _spriteMask = new bool[HORIZONTAL_RESOLUTION];
   }
 
   #region Methods
@@ -87,9 +107,9 @@ public sealed partial class VDP
     IncrementAddress();
   }
 
-  public void Step(int clockCycles)
+  public void Step(int cycles)
   {
-    _hCounter += (ushort)(clockCycles * 3);
+    _hCounter += (ushort)(cycles * HCOUNT_PER_CYCLE);
 
     if (_hCounter < HCOUNTER_MAX)
       return;
@@ -107,7 +127,7 @@ public sealed partial class VDP
     return true;
   }
 
-  public byte[] ReadFramebuffer() => _framebuffer.PopFrame();
+  public byte[] ReadFramebuffer() => _framebuffer.ReadFrame();
 
   private void RenderScanline()
   {
@@ -123,7 +143,7 @@ public sealed partial class VDP
   {
     if (_vCounter == _vCounterActive)
     {
-      _framebuffer.PushFrame();
+      _framebuffer.PublishFrame();
     }
     else if (_vCounter == _vCounterActive + 1)
     {
@@ -174,7 +194,7 @@ public sealed partial class VDP
       BlankScanline();
       return;
     }
-    
+
     if (DisplayMode4)
     {
       RasterizeSprites();
@@ -185,6 +205,8 @@ public sealed partial class VDP
       RasterizeLegacySprites();
       RasterizeLegacyBackground();
     }
+
+    Array.Clear(_spriteMask);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -226,10 +248,7 @@ public sealed partial class VDP
 
       spriteCount++;
       if (spriteCount > 8)
-      {
         SpriteOverflow = true;
-        return;
-      }
 
       var offset = 0x80 + (sprite * 2);
       int x = _vram[_spriteAttributeTableAddress + offset];
@@ -262,7 +281,7 @@ public sealed partial class VDP
           continue;
         paletteIndex += 16;
 
-        if (_framebuffer.IsOccupied(x, _vCounter))
+        if (_spriteMask[x])
         {
           SpriteCollision = true;
           continue;
@@ -326,8 +345,8 @@ public sealed partial class VDP
 
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
 
-        if (_framebuffer.IsOccupied(x, _vCounter) &&
-            (!tileData.HighPriotity || paletteIndex == TRANSPARENT))
+        if (_spriteMask[x] &&
+            (!tileData.HighPriority || paletteIndex == TRANSPARENT))
           continue;
 
         if (tileData.UseSpritePalette)
@@ -410,7 +429,7 @@ public sealed partial class VDP
     var data = _vram[address + offset];
     for (byte i = 0; i < TILE_SIZE; i++)
     {
-      if (_framebuffer.IsOccupied(x + i, _vCounter))
+      if (_spriteMask[x + i])
       {
         SpriteCollision = true;
         continue;
@@ -462,7 +481,7 @@ public sealed partial class VDP
                   ? colorData.HighNibble()
                   : colorData.LowNibble();
         
-        if (_framebuffer.IsOccupied(x, _vCounter))
+        if (_spriteMask[x])
           continue;
         
         if (color == TRANSPARENT)
@@ -487,18 +506,18 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixel(int x, int y, int paletteIndex, bool isSprite) => _framebuffer.SetPixel(x, y, _palette[paletteIndex], isSprite);
+  private void SetPixel(int x, int y, int paletteIndex, bool isSprite)
+  {
+    _framebuffer.SubmitPixel(x, y, _palette[paletteIndex]);
+    _spriteMask[x] = isSprite;
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacyPixel(int x, int y, byte color, bool isSprite) => _framebuffer.SetPixel(x, y, Color.ToLegacyRGBA(color), isSprite);
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private bool GetFlag(Status flag) => (_status & flag) != 0;
-  
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetFlag(Status flag, bool value) => _status = value
-                                                 ? _status | flag
-                                                 : _status & ~flag;
+  private void SetLegacyPixel(int x, int y, byte color, bool isSprite)
+  {
+    _framebuffer.SubmitPixel(x, y, Color.ToLegacyRGBA(color));
+    _spriteMask[x] = isSprite;
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetLastSpriteIndex(int value)
@@ -590,7 +609,15 @@ public sealed partial class VDP
       case 0x8:
         _hScroll = value;
         return;
-    };
+    }
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool GetFlag(Status flag) => (_status & flag) != 0;
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetFlag(Status flag, bool value) => _status = value
+                                                 ? _status | flag
+                                                 : _status & ~flag;
   #endregion
 }

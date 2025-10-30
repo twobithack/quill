@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿using Quill.Common.Interfaces;
 using Quill.Core;
 
 namespace Quill.Sound;
@@ -17,7 +16,7 @@ public sealed partial class PSG
   #endregion
 
   #region Fields
-  private readonly Action<short> _onSampleGenerated;
+  private readonly IAudioSink _audioSink;
   private readonly Channel[] _channels;
   private int _channelLatch;
   private bool _volumeLatch;

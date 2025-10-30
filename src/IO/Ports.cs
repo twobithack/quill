@@ -1,3 +1,7 @@
+using System.Runtime.CompilerServices;
+
+using Quill.Common;
+using Quill.Common.Definitions;
 using Quill.IO.Definitions;
 
 namespace Quill.IO;
@@ -7,10 +11,10 @@ public sealed class Ports
   #region Fields
   public bool NMI;
 
-  private bool _pauseEnabled;
   private ControlPort _control;
   private PortA _portA;
   private PortB _portB;
+  private bool _pausingEnabled;
   #endregion
 
   public Ports()
@@ -19,6 +23,14 @@ public sealed class Ports
     _portB = PortB.None;
   }
 
+  #region Properties
+  private bool TH1 => !GetPin(ControlPort.TH1_Input) &&
+                      !GetPin(ControlPort.TH1_Output);
+
+  private bool TH2 => !GetPin(ControlPort.TH2_Input) &&
+                      !GetPin(ControlPort.TH2_Output);
+  #endregion
+
   #region Methods
   public byte ReadPortA() => (byte)~_portA;
   public byte ReadPortB() => (byte)~_portB;
@@ -26,63 +38,50 @@ public sealed class Ports
   public void WriteControl(byte value)
   {
     _control = (ControlPort)value;
-    _portB &= PortB.Joy2;
-
-    if (!GetControlFlag(ControlPort.TH1_Input) &&
-        !GetControlFlag(ControlPort.TH1_Output))
-      _portB |= PortB.TH1;
-      
-    if (!GetControlFlag(ControlPort.TH2_Input) &&
-        !GetControlFlag(ControlPort.TH2_Output))
-      _portB |= PortB.TH2;
+    SetPin(PortB.TH1, TH1);
+    SetPin(PortB.TH2, TH2);
   }
-
-  public void SetJoypad1State(JoypadState joypad)
+  
+  public void UpdateInput(InputState input)
   {
-    _portA &= ~PortA.Joy1;
+    SetPin(PortA.Joy1Up,    input.IsJ1ButtonDown(JoypadButtons.Up));
+    SetPin(PortA.Joy1Down,  input.IsJ1ButtonDown(JoypadButtons.Down));
+    SetPin(PortA.Joy1Left,  input.IsJ1ButtonDown(JoypadButtons.Left));
+    SetPin(PortA.Joy1Right, input.IsJ1ButtonDown(JoypadButtons.Right));
+    SetPin(PortA.Joy1FireA, input.IsJ1ButtonDown(JoypadButtons.FireA));
+    SetPin(PortA.Joy1FireB, input.IsJ1ButtonDown(JoypadButtons.FireB));
 
-    if (joypad.Up)    _portA |= PortA.Joy1Up;
-    if (joypad.Down)  _portA |= PortA.Joy1Down;
-    if (joypad.Left)  _portA |= PortA.Joy1Left;
-    if (joypad.Right) _portA |= PortA.Joy1Right;
-    if (joypad.FireA) _portA |= PortA.Joy1FireA;
-    if (joypad.FireB) _portA |= PortA.Joy1FireB;
+    SetPin(PortA.Joy2Up,    input.IsJ2ButtonDown(JoypadButtons.Up));
+    SetPin(PortA.Joy2Down,  input.IsJ2ButtonDown(JoypadButtons.Down));
+    SetPin(PortB.Joy2Left,  input.IsJ2ButtonDown(JoypadButtons.Left));
+    SetPin(PortB.Joy2Right, input.IsJ2ButtonDown(JoypadButtons.Right));
+    SetPin(PortB.Joy2FireA, input.IsJ2ButtonDown(JoypadButtons.FireA));
+    SetPin(PortB.Joy2FireB, input.IsJ2ButtonDown(JoypadButtons.FireB));
+    
+    SetPin(PortB.Reset,     input.IsButtonDown(ConsoleButtons.Reset));
 
-    if (!joypad.Pause) 
-      _pauseEnabled = true;
-    else if (_pauseEnabled)
+    if (!input.IsButtonDown(ConsoleButtons.Pause))
     {
-      _pauseEnabled = false;
+      _pausingEnabled = true;
+    }
+    else if (_pausingEnabled)
+    {
+      _pausingEnabled = false;
       NMI = true;
     }
   }
 
-  public void SetJoypad2State(JoypadState joypad)
-  {
-    _portA &= ~PortA.Joy2;
-    _portB &= ~PortB.Joy2;
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool GetPin(ControlPort pin) => (_control & pin) != 0;
 
-    if (joypad.Up)    _portA |= PortA.Joy2Up;
-    if (joypad.Down)  _portA |= PortA.Joy2Down;
-    if (joypad.Left)  _portB |= PortB.Joy2Left;
-    if (joypad.Right) _portB |= PortB.Joy2Right;
-    if (joypad.FireA) _portB |= PortB.Joy2FireA;
-    if (joypad.FireB) _portB |= PortB.Joy2FireB;
-
-    if (joypad.Pause && _pauseEnabled)
-    {
-      _pauseEnabled = false;
-      NMI = true;
-    }
-  }
-
-  public void SetResetButtonState(bool reset)
-  {
-    _portB = reset 
-           ? (_portB | PortB.Reset) 
-           : (_portB & ~PortB.Reset);
-  }
-
-  private bool GetControlFlag(ControlPort flag) => (_control & flag) != 0;
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetPin(PortA pin, bool state) => _portA = state
+                                                       ? (_portA | pin)
+                                                       : (_portA & ~pin);
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]                                         
+  private void SetPin(PortB pin, bool state) => _portB = state
+                                                       ? (_portB | pin) 
+                                                       : (_portB & ~pin);
   #endregion
 }

@@ -4,18 +4,13 @@ using Quill.Common.Extensions;
 using Quill.Core;
 using Quill.CPU.Definitions;
 using Quill.IO;
-using Quill.Sound;
-using Quill.Video;
 
 namespace Quill.CPU;
 
 unsafe public ref partial struct Z80
 {
   #region Fields
-  private Memory _memory;
-  private readonly PSG _psg;
-  private readonly VDP _vdp;
-  private readonly Ports _ports;
+  private Bus _bus;
 
   private Instruction _instruction;
   private ushort? _memPtr = null;
@@ -48,6 +43,8 @@ unsafe public ref partial struct Z80
   #endregion
 
   #region Properties
+  public readonly ushort PC => _pc;
+
   private bool SignFlag
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,9 +201,7 @@ unsafe public ref partial struct Z80
     _halt = state.Halt;
     _iff1 = state.IFF1;
     _iff2 = state.IFF2;
-    _memory.LoadState(state);
-    _vdp.LoadState(state);
-    _psg.LoadState(state);
+    _bus.LoadState(state);
   }
 
   public readonly Snapshot SaveState()
@@ -231,9 +226,7 @@ unsafe public ref partial struct Z80
       IFF1 = _iff1,
       IFF2 = _iff2
     };
-    _memory.SaveState(state);
-    _vdp.SaveState(state);
-    _psg.SaveState(state);
+    _bus.SaveState(state);
     return state;
   }
 
@@ -256,10 +249,33 @@ unsafe public ref partial struct Z80
     state.Halt = _halt;
     state.IFF1 = _iff1;
     state.IFF2 = _iff2;
+    _bus.SaveState(state);
+  }
 
-    _memory.SaveState(state);
-    _vdp.SaveState(state);
-    _psg.SaveState(state);
+  public readonly Snapshot ReadState()
+  {
+    var state = new Snapshot
+    {
+      AF = AF,
+      BC = BC,
+      DE = DE,
+      HL = HL,
+      IX = IX,
+      IY = IY,
+      I = _i,
+      R = _r,
+      PC = _pc,
+      SP = _sp,
+      AFs = _afShadow,
+      BCs = _bcShadow,
+      DEs = _deShadow,
+      HLs = _hlShadow,
+      Halt = _halt,
+      IFF1 = _iff1,
+      IFF2 = _iff2
+    };
+    _bus.SaveState(state);
+    return state;
   }
 
   public readonly string DumpRegisters()
@@ -271,12 +287,7 @@ unsafe public ref partial struct Z80
            "╘══════════╧══════════╧══════════╧══════════╧═══════════╛";
   }
 
-  public readonly void DumpMemory(string path) => _memory.DumpRAM(path);
-  public readonly void DumpROM(string path) => _memory.DumpROM(path);
-  
   public override readonly string ToString() => DumpRegisters() + "\r\n" +
-                                                $"Flags: {_flags} | CIR: {_instruction}\r\n" +
-                                                _memory.ToString() + "\r\n" +
-                                                _vdp.ToString() + "\r\n";
+                                                $"Flags: {_flags} | CIR: {_instruction}";
   #endregion
 }
