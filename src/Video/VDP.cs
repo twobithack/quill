@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -32,6 +33,7 @@ public sealed partial class VDP
     _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
+    _spriteMask = new bool[HORIZONTAL_RESOLUTION];
   }
 
   #region Methods
@@ -192,7 +194,7 @@ public sealed partial class VDP
       BlankScanline();
       return;
     }
-    
+
     if (DisplayMode4)
     {
       RasterizeSprites();
@@ -203,6 +205,8 @@ public sealed partial class VDP
       RasterizeLegacySprites();
       RasterizeLegacyBackground();
     }
+
+    Array.Clear(_spriteMask);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -277,7 +281,7 @@ public sealed partial class VDP
           continue;
         paletteIndex += 16;
 
-        if (_framebuffer.IsOccupied(x, _vCounter))
+        if (_spriteMask[x])
         {
           SpriteCollision = true;
           continue;
@@ -341,7 +345,7 @@ public sealed partial class VDP
 
         var paletteIndex = patternData.GetPaletteIndex(7 - i);
 
-        if (_framebuffer.IsOccupied(x, _vCounter) &&
+        if (_spriteMask[x] &&
             (!tileData.HighPriority || paletteIndex == TRANSPARENT))
           continue;
 
@@ -425,7 +429,7 @@ public sealed partial class VDP
     var data = _vram[address + offset];
     for (byte i = 0; i < TILE_SIZE; i++)
     {
-      if (_framebuffer.IsOccupied(x + i, _vCounter))
+      if (_spriteMask[x + i])
       {
         SpriteCollision = true;
         continue;
@@ -477,7 +481,7 @@ public sealed partial class VDP
                   ? colorData.HighNibble()
                   : colorData.LowNibble();
         
-        if (_framebuffer.IsOccupied(x, _vCounter))
+        if (_spriteMask[x])
           continue;
         
         if (color == TRANSPARENT)
@@ -502,18 +506,18 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixel(int x, int y, int paletteIndex, bool isSprite) => _framebuffer.SubmitPixel(x, y, _palette[paletteIndex], isSprite);
+  private void SetPixel(int x, int y, int paletteIndex, bool isSprite)
+  {
+    _framebuffer.SubmitPixel(x, y, _palette[paletteIndex]);
+    _spriteMask[x] = isSprite;
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacyPixel(int x, int y, byte color, bool isSprite) => _framebuffer.SubmitPixel(x, y, Color.ToLegacyRGBA(color), isSprite);
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private bool GetFlag(Status flag) => (_status & flag) != 0;
-  
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetFlag(Status flag, bool value) => _status = value
-                                                 ? _status | flag
-                                                 : _status & ~flag;
+  private void SetLegacyPixel(int x, int y, byte color, bool isSprite)
+  {
+    _framebuffer.SubmitPixel(x, y, Color.ToLegacyRGBA(color));
+    _spriteMask[x] = isSprite;
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetLastSpriteIndex(int value)
@@ -605,7 +609,15 @@ public sealed partial class VDP
       case 0x8:
         _hScroll = value;
         return;
-    };
+    }
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private bool GetFlag(Status flag) => (_status & flag) != 0;
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void SetFlag(Status flag, bool value) => _status = value
+                                                 ? _status | flag
+                                                 : _status & ~flag;
   #endregion
 }

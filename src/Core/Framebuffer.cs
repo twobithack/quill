@@ -16,7 +16,6 @@ unsafe public sealed class Framebuffer : IVideoSink
   #endregion
 
   #region Fields
-  private readonly bool[] _occupied;
   private readonly int[] _backBuffer;
   private readonly byte[] _frontBufferA;
   private readonly byte[] _frontBufferB;
@@ -25,7 +24,6 @@ unsafe public sealed class Framebuffer : IVideoSink
 
   public Framebuffer()
   {
-    _occupied = new bool[BACK_BUFFER_SIZE];
     _backBuffer = new int[BACK_BUFFER_SIZE];
     _frontBufferA = new byte[FRONT_BUFFER_SIZE];
     _frontBufferB = new byte[FRONT_BUFFER_SIZE];
@@ -33,15 +31,11 @@ unsafe public sealed class Framebuffer : IVideoSink
 
   #region Methods
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SubmitPixel(int x, int y, int value, bool isSprite)
+  public void SubmitPixel(int x, int y, int value)
   {
     var index = GetPixelIndex(x, y);
     _backBuffer[index] = value;
-    _occupied[index] = isSprite;
   }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public bool IsOccupied(int x, int y) => _occupied[GetPixelIndex(x, y)];
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void PublishFrame()
@@ -53,9 +47,7 @@ unsafe public sealed class Framebuffer : IVideoSink
 
     Buffer.BlockCopy(_backBuffer, 0, targetBuffer, 0, FRONT_BUFFER_SIZE);
     Volatile.Write(ref _frontBufferToggle, !bufferToggle);
-
     Array.Clear(_backBuffer);
-    Array.Clear(_occupied);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

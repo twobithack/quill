@@ -19,6 +19,7 @@ public sealed partial class VDP
   private readonly int[] _palette;
   private readonly byte[] _vram;
   private readonly byte[] _registers;
+  private readonly bool[] _spriteMask;
 
   private ControlCode _controlCode;
   private Status _status;
