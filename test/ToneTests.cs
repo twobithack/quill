@@ -7,10 +7,10 @@ using Quill.Video;
 
 namespace Quill.Tests;
 
-internal class ToneTests
+public class ToneTests
 {
   [Fact]
-  internal void SN76489_TestRom_620Hz()
+  public void SN76489_TestRom_620Hz()
   {
     var rom = LoadROM("SN76489_TestRom_NTSC");
     var memory = new Mapper(rom);
@@ -38,7 +38,7 @@ internal class ToneTests
   }
 
   [Fact]
-  internal void SN76489_TestRom_465Hz()
+  public void SN76489_TestRom_465Hz()
   {
     var rom = LoadROM("SN76489_TestRom_NTSC");
     var memory = new Mapper(rom);
@@ -66,7 +66,7 @@ internal class ToneTests
   }
   
   [Fact]
-  internal void SN76489_TestRom_310Hz()
+  public void SN76489_TestRom_310Hz()
   {
     var rom = LoadROM("SN76489_TestRom_NTSC");
     var memory = new Mapper(rom);
@@ -94,7 +94,7 @@ internal class ToneTests
   }
 
   [Fact]
-  internal void SN76489_TestRom_230Hz()
+  public void SN76489_TestRom_230Hz()
   {
     var rom = LoadROM("SN76489_TestRom_NTSC");
     var memory = new Mapper(rom);
