@@ -5,6 +5,7 @@
   "clockRate":        3579540,
   "cropBottomBorder": true,
   "cropLeftBorder":   true,
+  "enableCRTFilter":  true,
   "fixAspectRatio":   true,
   "scaleFactor":      4
 }
