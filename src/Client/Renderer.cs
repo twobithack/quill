@@ -216,6 +216,29 @@ public sealed class Renderer
       return clamp(normalized, 0.0, 1.0);
     }
 
+    vec3 applyHorizontalBlur(vec2 uv, vec2 texelSize, float intensity)
+    { 
+      vec2 texelWidth = vec2(texelSize.x, 0.0);
+      vec3 center = texture(uTexture, uv).rgb;
+      vec3 left   = texture(uTexture, uv - texelWidth).rgb;
+      vec3 right  = texture(uTexture, uv + texelWidth).rgb;
+
+      vec3 blurred = (center * 2 + left + right) * 0.25;
+      return mix(center, blurred, intensity);
+    }
+
+    vec3 applyChromaticAberration(vec2 uv, vec2 texelSize, float intensity)
+    {
+      float offset = texelSize.x * intensity;
+      vec2 redUV   = uv + vec2(-offset, 0.0);
+      vec2 greenUV = uv;
+      vec2 blueUV  = uv + vec2( offset, 0.0);
+
+      return vec3(texture(uTexture, redUV).r,
+                  texture(uTexture, greenUV).g,
+                  texture(uTexture, blueUV).b);
+    }
+
     float getScanlineIntensity(float normalizedY, float textureHeight)
     {
       float rowIndex      = normalizedY * textureHeight;
@@ -253,7 +276,12 @@ public sealed class Renderer
 
       vec2 normalizedUV = normalizeUV(vTexCoord, uUVMin, uUVMax);
 
-      vec3 color = toLinear(source.rgb);
+      vec2 texelSize = 1.0 / uTextureSize;
+      vec3 blurredColor = applyHorizontalBlur(vTexCoord, texelSize, 0.4);
+      vec3 aberratedColor = applyChromaticAberration(vTexCoord, texelSize, 0.7);
+      vec3 baseColor = mix(blurredColor, aberratedColor, 0.65);
+
+      vec3 color = toLinear(baseColor);
       color *= getScanlineIntensity(normalizedUV.y, uTextureSize.y);
       color *= getShadowMask(gl_FragCoord.x);
       color *= getVignetteFactor(normalizedUV);
