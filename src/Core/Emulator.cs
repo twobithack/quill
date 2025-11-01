@@ -105,9 +105,15 @@ unsafe public sealed class Emulator
     }
 
     if (input.IsButtonDown(Commands.Quickload))
+    {
       _loadRequested = true;
+      _savingEnabled = false;
+    }
     else if (input.IsButtonDown(Commands.Quicksave))
+    {
       _saveRequested = true;
+      _savingEnabled = false;
+    }
   }
 
   private Snapshot LoadSnapshot() => Snapshot.ReadFromFile(_snapshotPath);

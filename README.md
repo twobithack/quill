@@ -32,27 +32,25 @@ Configuration options can be found in [`config.json`](/config.json).
 
 ## Keymap
 
-Currently, only keyboard input is supported.
+| Joypad Button     | Controller                      | Keyboard (P1) | Keyboard (P2) |
+| ----------------- | --------------------------------| ------------- | --------------|
+| Up                | <kbd>▲</kbd> or <kbd>LS ↑</kbd> | <kbd>W</kbd>  | <kbd>I</kbd>  |
+| Down              | <kbd>▼</kbd> or <kbd>LS ↓</kbd> | <kbd>S</kbd>  | <kbd>K</kbd>  |
+| Left              | <kbd>◀</kbd> or <kbd>LS ←</kbd> | <kbd>A</kbd>  | <kbd>J</kbd>  |
+| Right             | <kbd>▶</kbd> or <kbd>LS →</kbd> | <kbd>D</kbd>  | <kbd>L</kbd>  |
+| Button 1          | <kbd>□</kbd> or <kbd>△</kbd>    | <kbd>F</kbd>  | <kbd>;</kbd>  |
+| Button 2          | <kbd>✕</kbd> or <kbd>○</kbd>    | <kbd>G</kbd>  | <kbd>'</kbd>  |
 
-| Joypad Button     | Player 1    | Player 2         |
-| ----------------- | ----------- | ---------------- |
-| Up                | `W`         | `I`              |
-| Down              | `S`         | `K`              |
-| Left              | `A`         | `J`              |
-| Right             | `D`         | `L`              |
-| Button 1          | `F`         | `;` (semicolon)  |
-| Button 2          | `G`         | `'` (apostrophe) |
+| Console Button    | Controller        | Keyboard             |
+| ----------------- | ----------------- | -------------------- |
+| Pause             | <kbd>START</kbd>  | <kbd>Space</kbd>     |
+| Reset             | <kbd>SELECT</kbd> | <kbd>Esc</kbd>       |
 
-| Console Button    | Key         |
-| ----------------- | ----------- |
-| Pause             | `Space`     |
-| Reset             | `Esc`       |
-
-| Function          | Key         |
-| ----------------- | ----------- |
-| Rewind            | `R` (hold)  |
-| Quicksave         | `Enter`     |
-| Quickload         | `Backspace` |
+| Function          | Controller        | Keyboard             |
+| ----------------- | ----------------- | -------------------- |
+| Rewind **(hold)** | <kbd>L1</kbd>     | <kbd>R</kbd>         |
+| Quickload         | <kbd>L2</kbd>     | <kbd>Backspace</kbd> |
+| Quicksave         | <kbd>R2</kbd>     | <kbd>Enter</kbd>     |
 
 ## License
 
