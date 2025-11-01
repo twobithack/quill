@@ -2,7 +2,7 @@
 
 ## WORKING
 * 20-em-1
-* Action Figther
+* Action Fighter
 * Addams Family
 * Aerial Assault
 * After Burner
