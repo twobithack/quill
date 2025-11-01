@@ -1,6 +1,6 @@
 # MASTER SYSTEM
 
-## WORKING
+## SUPPORTED
 * 20-em-1
 * Action Fighter
 * Addams Family
@@ -251,7 +251,7 @@
 * Galactic Protector (paddle)
 * Gangster Town (phaser)
 * King & Balloon (custom mapper)
-* Knightmare II: The Maze of Galious
+* Knightmare II: The Maze of Galious (custom mapper)
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
 * Missile Defence 3D (phaser)
@@ -270,7 +270,7 @@
 
 # SG-1000
 
-## WORKING
+## SUPPORTED
 * Bank Panic
 * Bomb Jack
 * Borderline
@@ -310,7 +310,7 @@
 * Star Jacker 
 * Wonder Boy
 
-## NOT WORKING
+## UNSUPPORTED
 * Bomberman Special
 * Exerion
 * James Bond 007
