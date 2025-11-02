@@ -53,6 +53,8 @@ public sealed class Renderer
     GL.BindTexture(TextureTarget.Texture2D, _texture);
     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS,     (int)TextureWrapMode.ClampToEdge);
+    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT,     (int)TextureWrapMode.ClampToEdge);
     GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
                   FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT, 0,
                   PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
@@ -260,8 +262,7 @@ public sealed class Renderer
     float getVignetteFactor(vec2 uv)
     {
       vec2  offset    = (uv - 0.5) * 1.2;
-      float radiusSq  = dot(offset, offset);
-      float factor    = 1.0 - 0.6 * radiusSq;
+      float factor    = 1.0 - dot(offset, offset);
       return clamp(factor, 0.0, 1.0);
     }
 
