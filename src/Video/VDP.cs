@@ -18,6 +18,10 @@ public sealed partial class VDP
   private const int HORIZONTAL_RESOLUTION = 256;
   private const int TILE_SIZE = 8;
   private const int BACKGROUND_COLUMNS = 32;
+  private const int BACKGROUND_ROWS = 28;
+  private const byte VCOUNTER_ACTIVE = 191;
+  private const byte VCOUNTER_JUMP_FROM = 218;
+  private const byte VCOUNTER_JUMP_TO = 213;
   private const int HSCROLL_LIMIT = 1;
   private const int VSCROLL_LIMIT = 24;
   private const int HCOUNT_PER_CYCLE = 3;
@@ -134,26 +138,26 @@ public sealed partial class VDP
     IncrementScanline();
     UpdateInterrupts();
 
-    if (_vCounter <= _vCounterActive)
+    if (_vCounter <= VCOUNTER_ACTIVE)
       RasterizeScanline();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementScanline()
   {
-    if (_vCounter == _vCounterActive)
+    if (_vCounter == VCOUNTER_ACTIVE)
     {
       _framebuffer.PublishFrame();
     }
-    else if (_vCounter == _vCounterActive + 1)
+    else if (_vCounter == VCOUNTER_ACTIVE + 1)
     {
       VBlank = true;
     }
-    else if (_vCounter == _vCounterJumpFrom)
+    else if (_vCounter == VCOUNTER_JUMP_FROM)
     {
       if (!_vCounterJumped)
       {
-        _vCounter = _vCounterJumpTo;
+        _vCounter = VCOUNTER_JUMP_TO;
         _vCounterJumped = true;
         return;
       }
@@ -171,14 +175,14 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void UpdateInterrupts()
   {
-    if (_vCounter > _vCounterActive + 1)
+    if (_vCounter > VCOUNTER_ACTIVE + 1)
     {
       _hLineCounter = _registers[0xA];
     }
     else if (_hLineCounter == 0)
     {
       _hLineCounter = _registers[0xA];
-      _hLineInterruptPending = _hLineInterruptEnabled;
+      _hLineInterruptPending = HLineInterruptEnabled;
     }
     else
       _hLineCounter--;
@@ -189,7 +193,7 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   { 
-    if (!_displayEnabled)
+    if (!DisplayEnabled)
     {
       BlankScanline();
       return;
@@ -215,12 +219,12 @@ public sealed partial class VDP
     if (DisplayMode4)
     {
       for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
-        SetPixel(x, _vCounter, _blankColor, false);
+        SetPixel(x, _vCounter, BlankColor, false);
     }
     else
     {
       for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
-        SetLegacyPixel(x, _vCounter, _legacyBlankColor, false);
+        SetLegacyPixel(x, _vCounter, LegacyBlankColor, false);
     }
   }
 
@@ -228,13 +232,13 @@ public sealed partial class VDP
   private void RasterizeSprites()
   {
     var spriteHeight = TILE_SIZE;
-    if (_stretchSprites || _zoomSprites)
+    if (StretchSprites || ZoomSprites)
       spriteHeight *= 2;
 
     var spriteCount = 0;
     for (int sprite = 0; sprite < 64; sprite++)
     {
-      ushort y = _vram[_spriteAttributeTableAddress + sprite];
+      ushort y = _vram[SpriteAttributeTableAddress + sprite];
       if (y == DISABLE_SPRITES)
         return;
 
@@ -251,20 +255,18 @@ public sealed partial class VDP
         SpriteOverflow = true;
 
       var offset = 0x80 + (sprite * 2);
-      int x = _vram[_spriteAttributeTableAddress + offset];
-      int patternIndex = _vram[_spriteAttributeTableAddress + offset + 1];
+      int x = _vram[SpriteAttributeTableAddress + offset];
+      int patternIndex = _vram[SpriteAttributeTableAddress + offset + 1];
 
-      if (_spriteShift)
+      if (SpriteShift)
         x -= TILE_SIZE;
 
-      if (_useSecondPatternTable)
-        patternIndex += 0x100;
-
-      if (_stretchSprites && y <= _vCounter + TILE_SIZE)
+      if (StretchSprites && y <= _vCounter + TILE_SIZE)
         patternIndex &= 0b_1111_1111_1111_1110;
 
-      var patternAddress = patternIndex * 32;
-      patternAddress += (_vCounter - y) * 4;
+      var rowOffset = (_vCounter - y) << 2;
+      var patternOffset = patternIndex << 5;
+      var patternAddress = SpritePatternTableAddress + rowOffset + patternOffset;
       var patternData = GetPatternData(patternAddress);
 
       var spriteEnd = x + TILE_SIZE;
@@ -273,7 +275,7 @@ public sealed partial class VDP
         if (x >= HORIZONTAL_RESOLUTION)
           break;
 
-        if (_leftColumnBlank && x < TILE_SIZE)
+        if (BlankLeftColumn && x < TILE_SIZE)
           continue;
 
         var paletteIndex = patternData.GetPaletteIndex(i);
@@ -295,26 +297,26 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeBackground()
   {
-    var allowHScroll = !_hScrollInhibit ||
+    var allowHScroll = !HScrollInhibit ||
                        _vCounter / TILE_SIZE > HSCROLL_LIMIT;
 
     for (int backgroundColumn = 0; backgroundColumn < BACKGROUND_COLUMNS; backgroundColumn++)
     {
       ushort tilemapY = _vCounter;
-      if (!_vScrollInhibit ||
+      if (!VScrollInhibit ||
           backgroundColumn < VSCROLL_LIMIT)
         tilemapY += _vScroll;
 
       var tilemapRow = tilemapY / TILE_SIZE;
-      if (tilemapRow >= _backgroundRows) 
-        tilemapRow -= _backgroundRows;
+      if (tilemapRow >= BACKGROUND_ROWS) 
+        tilemapRow -= BACKGROUND_ROWS;
                     
       var tilemapColumn = backgroundColumn;
       if (allowHScroll)
-        tilemapColumn += BACKGROUND_COLUMNS - (_hScroll / TILE_SIZE);
+        tilemapColumn += BACKGROUND_COLUMNS - (HScroll / TILE_SIZE);
       tilemapColumn %= BACKGROUND_COLUMNS;
 
-      var tileAddress = _nameTableAddress + 
+      var tileAddress = NameTableAddress + 
                         (tilemapRow * BACKGROUND_COLUMNS * 2) + 
                         (tilemapColumn * 2);
 
@@ -334,12 +336,12 @@ public sealed partial class VDP
 
         var x = (tilemapColumn * TILE_SIZE) + columnOffset;
         if (allowHScroll)
-          x += _hScroll;
+          x += HScroll;
         x %= HORIZONTAL_RESOLUTION;
 
-        if (_leftColumnBlank && x < TILE_SIZE)
+        if (BlankLeftColumn && x < TILE_SIZE)
         {
-          SetPixel(x, _vCounter, _blankColor, false);
+          SetPixel(x, _vCounter, BlankColor, false);
           continue;
         }
 
@@ -361,13 +363,13 @@ public sealed partial class VDP
   private void RasterizeLegacySprites()
   {
     var spriteHeight = TILE_SIZE;
-    if (_stretchSprites)
+    if (StretchSprites)
       spriteHeight *= 2;
 
     var spriteCount = 0;
     for (int sprite = 0; sprite < 32; sprite++)
     {
-      var baseAddress = _spriteAttributeTableAddress + (sprite * 4);
+      var baseAddress = SpriteAttributeTableAddress + (sprite * 4);
       ushort y = _vram[baseAddress];
       if (y == DISABLE_SPRITES)
       {
@@ -408,12 +410,12 @@ public sealed partial class VDP
       var offset = _vCounter - y;
       if (spriteHeight == TILE_SIZE)
       {
-        var address = _spriteGeneratorTableAddress + (pattern * TILE_SIZE);
+        var address = LegacySpritePatternTableAddress + (pattern * TILE_SIZE);
         RasterizeMode2Sprite(address, x, offset, color);
       }
       else
       {
-        var address = _spriteGeneratorTableAddress + ((pattern & 0b_1111_1100) * TILE_SIZE);
+        var address = LegacySpritePatternTableAddress + ((pattern & 0b_1111_1100) * TILE_SIZE);
         RasterizeMode2Sprite(address, x, offset, color);
         RasterizeMode2Sprite(address, x + TILE_SIZE, offset + 16, color);
       }
@@ -459,12 +461,12 @@ public sealed partial class VDP
 
     for (int column = 0; column < BACKGROUND_COLUMNS; column++)
     {
-      var patternIndex = _vram[_nameTableAddress + column + (row * BACKGROUND_COLUMNS)];
-      var patternAddress = _patternGeneratorTableAddress + tableAddressOffset;
+      var patternIndex = _vram[NameTableAddress + column + (row * BACKGROUND_COLUMNS)];
+      var patternAddress = PatternTableAddress + tableAddressOffset;
       patternAddress += rowOffset + (patternIndex * TILE_SIZE);
 
       var colorIndex = patternIndex & colorMask;
-      var colorAddress = _colorTableAddress + tableAddressOffset;
+      var colorAddress = ColorTableAddress + tableAddressOffset;
       colorAddress += rowOffset + (colorIndex * TILE_SIZE);
       
       var patternData = _vram[patternAddress];
@@ -485,7 +487,7 @@ public sealed partial class VDP
           continue;
         
         if (color == TRANSPARENT)
-          color = _legacyBlankColor;
+          color = LegacyBlankColor;
 
         SetLegacyPixel(x, _vCounter, color, false);
       }
@@ -550,65 +552,18 @@ public sealed partial class VDP
   private void WriteRegister(byte register, byte value)
   {
     _registers[register] = value;
-    switch (register)
+
+    if (register == 0x0)
     {
-      case 0x0:
-        _spriteShift = value.TestBit(3);
-        _hLineInterruptEnabled = value.TestBit(4);
-        _leftColumnBlank = value.TestBit(5);
-        _hScrollInhibit = value.TestBit(6);
-        _vScrollInhibit = value.TestBit(7);
-        if (IRQ && !_hLineInterruptEnabled)
-          IRQ = VSyncPending;
-        UpdateDisplayMode();
-        return;
-
-      case 0x1:
-        _zoomSprites = value.TestBit(0);
-        _stretchSprites = value.TestBit(1);
-        _vBlankInterruptEnabled = value.TestBit(5);
-        _displayEnabled = value.TestBit(6);
-        if (IRQ && !_vBlankInterruptEnabled)
-          IRQ = HLinePending;
-        UpdateDisplayMode();
-        return;
-
-      case 0x2:
-        _nameTableAddress = (ushort)(value & 0b_0000_1110);
-        _nameTableAddress <<= 10;
-        return;
-
-      case 0x3:
-        _colorTableAddress = value.TestBit(7)
-                           ? (ushort)0x2000
-                           : (ushort)0x0000;
-        return;
-
-      case 0x4:
-        _patternGeneratorTableAddress = value.TestBit(2)
-                                      ? (ushort)0x2000
-                                      : (ushort)0x0000;
-        return;
-
-      case 0x5:
-        _spriteAttributeTableAddress = (ushort)(value & 0b_0111_1110);
-        _spriteAttributeTableAddress <<= 7;
-        return;
-
-      case 0x6:
-        _useSecondPatternTable = value.TestBit(2);
-        _spriteGeneratorTableAddress = (ushort)(value & 0b_0000_0111);
-        _spriteGeneratorTableAddress <<= 11;
-        return;
-
-      case 0x7:
-        _legacyBlankColor = (byte)(value & 0b_1111);
-        _blankColor = _legacyBlankColor.SetBit(4);
-        return;
-
-      case 0x8:
-        _hScroll = value;
-        return;
+      if (IRQ && !HLineInterruptEnabled)
+        IRQ = VSyncPending;
+      UpdateDisplayMode();
+    }
+    else if (register == 0x1)
+    {
+      if (IRQ && !VBlankInterruptEnabled)
+        IRQ = HLinePending;
+      UpdateDisplayMode();
     }
   }
 

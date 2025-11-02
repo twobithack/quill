@@ -46,11 +46,11 @@ public sealed class Snapshot
   [Key(28)] public Status VDPStatus;
   [Key(29)] public ushort ControlWord;
   [Key(30)] public byte DataPort;
-  [Key(31)] public byte HScroll;
-  [Key(32)] public byte VScroll;
-  [Key(33)] public byte HLineCounter;
-  [Key(34)] public bool HLinePending;
-  [Key(35)] public bool ControlWritePending;
+  [Key(31)] public byte VScroll;
+  [Key(32)] public byte HLineCounter;
+  [Key(33)] public bool HLinePending;
+  [Key(34)] public bool ControlWritePending;
+  [Key(35)] public bool IRQ;
 
   [Key(36)] public ushort[] Tones;
   [Key(37)] public byte[] Volumes;
