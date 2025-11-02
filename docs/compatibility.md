@@ -290,7 +290,6 @@
 * Golgo 13
 * Gulkave
 * Guzzler
-* Hang-On II
 * H.E.R.O.
 * Hustle Chumy
 * Hyper Sports
@@ -313,6 +312,7 @@
 ## UNSUPPORTED
 * Bomberman Special
 * Exerion
+* Hang-On II
 * James Bond 007
 * Pop Flamer
 * Rock n' Bolt

@@ -31,7 +31,6 @@ public sealed class InputHandler
 
   #region Fields
   private readonly Action<InputState> _updateInput;
-  
   #endregion
   
   public InputHandler(Action<InputState> inputSetter) => _updateInput = inputSetter;
