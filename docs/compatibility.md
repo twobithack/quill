@@ -1,8 +1,8 @@
 # MASTER SYSTEM
 
-## WORKING
+## SUPPORTED
 * 20-em-1
-* Action Figther
+* Action Fighter
 * Addams Family
 * Aerial Assault
 * After Burner
@@ -251,7 +251,7 @@
 * Galactic Protector (paddle)
 * Gangster Town (phaser)
 * King & Balloon (custom mapper)
-* Knightmare II: The Maze of Galious
+* Knightmare II: The Maze of Galious (custom mapper)
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
 * Missile Defence 3D (phaser)
@@ -270,7 +270,7 @@
 
 # SG-1000
 
-## WORKING
+## SUPPORTED
 * Bank Panic
 * Bomb Jack
 * Borderline
@@ -290,7 +290,6 @@
 * Golgo 13
 * Gulkave
 * Guzzler
-* Hang-On II
 * H.E.R.O.
 * Hustle Chumy
 * Hyper Sports
@@ -310,9 +309,10 @@
 * Star Jacker 
 * Wonder Boy
 
-## NOT WORKING
+## UNSUPPORTED
 * Bomberman Special
 * Exerion
+* Hang-On II
 * James Bond 007
 * Pop Flamer
 * Rock n' Bolt

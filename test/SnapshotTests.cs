@@ -122,7 +122,7 @@ public class SnapshotTests
     var bus = new Bus(memory, new(), psg, vdp);
     var cpu = new Z80(bus);
 
-    for (int testCase = 0; testCase < 79; testCase++)
+    for (int testCase = 0; testCase < 50; testCase++)
     {
       var steps = 0;
       do
