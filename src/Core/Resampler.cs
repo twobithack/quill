@@ -38,7 +38,7 @@ public sealed class Resampler : IAudioSink
   }
   
   #region Methods
-  public void SubmitSample(short rawSample)
+  public void EnqueueSample(short rawSample)
   {
     _rawSampleAccumulator += rawSample;
     _rawSampleCounter++;

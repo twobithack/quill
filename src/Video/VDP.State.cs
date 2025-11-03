@@ -20,6 +20,7 @@ public sealed partial class VDP
   private readonly byte[] _vram;
   private readonly byte[] _registers;
   private readonly bool[] _spriteMask;
+  private readonly int[] _scanline;
 
   private ControlCode _controlCode;
   private Status _status;
@@ -66,6 +67,7 @@ public sealed partial class VDP
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     set => SetFlag(Status.VBlank, value);
   }
+  
   private bool SpriteShift            => TestRegisterBit(0x0, 3);
   private bool HLineInterruptEnabled  => TestRegisterBit(0x0, 4);
   private bool BlankLeftColumn        => TestRegisterBit(0x0, 5);

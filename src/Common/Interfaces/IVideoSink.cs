@@ -2,7 +2,7 @@ namespace Quill.Common.Interfaces;
 
 public interface IVideoSink
 {
-  void SubmitPixel(int x, int y, int color);
-  void PublishFrame();
+  void BlitScanline(int y, int[] scanline);
+  void PresentFrame();
   byte[] ReadFrame();
 }

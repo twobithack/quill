@@ -4,7 +4,7 @@ namespace Quill.Tests;
 
 public class NullAudioSink : IAudioSink
 {
-  public void SubmitSample(short sample) { }
+  public void EnqueueSample(short sample) { }
 
   public byte[] ReadBuffer() => [];
 }

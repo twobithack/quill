@@ -83,7 +83,7 @@ public sealed partial class PSG
     sample += _channels[TONE2].GenerateTone();
     sample += _channels[NOISE].GenerateNoise(_channels[TONE2].Tone);
 
-    _audioSink.SubmitSample(sample);
+    _audioSink.EnqueueSample(sample);
   }
   #endregion
 }

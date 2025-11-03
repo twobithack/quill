@@ -36,9 +36,10 @@ public sealed partial class VDP
   public VDP(IVideoSink framebuffer)
   {
     _framebuffer = framebuffer;
-    _palette = new int[CRAM_SIZE];
     _vram = new byte[VRAM_SIZE];
+    _palette = new int[CRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
+    _scanline = new int[HORIZONTAL_RESOLUTION];
     _spriteMask = new bool[HORIZONTAL_RESOLUTION];
   }
 
@@ -135,13 +136,12 @@ public sealed partial class VDP
 
   public byte[] ReadFramebuffer() => _framebuffer.ReadFrame();
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RenderScanline()
   {
     IncrementScanline();
     UpdateInterrupts();
-
-    if (_vCounter < VERTICAL_RESOLUTION)
-      RasterizeScanline();
+    RasterizeScanline();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -162,7 +162,7 @@ public sealed partial class VDP
     }
     else if (_vCounter == VCOUNTER_MAX)
     {
-      _framebuffer.PublishFrame();
+      _framebuffer.PresentFrame();
       _vScroll = _registers[0x9];
       _vCounterJumped = false;
       _vBlankCompleted = true;
@@ -191,7 +191,10 @@ public sealed partial class VDP
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
-  { 
+  {
+    if (_vCounter >= VERTICAL_RESOLUTION)
+      return;
+
     if (!DisplayEnabled || _vCounter > VCOUNTER_ACTIVE)
     {
       BlankScanline();
@@ -209,7 +212,7 @@ public sealed partial class VDP
       RasterizeLegacyBackground();
     }
 
-    Array.Clear(_spriteMask);
+    CommitScanline();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -218,12 +221,12 @@ public sealed partial class VDP
     if (DisplayMode4)
     {
       for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
-        SetPixel(x, _vCounter, BlankColor, false);
+        SetPixel(x, BlankColor, false);
     }
     else
     {
       for (int x = 0; x < HORIZONTAL_RESOLUTION; x++)
-        SetLegacyPixel(x, _vCounter, LegacyBlankColor, false);
+        SetLegacyPixel(x, LegacyBlankColor, false);
     }
   }
 
@@ -288,7 +291,7 @@ public sealed partial class VDP
           continue;
         }
 
-        SetPixel(x, _vCounter, paletteIndex, true);
+        SetPixel(x, paletteIndex, true);
       }
     }
   }
@@ -340,7 +343,7 @@ public sealed partial class VDP
 
         if (BlankLeftColumn && x < TILE_SIZE)
         {
-          SetPixel(x, _vCounter, BlankColor, false);
+          SetPixel(x, BlankColor, false);
           continue;
         }
 
@@ -353,7 +356,7 @@ public sealed partial class VDP
         if (tileData.UseSpritePalette)
           paletteIndex += 16;
 
-        SetPixel(x, _vCounter, paletteIndex, false);
+        SetPixel(x, paletteIndex, false);
       }
     }
   }
@@ -439,7 +442,7 @@ public sealed partial class VDP
       if (!data.TestBit(7 - i))
         continue;
 
-      SetLegacyPixel(x + i, _vCounter, color, true);
+      SetLegacyPixel(x + i, color, true);
     }
   }
 
@@ -488,7 +491,7 @@ public sealed partial class VDP
         if (color == TRANSPARENT)
           color = LegacyBlankColor;
 
-        SetLegacyPixel(x, _vCounter, color, false);
+        SetLegacyPixel(x, color, false);
       }
     }
   }
@@ -507,17 +510,24 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPixel(int x, int y, int paletteIndex, bool isSprite)
+  private void SetPixel(int x, int paletteIndex, bool isSprite)
   {
-    _framebuffer.SubmitPixel(x, y, _palette[paletteIndex]);
+    _scanline[x] = _palette[paletteIndex];
     _spriteMask[x] = isSprite;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacyPixel(int x, int y, byte color, bool isSprite)
+  private void SetLegacyPixel(int x, byte color, bool isSprite)
   {
-    _framebuffer.SubmitPixel(x, y, Color.ToLegacyRGBA(color));
+    _scanline[x] = _palette[Color.ToLegacyRGBA(color)];
     _spriteMask[x] = isSprite;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void CommitScanline()
+  {
+    _framebuffer.BlitScanline(_vCounter, _scanline);
+    Array.Clear(_spriteMask);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -2,7 +2,6 @@ namespace Quill.Common.Interfaces;
 
 public interface IAudioSink
 {
-  void SubmitSample(short sample);
-
+  void EnqueueSample(short sample);
   byte[] ReadBuffer();
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 using Quill.Common.Interfaces;
 
@@ -11,51 +10,46 @@ unsafe public sealed class Framebuffer : IVideoSink
   #region Constants
   private const int FRAME_WIDTH = 256;
   private const int FRAME_HEIGHT = 240;
-  private const int BACK_BUFFER_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
-  private const int FRONT_BUFFER_SIZE = BACK_BUFFER_SIZE * sizeof(int);
+  private const int BYTES_PER_SCANLINE = FRAME_WIDTH * sizeof(int);
+  private const int BUFFER_SIZE = BYTES_PER_SCANLINE * FRAME_HEIGHT;
   #endregion
 
   #region Fields
-  private readonly int[] _backBuffer;
+  private readonly byte[] _backBuffer;
   private readonly byte[] _frontBufferA;
   private readonly byte[] _frontBufferB;
-  private bool _frontBufferToggle;
+  private volatile bool _frontBufferToggle;
   #endregion
 
   public Framebuffer()
   {
-    _backBuffer = new int[BACK_BUFFER_SIZE];
-    _frontBufferA = new byte[FRONT_BUFFER_SIZE];
-    _frontBufferB = new byte[FRONT_BUFFER_SIZE];
+    _backBuffer = new byte[BUFFER_SIZE];
+    _frontBufferA = new byte[BUFFER_SIZE];
+    _frontBufferB = new byte[BUFFER_SIZE];
   }
 
   #region Methods
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SubmitPixel(int x, int y, int value)
+  public void BlitScanline(int y, int[] scanline)
   {
-    var index = GetPixelIndex(x, y);
-    _backBuffer[index] = value;
+    var offset = y * BYTES_PER_SCANLINE;
+    Buffer.BlockCopy(scanline, 0, _backBuffer, offset, BYTES_PER_SCANLINE);
   }
-
+  
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void PublishFrame()
+  public void PresentFrame()
   {
-    var bufferToggle = Volatile.Read(ref _frontBufferToggle);
-    var targetBuffer = bufferToggle
+    var targetBuffer = _frontBufferToggle
                      ? _frontBufferA
                      : _frontBufferB;
 
-    Buffer.BlockCopy(_backBuffer, 0, targetBuffer, 0, FRONT_BUFFER_SIZE);
-    Volatile.Write(ref _frontBufferToggle, !bufferToggle);
-    Array.Clear(_backBuffer);
+    Buffer.BlockCopy(_backBuffer, 0, targetBuffer, 0, BUFFER_SIZE);
+    _frontBufferToggle = !_frontBufferToggle;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public byte[] ReadFrame() => Volatile.Read(ref _frontBufferToggle) 
-                            ? _frontBufferB
-                            : _frontBufferA;
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private static int GetPixelIndex(int x, int y) => x + (y * FRAME_WIDTH);
+  public byte[] ReadFrame() => _frontBufferToggle
+                             ? _frontBufferB
+                             : _frontBufferA;
   #endregion
 }
