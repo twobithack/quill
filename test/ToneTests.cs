@@ -9,8 +9,10 @@ namespace Quill.Tests;
 
 public class ToneTests
 {
+  private const int TEST_CASE_STEPS = 100000;
+
   [Fact]
-  public void SN76489_TestRom_230Hz()
+  public void SN76489TestRom230Hz()
   {
     var rom = LoadROM("SN76489_TestRom_NTSC");
     var memory = new Mapper(rom);
@@ -22,7 +24,7 @@ public class ToneTests
     var initialState = LoadState("SN76489_TestRom_480");
     cpu.LoadState(initialState);
 
-    var steps = 1000000;
+    var steps = TEST_CASE_STEPS;
     do
     {
       cpu.Step();
@@ -38,7 +40,7 @@ public class ToneTests
   }
 
   [Fact]
-  public void SN76489_TestRom_310Hz()
+  public void SN76489TestRom310Hz()
   {
     var rom = LoadROM("SN76489_TestRom_NTSC");
     var memory = new Mapper(rom);
@@ -50,7 +52,7 @@ public class ToneTests
     var initialState = LoadState("SN76489_TestRom_360");
     cpu.LoadState(initialState);
 
-    var steps = 1000000;
+    var steps = TEST_CASE_STEPS;
     do
     {
       cpu.Step();
@@ -66,7 +68,7 @@ public class ToneTests
   }
 
   [Fact]
-  public void SN76489_TestRom_465Hz()
+  public void SN76489TestRom465Hz()
   {
     var rom = LoadROM("SN76489_TestRom_NTSC");
     var memory = new Mapper(rom);
@@ -78,7 +80,7 @@ public class ToneTests
     var initialState = LoadState("SN76489_TestRom_240");
     cpu.LoadState(initialState);
 
-    var steps = 1000000;
+    var steps = TEST_CASE_STEPS;
     do
     {
       cpu.Step();
@@ -94,7 +96,7 @@ public class ToneTests
   }
   
   [Fact]
-  public void SN76489_TestRom_620Hz()
+  public void SN76489TestRom620Hz()
   {
     var rom = LoadROM("SN76489_TestRom_NTSC");
     var memory = new Mapper(rom);
@@ -106,7 +108,7 @@ public class ToneTests
     var initialState = LoadState("SN76489_TestRom_180");
     cpu.LoadState(initialState);
 
-    var steps = 1000000;
+    var steps = TEST_CASE_STEPS;
     do
     {
       cpu.Step();

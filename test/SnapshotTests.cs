@@ -12,7 +12,8 @@ namespace Quill.Tests;
 public class SnapshotTests
 {
   #region Constants
-  private const int TEST_CASE_STEP_LIMIT = 468281085;
+  private const int TEST_CASE_STEP_LIMIT = 9000000;
+  private const int LONG_TEST_CASE_STEP_LIMIT = 468281085;
   private const ushort SMSMEMTEST_RAM_TEST_HOOK  = 0x0524;
   private const ushort SMSMEMTEST_VRAM_TEST_HOOK = 0x0618;
   private const ushort SMSMEMTEST_SRAM_TEST_HOOK = 0x0724;
@@ -20,7 +21,7 @@ public class SnapshotTests
   #endregion
 
   [Fact]
-  public void SMSmemtest_RAM()
+  public void SMSmemtestRAM()
   {
     var rom = LoadROM("SMSmemtest");
     var memory = new Mapper(rom);
@@ -29,13 +30,13 @@ public class SnapshotTests
     var bus = new Bus(memory, new(), psg, vdp);
     var cpu = new Z80(bus);
 
-    var steps = 0;
+    var steps = TEST_CASE_STEP_LIMIT;
     do
     {
       cpu.Step();
-      steps++;
+      steps--;
 
-      Assert.False(steps > TEST_CASE_STEP_LIMIT, "CPU step limit exceeded.");
+      Assert.True(steps > 0, "CPU step limit exceeded.");
     }
     while (cpu.PC != SMSMEMTEST_RAM_TEST_HOOK);
 
@@ -49,7 +50,7 @@ public class SnapshotTests
   }
 
   [Fact]
-  public void SMSmemtest_VRAM()
+  public void SMSmemtestVRAM()
   {
     var rom = LoadROM("SMSmemtest");
     var memory = new Mapper(rom);
@@ -61,13 +62,13 @@ public class SnapshotTests
     var initialState = LoadState("SMSmemtest_VRAM_init");
     cpu.LoadState(initialState);
 
-    var steps = 0;
+    var steps = TEST_CASE_STEP_LIMIT;
     do
     {
       cpu.Step();
-      steps++;
+      steps--;
 
-      Assert.False(steps > TEST_CASE_STEP_LIMIT, "CPU step limit exceeded.");
+      Assert.True(steps > 0, "CPU step limit exceeded.");
     }
     while (cpu.PC != SMSMEMTEST_VRAM_TEST_HOOK);
 
@@ -81,7 +82,7 @@ public class SnapshotTests
   }
 
   [Fact]
-  public void SMSmemtest_SRAM()
+  public void SMSmemtestSRAM()
   {
     var rom = LoadROM("SMSmemtest");
     var memory = new Mapper(rom);
@@ -93,13 +94,13 @@ public class SnapshotTests
     var initialState = LoadState("SMSmemtest_SRAM_init");
     cpu.LoadState(initialState);
 
-    var steps = 0;
+    var steps = TEST_CASE_STEP_LIMIT;
     do
     {
       cpu.Step();
-      steps++;
+      steps--;
 
-      Assert.False(steps > TEST_CASE_STEP_LIMIT, "CPU step limit exceeded.");
+      Assert.True(steps > 0, "CPU step limit exceeded.");
     }
     while (cpu.PC != SMSMEMTEST_SRAM_TEST_HOOK);
 
@@ -124,13 +125,45 @@ public class SnapshotTests
 
     for (int testCase = 0; testCase < 50; testCase++)
     {
-      var steps = 0;
+      var steps = TEST_CASE_STEP_LIMIT;
       do
       {
         cpu.Step();
-        steps++;
+        steps--;
 
-        Assert.False(steps > TEST_CASE_STEP_LIMIT, $"Test case {testCase:D2} exceeded CPU step limit.");
+        Assert.True(steps > 0, "CPU step limit exceeded.");
+      }
+      while (cpu.PC != ZEXDOC_TEST_CASE_HOOK);
+
+      var state = cpu.ReadState();
+      var targetState = LoadState($"zexdoc_{testCase:D2}");
+      Assert.True(state.Equals(targetState), $"Test case {testCase:D2} snapshot mismatch.");
+
+      var frame = vdp.ReadFramebuffer();
+      var targetFrame = LoadFrame($"zexdoc_{testCase:D2}");
+      Assert.True(CompareFrames(frame, targetFrame), $"Test case {testCase:D2} framebuffer mismatch.");
+    }
+  }
+
+  [Fact, Trait("Category", "Long")]
+  public void ZexdocFull()
+  {
+    var rom = LoadROM("zexdoc");
+    var memory = new Mapper(rom);
+    var psg = new PSG(new NullAudioSink());
+    var vdp = new VDP(new Framebuffer());
+    var bus = new Bus(memory, new(), psg, vdp);
+    var cpu = new Z80(bus);
+
+    for (int testCase = 0; testCase < 79; testCase++)
+    {
+      var steps = LONG_TEST_CASE_STEP_LIMIT;
+      do
+      {
+        cpu.Step();
+        steps--;
+
+        Assert.True(steps > 0, "CPU step limit exceeded.");
       }
       while (cpu.PC != ZEXDOC_TEST_CASE_HOOK);
 
