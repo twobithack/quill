@@ -16,7 +16,7 @@ public sealed partial class VDP
   public const int REGISTER_COUNT = 11;
   
   private const int HORIZONTAL_RESOLUTION = 256;
-  private const int TILE_SIZE = 8;
+  private const int VERTICAL_RESOLUTION = 240;
   private const int BACKGROUND_COLUMNS = 32;
   private const int BACKGROUND_ROWS = 28;
   private const byte VCOUNTER_ACTIVE = 191;
@@ -27,8 +27,10 @@ public sealed partial class VDP
   private const int HCOUNT_PER_CYCLE = 3;
   private const int HCOUNTER_MAX = 684;
   private const int VCOUNTER_MAX = byte.MaxValue;
+  
   private const byte DISABLE_SPRITES = 0xD0;
   private const byte TRANSPARENT = 0x00;
+  private const int TILE_SIZE = 8;
   #endregion
 
   public VDP(IVideoSink framebuffer)
@@ -138,18 +140,14 @@ public sealed partial class VDP
     IncrementScanline();
     UpdateInterrupts();
 
-    if (_vCounter <= VCOUNTER_ACTIVE)
+    if (_vCounter < VERTICAL_RESOLUTION)
       RasterizeScanline();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void IncrementScanline()
   {
-    if (_vCounter == VCOUNTER_ACTIVE)
-    {
-      _framebuffer.PublishFrame();
-    }
-    else if (_vCounter == VCOUNTER_ACTIVE + 1)
+    if (_vCounter == VCOUNTER_ACTIVE + 1)
     {
       VBlank = true;
     }
@@ -164,6 +162,7 @@ public sealed partial class VDP
     }
     else if (_vCounter == VCOUNTER_MAX)
     {
+      _framebuffer.PublishFrame();
       _vScroll = _registers[0x9];
       _vCounterJumped = false;
       _vBlankCompleted = true;
@@ -193,7 +192,7 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   { 
-    if (!DisplayEnabled)
+    if (!DisplayEnabled || _vCounter > VCOUNTER_ACTIVE)
     {
       BlankScanline();
       return;
