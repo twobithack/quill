@@ -10,11 +10,6 @@ namespace Quill.Core;
 
 unsafe public sealed class Emulator
 {
-  #region Constants
-  private const int REWIND_BUFFER_SIZE = 1000;
-  private const int FRAMES_PER_REWIND = 3;
-  #endregion
-
   #region Fields
   private readonly Framebuffer _framebuffer;
   private readonly Resampler _resampler;
@@ -22,7 +17,8 @@ unsafe public sealed class Emulator
   private readonly byte[] _rom;
 
   private readonly RingBuffer<Snapshot> _history;
-  private readonly string _snapshotPath;
+  private readonly int _rewindInterval;
+  private readonly string _savePath;
 
   private volatile bool _running;
   private volatile bool _rewinding;
@@ -38,8 +34,9 @@ unsafe public sealed class Emulator
     _ports = new Ports();
     _rom = rom;
 
-    _history = new RingBuffer<Snapshot>(REWIND_BUFFER_SIZE);
-    _snapshotPath = savePath;
+    _history = new RingBuffer<Snapshot>(config.Rewind.SnapshotCount);
+    _rewindInterval = config.Rewind.FrameInterval;
+    _savePath = savePath;
   }
 
   #region Methods
@@ -77,7 +74,7 @@ unsafe public sealed class Emulator
         SaveSnapshot(state);
         _saveRequested = false;
       }
-      else if (frameCounter >= FRAMES_PER_REWIND)
+      else if (frameCounter >= _rewindInterval)
       {
         var slot = _history.AcquireSlot();
         cpu.SaveState(slot);
@@ -116,8 +113,8 @@ unsafe public sealed class Emulator
     }
   }
 
-  private Snapshot LoadSnapshot() => Snapshot.ReadFromFile(_snapshotPath);
+  private Snapshot LoadSnapshot() => Snapshot.ReadFromFile(_savePath);
 
-  private void SaveSnapshot(Snapshot state) => state.WriteToFile(_snapshotPath);
+  private void SaveSnapshot(Snapshot state) => state.WriteToFile(_savePath);
   #endregion
 }

@@ -1,14 +1,36 @@
 namespace Quill.Common;
 
-public class Configuration
+public readonly record struct Configuration
 {
-  public int  AudioBufferCount  { get; set; } = 150; 
-  public int  AudioBufferSize   { get; set; } = 49;
-  public int  AudioSampleRate   { get; set; } = 44100;
-  public int  ClockRate         { get; set; } = 3579540;
-  public bool CropBottomBorder  { get; set; } = true;
-  public bool CropLeftBorder    { get; set; } = true;
-  public bool EnableCRTFilter   { get; set; } = true;
-  public bool FixAspectRatio    { get; set; } = true;
-  public int  ScaleFactor       { get; set; } = 3;
+  public AudioOptions   Audio   { get; init; }
+  public DisplayOptions Display { get; init; }
+  public RewindOptions  Rewind  { get; init; }
+  public SystemOptions  System  { get; init; }
+}
+
+public readonly record struct AudioOptions
+{
+  public int BufferCount        { get; init; }
+  public int BufferSize         { get; init; }
+  public int SampleRate         { get; init; }
+}
+
+public readonly record struct DisplayOptions
+{
+  public bool CropBottomBorder  { get; init; }
+  public bool CropLeftBorder    { get; init; }
+  public bool EnableCRTFilter   { get; init; }
+  public bool FixAspectRatio    { get; init; }
+  public int  ScaleFactor       { get; init; }
+}
+
+public readonly record struct RewindOptions
+{
+  public int SnapshotCount      { get; init; }
+  public int FrameInterval      { get; init; }
+}
+
+public readonly record struct SystemOptions
+{
+  public int ClockRate          { get; init; }
 }

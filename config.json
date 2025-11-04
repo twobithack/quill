@@ -1,11 +1,25 @@
 {
-  "audioBufferCount": 150,
-  "audioBufferSize":  49,
-  "audioSampleRate":  44100,
-  "clockRate":        3579540,
-  "cropBottomBorder": true,
-  "cropLeftBorder":   true,
-  "enableCRTFilter":  true,
-  "fixAspectRatio":   true,
-  "scaleFactor":      4
+  "audio":
+  {
+    "bufferCount":      150,
+    "bufferSize":       49,
+    "sampleRate":       44100
+  },
+  "display":
+  {
+    "cropBottomBorder": true,
+    "cropLeftBorder":   true,
+    "enableCRTFilter":  true,
+    "fixAspectRatio":   true,
+    "scaleFactor":      3
+  },
+  "rewind":
+  {
+    "snapshotCount":    10000,
+    "frameInterval":    3
+  },
+  "system":
+  {
+    "clockRate":        3579540
+  }
 }
