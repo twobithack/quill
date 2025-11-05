@@ -421,7 +421,7 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private static bool CheckParity(uint value) => BitOperations.PopCount(value) % 2 == 0;
+  private static bool CheckParity(uint value) => (BitOperations.PopCount(value) & 1) == 0;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly bool GetFlag(Flags flag) => (_flags & flag) != 0;

@@ -51,20 +51,20 @@ public ref struct Bus
     byte mirror when mirror < 0x3E => 0xFF,
     byte mirror when mirror > 0x3F &&
                      mirror < 0x80 &&
-                     mirror % 2 == 0 => _vdp.VCounter,
+                    (mirror & 1) == 0 => _vdp.VCounter,
     byte mirror when mirror > 0x3F &&
                      mirror < 0x80 &&
-                     mirror % 2 != 0 => _vdp.HCounter,
+                    (mirror & 1) != 0 => _vdp.HCounter,
     byte mirror when mirror > 0x7F &&
                      mirror < 0xC0 &&
-                     mirror % 2 == 0 => _vdp.ReadData(),
+                    (mirror & 1) == 0 => _vdp.ReadData(),
     byte mirror when mirror > 0x7F &&
                      mirror < 0xC0 &&
-                     mirror % 2 != 0 => _vdp.ReadStatus(),
+                    (mirror & 1) != 0 => _vdp.ReadStatus(),
     byte mirror when mirror > 0xC0 &&
-                     mirror % 2 == 0 => _ports.ReadPortA(),
+                    (mirror & 1) == 0 => _ports.ReadPortA(),
     byte mirror when mirror > 0xC1 &&
-                     mirror % 2 != 0 => _ports.ReadPortB(),
+                    (mirror & 1) != 0 => _ports.ReadPortB(),
     _ => 0xFF
   };
 
@@ -88,13 +88,13 @@ public ref struct Bus
 
       case 0x3E:
       case byte mirror when mirror < 0x3E &&
-                            mirror % 2 == 0:
+                           (mirror & 1) == 0:
         // Memory controller
         return;
 
       case 0x3F:
       case byte mirror when mirror < 0x3E &&
-                            mirror % 2 != 0:
+                           (mirror & 1) != 0:
         _ports.WriteControl(value);
         return;
 
@@ -105,13 +105,13 @@ public ref struct Bus
 
       case byte mirror when mirror > 0x7F &&
                             mirror < 0xC0 &&
-                            mirror % 2 != 0:
+                           (mirror & 1) != 0:
         _vdp.WriteControl(value);
         return;
 
       case byte mirror when mirror > 0x7F &&
                             mirror < 0xC0 &&
-                            mirror % 2 == 0:
+                           (mirror & 1) == 0:
         _vdp.WriteData(value);
         return;
     }

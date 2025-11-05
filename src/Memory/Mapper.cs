@@ -81,25 +81,25 @@ unsafe public ref struct Mapper
     if (address < PAGE_SIZE)
       return _rom[_page0, address];
 
-    var index = address % PAGE_SIZE;
+    var wrapped = address & (PAGE_SIZE - 1);
 
     if (address < PAGE_SIZE * 2)
-      return _rom[_page1, index];
+      return _rom[_page1, wrapped];
 
     if (address < PAGE_SIZE * 3)
     {
       if (_bankEnable)
         return _bankSelect
-             ? _ramBank0[index]
-             : _ramBank1[index];
+             ? _ramBank0[wrapped]
+             : _ramBank1[wrapped];
 
-      return _rom[_page2, index];
+      return _rom[_page2, wrapped];
     }
 
     if (address >= MIRROR_START)
-      index -= MIRROR_SIZE;
+      wrapped -= MIRROR_SIZE;
 
-    return _ram[index];
+    return _ram[wrapped];
   }
   
   public void WriteByte(ushort address, byte value)
@@ -107,23 +107,23 @@ unsafe public ref struct Mapper
     if (address < PAGE_SIZE * 2)
       return;
 
-    var index = address % PAGE_SIZE;
-
+    var wrapped = address & (PAGE_SIZE - 1);
+    
     if (address < PAGE_SIZE * 3)
     {
       if (!_bankEnable)
         return;
 
       if (_bankSelect)
-        _ramBank0[index] = value;
+        _ramBank0[wrapped] = value;
       else
-        _ramBank1[index] = value;
+        _ramBank1[wrapped] = value;
 
       return;
     }
 
     if (address >= MIRROR_START)
-      index -= MIRROR_SIZE;
+      wrapped -= MIRROR_SIZE;
 
     if (address == BANK_CONTROL)
     {
@@ -137,7 +137,7 @@ unsafe public ref struct Mapper
     else if (address == PAGE2_CONTROL)
       _page2 = (byte)(value & _pageMask);
 
-    _ram[index] = value;
+    _ram[wrapped] = value;
   }
 
   public readonly ushort ReadWord(ushort address)
