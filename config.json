@@ -1,9 +1,9 @@
 {
   "audio":
   {
-    "bufferCount":      150,
-    "bufferSize":       49,
-    "sampleRate":       44100
+    "bufferCount":      128,
+    "bufferSize":       64,
+    "sampleRate":       48000
   },
   "display":
   {

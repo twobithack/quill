@@ -1,4 +1,4 @@
-﻿using static System.Collections.StructuralComparisons;
+﻿using System;
 using System.IO;
 
 using MessagePack;
@@ -10,7 +10,7 @@ using Quill.Video.Definitions;
 namespace Quill.Core;
 
 [MessagePackObject]
-public sealed class Snapshot
+public sealed class Snapshot : IEquatable<Snapshot>
 {
   #region Fields
   [Key(0)]  public ushort AF;
@@ -95,31 +95,54 @@ public sealed class Snapshot
 
   public bool Equals(Snapshot other)
   {
-    if (!StructuralEqualityComparer.Equals(RAM,        other.RAM))        return false;
-    if (!StructuralEqualityComparer.Equals(Bank0,      other.Bank0))      return false;
-    if (!StructuralEqualityComparer.Equals(Bank1,      other.Bank1))      return false;
-    if (!StructuralEqualityComparer.Equals(Palette,    other.Palette))    return false;
-    if (!StructuralEqualityComparer.Equals(VRAM,       other.VRAM))       return false;
-    if (!StructuralEqualityComparer.Equals(VRegisters, other.VRegisters)) return false;
-
-    if (AF   != other.AF)   return false;
-    if (BC   != other.BC)   return false;
-    if (DE   != other.DE)   return false;
-    if (HL   != other.HL)   return false;
-    if (IX   != other.IX)   return false;
-    if (IY   != other.IY)   return false;
-    if (PC   != other.PC)   return false;
-    if (SP   != other.SP)   return false;
-    if (AFs  != other.AFs)  return false;
-    if (BCs  != other.BCs)  return false;
-    if (DEs  != other.DEs)  return false;
-    if (HLs  != other.HLs)  return false;
-    if (I    != other.I)    return false;
-    if (R    != other.R)    return false;
-    if (IFF1 != other.IFF1) return false;
-    if (IFF2 != other.IFF2) return false;
-
+    if (AF                  != other.AF)                      return false;
+    if (BC                  != other.BC)                      return false;
+    if (DE                  != other.DE)                      return false;
+    if (HL                  != other.HL)                      return false;
+    if (IX                  != other.IX)                      return false;
+    if (IY                  != other.IY)                      return false;
+    if (PC                  != other.PC)                      return false;
+    if (SP                  != other.SP)                      return false;
+    if (AFs                 != other.AFs)                     return false;
+    if (BCs                 != other.BCs)                     return false;
+    if (DEs                 != other.DEs)                     return false;
+    if (HLs                 != other.HLs)                     return false;
+    if (I                   != other.I)                       return false;
+    if (R                   != other.R)                       return false;
+    if (Halt                != other.Halt)                    return false;
+    if (IFF1                != other.IFF1)                    return false;
+    if (IFF2                != other.IFF2)                    return false;
+    if (BankEnable          != other.BankEnable)              return false;
+    if (BankSelect          != other.BankSelect)              return false;
+    if (Page0               != other.Page0)                   return false;
+    if (Page1               != other.Page1)                   return false;
+    if (Page2               != other.Page2)                   return false;
+    if (VDPStatus           != other.VDPStatus)               return false;
+    if (ControlWord         != other.ControlWord)             return false;
+    if (DataPort            != other.DataPort)                return false;
+    if (VScroll             != other.VScroll)                 return false;
+    if (HLineCounter        != other.HLineCounter)            return false;
+    if (HLinePending        != other.HLinePending)            return false;
+    if (ControlWritePending != other.ControlWritePending)     return false;
+    if (IRQ                 != other.IRQ)                     return false;
+    if (ChannelLatch        != other.ChannelLatch)            return false;
+    if (VolumeLatch         != other.VolumeLatch)             return false;
+    if (!RAM.AsSpan().SequenceEqual(other.RAM))               return false;
+    if (!Bank0.AsSpan().SequenceEqual(other.Bank0))           return false;
+    if (!Bank1.AsSpan().SequenceEqual(other.Bank1))           return false;
+    if (!Palette.AsSpan().SequenceEqual(other.Palette))       return false;
+    if (!VRAM.AsSpan().SequenceEqual(other.VRAM))             return false;
+    if (!VRegisters.AsSpan().SequenceEqual(other.VRegisters)) return false;
+    if (!Tones.AsSpan().SequenceEqual(other.Tones))           return false;
+    if (!Volumes.AsSpan().SequenceEqual(other.Volumes))       return false;
+    
     return true;
   }
+
+  public override bool Equals(object obj) => obj is Snapshot other
+                                          && Equals(other);
+
+  public override int GetHashCode() => HashCode.Combine(AF, BC, DE, HL,
+                                                        IX, IY, PC, SP);
   #endregion
 }

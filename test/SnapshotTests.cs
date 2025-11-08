@@ -1,6 +1,4 @@
-﻿using static System.Collections.StructuralComparisons;
-
-using Quill.Core;
+﻿using Quill.Core;
 using Quill.CPU;
 using Quill.IO;
 using Quill.Memory;
@@ -42,11 +40,11 @@ public class SnapshotTests
 
     var state = cpu.ReadState();
     var targetState = LoadState("SMSmemtest_RAM");
-    Assert.True(state.Equals(targetState), "Snapshot mismatch.");
+    Assert.Equal(state, targetState);
 
     var frame = vdp.ReadFramebuffer();
     var targetFrame = LoadFrame("SMSmemtest_RAM");
-    Assert.True(CompareFrames(frame, targetFrame), "Framebuffer mismatch.");
+    Assert.Equal(frame, targetFrame);
   }
 
   [Fact]
@@ -74,11 +72,11 @@ public class SnapshotTests
 
     var state = cpu.ReadState();
     var targetState = LoadState("SMSmemtest_VRAM");
-    Assert.True(state.Equals(targetState), "Snapshot mismatch.");
+    Assert.Equal(state, targetState);
 
     var frame = vdp.ReadFramebuffer();
     var targetFrame = LoadFrame("SMSmemtest_VRAM");
-    Assert.True(CompareFrames(frame, targetFrame), "Framebuffer mismatch.");
+    Assert.Equal(frame, targetFrame);
   }
 
   [Fact]
@@ -106,11 +104,11 @@ public class SnapshotTests
 
     var state = cpu.ReadState();
     var targetState = LoadState("SMSmemtest_SRAM");
-    Assert.True(state.Equals(targetState), "Snapshot mismatch.");
+    Assert.Equal(state, targetState);
     
     var frame = vdp.ReadFramebuffer();
     var targetFrame = LoadFrame("SMSmemtest_SRAM");
-    Assert.True(CompareFrames(frame, targetFrame), "Framebuffer mismatch.");
+    Assert.Equal(frame, targetFrame);
   }
 
   [Fact]
@@ -137,11 +135,11 @@ public class SnapshotTests
 
       var state = cpu.ReadState();
       var targetState = LoadState($"zexdoc_{testCase:D2}");
-      Assert.True(state.Equals(targetState), $"Test case {testCase:D2} snapshot mismatch.");
+      Assert.Equal(state, targetState);
 
       var frame = vdp.ReadFramebuffer();
       var targetFrame = LoadFrame($"zexdoc_{testCase:D2}");
-      Assert.True(CompareFrames(frame, targetFrame), $"Test case {testCase:D2} framebuffer mismatch.");
+      Assert.Equal(frame, targetFrame);
     }
   }
 
@@ -169,17 +167,15 @@ public class SnapshotTests
 
       var state = cpu.ReadState();
       var targetState = LoadState($"zexdoc_{testCase:D2}");
-      Assert.True(state.Equals(targetState), $"Test case {testCase:D2} snapshot mismatch.");
+      Assert.Equal(state, targetState);
 
       var frame = vdp.ReadFramebuffer();
       var targetFrame = LoadFrame($"zexdoc_{testCase:D2}");
-      Assert.True(CompareFrames(frame, targetFrame), $"Test case {testCase:D2} framebuffer mismatch.");
+      Assert.Equal(frame, targetFrame);
     }
   }
 
   private static byte[] LoadROM(string name) => File.ReadAllBytes($"roms/{name}.sms");
   private static Snapshot LoadState(string name) => Snapshot.ReadFromFile($"states/{name}.state");
   private static byte[] LoadFrame(string name) => File.ReadAllBytes($"frames/{name}.frame");
-  private static bool CompareFrames(byte[] framebuffer, byte[] targetbuffer) =>
-    StructuralEqualityComparer.Equals(framebuffer, targetbuffer);
 }
