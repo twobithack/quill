@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
 using Quill.Common.Interfaces;
@@ -8,6 +7,16 @@ namespace Quill.Sound;
 
 public sealed partial class PSG
 {
+  #region Constants
+  public const int CYCLES_PER_SAMPLE = 16;
+  public const int CHANNEL_COUNT = 4;
+
+  private const int TONE0 = 0b_00;
+  private const int TONE1 = 0b_01;
+  private const int TONE2 = 0b_10;
+  private const int NOISE = 0b_11;
+  #endregion
+
   public PSG(IAudioSink audioSink)
   {
     _audioSink = audioSink;
