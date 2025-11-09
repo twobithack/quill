@@ -205,10 +205,15 @@ public sealed partial class VDP
       RasterizeSprites();
       RasterizeBackground();
     }
+    else if (DisplayMode3)
+    {
+      RasterizeLegacySprites();
+      RasterizeMode3Background();
+    }
     else
     {
       RasterizeLegacySprites();
-      RasterizeLegacyBackground();
+      RasterizeMode2Background();
     }
 
     CommitScanline();
@@ -439,11 +444,10 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeLegacyBackground()
+  private void RasterizeMode2Background()
   {
     var colorMask = (_registers[0x3] << 1) | 1;
-
-    var row = _vCounter >> 3;
+    var row       = _vCounter >> 3;
     var rowOffset = _vCounter & (TILE_SIZE - 1);
 
     var tableAddressOffset = row switch
@@ -452,21 +456,21 @@ public sealed partial class VDP
       < 16  => TestRegisterBit(0x4, 1) ? 0x800  : 0x0,
       _     => TestRegisterBit(0x4, 0) ? 0x1000 : 0x0
     };
-
+    
     for (int column = 0; column < BACKGROUND_COLUMNS; column++)
     {
       var patternIndex = _vram[NameTableAddress + column + (row << 5)];
-      var patternAddress = PatternTableAddress 
+      var patternAddress = PatternTableAddress
                          + tableAddressOffset
-                         + rowOffset 
+                         + rowOffset
                          + (patternIndex << TILE_SHIFT);
 
       var colorIndex = patternIndex & colorMask;
-      var colorAddress = ColorTableAddress 
+      var colorAddress = ColorTableAddress
                        + tableAddressOffset
-                       + rowOffset 
+                       + rowOffset
                        + (colorIndex << TILE_SHIFT);
-      
+
       var patternData = _vram[patternAddress];
       var colorData = _vram[colorAddress];
 
@@ -477,13 +481,56 @@ public sealed partial class VDP
         if (x >= HORIZONTAL_RESOLUTION)
           return;
 
+        if (_spriteMask[x])
+          continue;
+
         var color = patternData.TestBit(i)
                   ? colorData.HighNibble()
                   : colorData.LowNibble();
-        
+
+        if (color == TRANSPARENT)
+          color = LegacyBlankColor;
+
+        SetLegacyBackgroundPixel(x, color);
+      }
+    }
+  }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void RasterizeMode3Background()
+  {
+    var row        = _vCounter >> TILE_SHIFT;
+    var rowOffset  = _vCounter & (TILE_SIZE - 1);
+    var pairOffset = (row & 0b_11) << 1;
+
+    for (int column = 0; column < BACKGROUND_COLUMNS; column++)
+    {
+      var patternIndex = _vram[NameTableAddress + column + (row << 5)];
+      var patternAddress = PatternTableAddress
+                         + (patternIndex << 3)
+                         + pairOffset;
+
+      if (rowOffset > 3)
+        patternAddress++;
+
+      var patternData = _vram[patternAddress];
+      var leftColor   = patternData.HighNibble();
+      var rightColor  = patternData.LowNibble();
+
+      var x = column << TILE_SHIFT;
+      var tileEnd = x + TILE_SIZE;
+      for (int i = 0; x < tileEnd; x++, i++)
+      {
+        if (x >= HORIZONTAL_RESOLUTION)
+          return;
+
         if (_spriteMask[x])
           continue;
-        
+
+        var color = (i < 4)
+                  ? leftColor
+                  : rightColor;
+
         if (color == TRANSPARENT)
           color = LegacyBlankColor;
 
