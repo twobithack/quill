@@ -1,61 +1,43 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-
-using CommunityToolkit.HighPerformance;
+using System.Runtime.CompilerServices;
 using Quill.Common.Extensions;
-using Quill.Core;
 
 namespace Quill.Memory;
 
-unsafe public ref struct Mapper
+unsafe public ref partial struct Mapper
 {
   #region Constants
-  public const ushort PAGE_SIZE = 0x4000;
+  public const ushort RAM_SIZE       = 0x2000;
+  public const ushort BANK_SIZE      = 0x4000;
   
-  private const ushort HEADER_SIZE = 0x200;
-  private const ushort PAGING_START = 0x400;
-  private const ushort MIRROR_SIZE = 0x2000;
-  private const ushort MIRROR_START = 0xE000;
-  private const ushort BANK_CONTROL = 0xFFFC;
-  private const ushort PAGE0_CONTROL = 0xFFFD;
-  private const ushort PAGE1_CONTROL = 0xFFFE;
-  private const ushort PAGE2_CONTROL = 0xFFFF;
-  #endregion
-
-  #region Fields
-  private readonly ReadOnlySpan2D<byte> _rom;
-  private readonly Span<byte> _ram;
-  private readonly Span<byte> _ramBank0;
-  private readonly Span<byte> _ramBank1;
-  private readonly byte _pageMask;
-  private bool _bankEnable;
-  private bool _bankSelect;
-  private byte _page0;
-  private byte _page1;
-  private byte _page2;
+  private const ushort HEADER_SIZE   = 0x0200;
+  private const ushort PAGING_START  = 0x0400;
+  private const ushort SRAM_CONTROL  = 0xFFFC;
+  private const ushort SLOT0_CONTROL = 0xFFFD;
+  private const ushort SLOT1_CONTROL = 0xFFFE;
+  private const ushort SLOT2_CONTROL = 0xFFFF;
   #endregion
 
   public Mapper(byte[] program)
   {
-    var headerOffset = (program.Length % PAGE_SIZE == HEADER_SIZE) ? HEADER_SIZE : 0;
-    var pageCount = (program.Length + PAGE_SIZE - 1) / PAGE_SIZE;
-    var rom = new byte[pageCount, PAGE_SIZE];
-                     
-    for (int i = headerOffset; i < program.Length; i++)
-    {
-      var page = i / PAGE_SIZE;
-      var index = i % PAGE_SIZE;
-      rom[page, index] = program[i];
-    }
+    var headerOffset = (program.Length % BANK_SIZE == HEADER_SIZE) ? HEADER_SIZE : 0;
+    var romLength = program.Length - headerOffset;
+    _pageCount = (romLength + BANK_SIZE - 1) / BANK_SIZE;
 
-    _rom = new ReadOnlySpan2D<byte>(rom);
-    _page0 = 0x00;
-    _page1 = 0x01;
-    _page2 = 0x02;
-    
-    _pageMask = pageCount switch 
+    var romPadded = new byte[_pageCount * BANK_SIZE];
+    program.AsSpan(headerOffset, romLength).CopyTo(romPadded);
+    _rom = romPadded;
+    _fixed = _rom[..PAGING_START];
+
+    _ram   = new byte[BANK_SIZE];
+    _sram0 = new byte[BANK_SIZE];
+    _sram1 = new byte[BANK_SIZE];
+    _sram  = _sram0;
+
+    _pageMask = _pageCount switch
     {
+      <= 1    =>  0b_0000_0000,
+      <= 2    =>  0b_0000_0001,
       <= 4    =>  0b_0000_0011,
       <= 8    =>  0b_0000_0111,
       <= 16   =>  0b_0000_1111,
@@ -64,162 +46,108 @@ unsafe public ref struct Mapper
       <= 128  =>  0b_0111_1111,
       _       =>  0b_1111_1111
     };
-
-    _ram = new Span<byte>(new byte[PAGE_SIZE]);
-    _ramBank0 = new Span<byte>(new byte[PAGE_SIZE]);
-    _ramBank1 = new Span<byte>(new byte[PAGE_SIZE]);
-    _bankEnable = false;
-    _bankSelect = false;
+    
+    _slot0Control = 0x00;
+    _slot1Control = 0x01;
+    _slot2Control = 0x02;
+    UpdateSlots();
   }
 
   #region Methods
   public readonly byte ReadByte(ushort address)
   {
     if (address < PAGING_START)
-      return _rom[0x00, address];
+      return _fixed[address];
 
-    if (address < PAGE_SIZE)
-      return _rom[_page0, address];
+    if (address < BANK_SIZE)
+      return _slot0[address];
 
-    var wrapped = address & (PAGE_SIZE - 1);
+    var index = address & (BANK_SIZE - 1);
 
-    if (address < PAGE_SIZE * 2)
-      return _rom[_page1, wrapped];
+    if (address < BANK_SIZE * 2)
+      return _slot1[index];
 
-    if (address < PAGE_SIZE * 3)
-    {
-      if (_bankEnable)
-        return _bankSelect
-             ? _ramBank0[wrapped]
-             : _ramBank1[wrapped];
+    if (address < BANK_SIZE * 3)
+      return _slot2[index];
 
-      return _rom[_page2, wrapped];
-    }
-
-    if (address >= MIRROR_START)
-      wrapped -= MIRROR_SIZE;
-
-    return _ram[wrapped];
+    index &= RAM_SIZE - 1;
+    return _ram[index];
   }
-  
+
   public void WriteByte(ushort address, byte value)
   {
-    if (address < PAGE_SIZE * 2)
+    if (address < BANK_SIZE * 2)
       return;
 
-    var wrapped = address & (PAGE_SIZE - 1);
-    
-    if (address < PAGE_SIZE * 3)
+    if (address == SRAM_CONTROL)
     {
-      if (!_bankEnable)
+      _sramEnable = value.TestBit(3);
+      _sramSelect = value.TestBit(2);
+      UpdateSlots();
+    }
+    else if (address == SLOT0_CONTROL)
+    {
+      _slot0Control = (byte)(value & _pageMask);
+      UpdateSlots();
+    }
+    else if (address == SLOT1_CONTROL)
+    {
+      _slot1Control = (byte)(value & _pageMask);
+      UpdateSlots();
+    }
+    else if (address == SLOT2_CONTROL)
+    {
+      _slot2Control = (byte)(value & _pageMask);
+      UpdateSlots();
+    }
+
+    if (address < BANK_SIZE * 3)
+    {
+      if (!_sramEnable)
         return;
-
-      if (_bankSelect)
-        _ramBank0[wrapped] = value;
-      else
-        _ramBank1[wrapped] = value;
-
-      return;
+      var index = address & (BANK_SIZE - 1);
+      _sram[index] = value;
     }
-
-    if (address >= MIRROR_START)
-      wrapped -= MIRROR_SIZE;
-
-    if (address == BANK_CONTROL)
+    else
     {
-      _bankEnable = value.TestBit(3);
-      _bankSelect = value.TestBit(2);
-    }
-    else if (address == PAGE0_CONTROL)
-      _page0 = (byte)(value & _pageMask);
-    else if (address == PAGE1_CONTROL)
-      _page1 = (byte)(value & _pageMask);
-    else if (address == PAGE2_CONTROL)
-      _page2 = (byte)(value & _pageMask);
-
-    _ram[wrapped] = value;
+      var index = address & (RAM_SIZE - 1);
+      _ram[index] = value;
+    }    
   }
 
   public readonly ushort ReadWord(ushort address)
   {
-    var lowByte = ReadByte(address);
+    var lowByte  = ReadByte(address);
     var highByte = ReadByte(address.Increment());
     return highByte.Concat(lowByte);
   }
 
   public void WriteWord(ushort address, ushort word)
   {
-    WriteByte(address, word.LowByte());
+    WriteByte(address,             word.LowByte());
     WriteByte(address.Increment(), word.HighByte());
   }
   
-  public void LoadState(Snapshot state)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void UpdateSlots()
   {
-    state.RAM.AsSpan().CopyTo(_ram);
-    state.Bank0.AsSpan().CopyTo(_ramBank0);
-    state.Bank1.AsSpan().CopyTo(_ramBank1);
-    _page0 = state.Page0;
-    _page1 = state.Page1;
-    _page2 = state.Page2;
-    _bankEnable = state.BankEnable;
-    _bankSelect = state.BankSelect;
+    _sram = _sramSelect
+          ? _sram0
+          : _sram1;
+
+    _slot0 = GetBank(_slot0Control);
+    _slot1 = GetBank(_slot1Control);
+    _slot2 = _sramEnable
+           ? _sram
+           : GetBank(_slot2Control);
   }
 
-  public readonly void SaveState(Snapshot state)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
   {
-    _ram.CopyTo(state.RAM);
-    _ramBank0.CopyTo(state.Bank0);
-    _ramBank1.CopyTo(state.Bank1);
-    state.Page0 = _page0;
-    state.Page1 = _page1;
-    state.Page2 = _page2;
-    state.BankEnable= _bankEnable;
-    state.BankSelect = _bankSelect;
-  }
-
-  public readonly void DumpRAM(string path)
-  {
-    var memory = new List<string>();
-    var row = string.Empty;
-
-    for (ushort address = 0; address < PAGE_SIZE; address++)
-    {
-      if (address % 64 == 0)
-      {
-        memory.Add(row);
-        row = string.Empty;
-      }
-      row += _ram[address].ToHex();
-    }
-    
-    File.WriteAllLines(path, memory);
-  }
-
-  public readonly void DumpROM(string path)
-  {
-    var dump = new List<string>();
-    for (byte page = 0; page < 0x40; page++)
-    {
-      var row = $"PAGE {page.ToHex()}";
-      for (ushort index = 0; index < PAGE_SIZE; index++)
-      {
-        if (index % 16 == 0)
-        {
-          dump.Add(row);
-          row = $"{index.ToHex()} : ";
-        }
-        row += _rom[page,index].ToHex();
-      }
-    }
-    File.WriteAllLines(path, dump);
-  }
-
-  public override readonly string ToString()
-  {
-    var banking = _bankEnable
-                ? $"enabled (Bank {_bankSelect.ToBit()})"
-                : "disabled";
-    return $"Memory: RAM banking {banking} | P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
+    var pageIndex = controlByte & _pageMask;
+    var wrapped = pageIndex % _pageCount;
+    return _rom.Slice(wrapped * BANK_SIZE, BANK_SIZE);
   }
   #endregion
 }

@@ -32,13 +32,13 @@ public sealed class Snapshot : IEquatable<Snapshot>
   [Key(16)] public bool IFF2;
 
   [Key(17)] public byte[] RAM;
-  [Key(18)] public byte[] Bank0;
-  [Key(19)] public byte[] Bank1;
-  [Key(20)] public bool BankEnable;
-  [Key(21)] public bool BankSelect;
-  [Key(22)] public byte Page0;
-  [Key(23)] public byte Page1;
-  [Key(24)] public byte Page2;
+  [Key(18)] public byte[] SRAM0;
+  [Key(19)] public byte[] SRAM1;
+  [Key(20)] public bool EnableSRAM;
+  [Key(21)] public bool SelectSRAM;
+  [Key(22)] public byte Slot0Control;
+  [Key(23)] public byte Slot1Control;
+  [Key(24)] public byte Slot2Control;
 
   [Key(25)] public int[] Palette;
   [Key(26)] public byte[] VRAM;
@@ -60,9 +60,9 @@ public sealed class Snapshot : IEquatable<Snapshot>
 
   public Snapshot()
   {
-    RAM = new byte[Mapper.PAGE_SIZE];
-    Bank0 = new byte[Mapper.PAGE_SIZE];
-    Bank1 = new byte[Mapper.PAGE_SIZE];
+    RAM = new byte[Mapper.BANK_SIZE];
+    SRAM0 = new byte[Mapper.BANK_SIZE];
+    SRAM1 = new byte[Mapper.BANK_SIZE];
     Palette = new int[VDP.CRAM_SIZE];
     VRAM = new byte[VDP.VRAM_SIZE];
     VRegisters = new byte[VDP.REGISTER_COUNT];
@@ -112,11 +112,11 @@ public sealed class Snapshot : IEquatable<Snapshot>
     if (Halt                != other.Halt)                    return false;
     if (IFF1                != other.IFF1)                    return false;
     if (IFF2                != other.IFF2)                    return false;
-    if (BankEnable          != other.BankEnable)              return false;
-    if (BankSelect          != other.BankSelect)              return false;
-    if (Page0               != other.Page0)                   return false;
-    if (Page1               != other.Page1)                   return false;
-    if (Page2               != other.Page2)                   return false;
+    if (EnableSRAM          != other.EnableSRAM)              return false;
+    if (SelectSRAM          != other.SelectSRAM)              return false;
+    if (Slot0Control        != other.Slot0Control)            return false;
+    if (Slot1Control        != other.Slot1Control)            return false;
+    if (Slot2Control        != other.Slot2Control)            return false;
     if (VDPStatus           != other.VDPStatus)               return false;
     if (ControlWord         != other.ControlWord)             return false;
     if (DataPort            != other.DataPort)                return false;
@@ -128,8 +128,8 @@ public sealed class Snapshot : IEquatable<Snapshot>
     if (ChannelLatch        != other.ChannelLatch)            return false;
     if (VolumeLatch         != other.VolumeLatch)             return false;
     if (!RAM.AsSpan().SequenceEqual(other.RAM))               return false;
-    if (!Bank0.AsSpan().SequenceEqual(other.Bank0))           return false;
-    if (!Bank1.AsSpan().SequenceEqual(other.Bank1))           return false;
+    if (!SRAM0.AsSpan().SequenceEqual(other.SRAM0))           return false;
+    if (!SRAM1.AsSpan().SequenceEqual(other.SRAM1))           return false;
     if (!Palette.AsSpan().SequenceEqual(other.Palette))       return false;
     if (!VRAM.AsSpan().SequenceEqual(other.VRAM))             return false;
     if (!VRegisters.AsSpan().SequenceEqual(other.VRegisters)) return false;
