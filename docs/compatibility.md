@@ -116,6 +116,8 @@
 * Indiana Jones and the Last Crusade
 * James 'Buster' Douglas Knockout Boxing
 * James Pond 2 - Codename Robocod
+* Jang Pung II
+* Jang Pung 3
 * The Jungle Book
 * Jurassic Park
 * Kenseiden
@@ -181,8 +183,10 @@
 * RoboCop versus The Terminator
 * Rocky
 * R-Type
-* Running Battle:
+* Run! Dodgeball King
+* Running Battle
 * Sagaia
+* Samgukji III
 * Sapo Xulé: O Mestre do Kung Fu
 * Sapo Xulé: S.O.S. Lagoa Poluida
 * Scramble Spirits
@@ -258,6 +262,7 @@
 * Excellent Dizzy Collection (Codemasters)
 * Flashpoint
 * Galactic Protector (paddle)
+* Gangcheol RoboCop
 * Gangster Town (phaser)
 * King & Balloon
 * Knightmare II: The Maze of Galious
@@ -268,7 +273,6 @@
 * Parlour Games
 * Rambo III (phaser)
 * Rescue Mission (phaser)
-* Run! Dodgeball King
 * Safari Hunt (phaser)
 * Sega Chess (PAL)
 * Shooting Galery (phaser)

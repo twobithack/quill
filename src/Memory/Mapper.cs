@@ -100,13 +100,13 @@ unsafe public ref partial struct Mapper
       {
         if (!_sramEnable)
           return;
-        var sramIndex = address & (BANK_SIZE - 1);
-        _sram[sramIndex] = value;
+        var index = address & (BANK_SIZE - 1);
+        _sram[index] = value;
       }
       else
       {
-        var ramIndex = address & (RAM_SIZE - 1);
-        _ram[ramIndex] = value;
+        var index = address & (RAM_SIZE - 1);
+        _ram[index] = value;
       }
     }
     else if (_mapper == MapperType.Codemasters)
@@ -128,8 +128,21 @@ unsafe public ref partial struct Mapper
       }
       else
       {
-        var ramIndex = address & (RAM_SIZE - 1);
-        _ram[ramIndex] = value;
+        var index = address & (RAM_SIZE - 1);
+        _ram[index] = value;
+      }
+    }
+    else if (_mapper == MapperType.Korean)
+    {
+      if (address == 0xA000)
+      {
+        _slot2Control = (byte)(value & _bankMask);
+        UpdateSlots();
+      }
+      else if (address >= BANK_SIZE * 3)
+      {
+        var index = address & (RAM_SIZE - 1);
+        _ram[index] = value;
       }
     }
   }
@@ -178,14 +191,19 @@ unsafe public ref partial struct Mapper
       _slot1 = GetBank(_slot1Control);
       _slot2 = GetBank(_slot2Control);
     }
+    else if (_mapper == MapperType.Korean)
+    {
+      _slot0 = GetBank(0);
+      _slot1 = GetBank(1);
+      _slot2 = GetBank(_slot2Control);
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
   {
-    var bank = controlByte & _bankMask;
-    var mirrored = bank % _bankCount;
-    return _rom.Slice(mirrored * BANK_SIZE, BANK_SIZE);
+    var bank = controlByte % _bankCount;
+    return _rom.Slice(bank * BANK_SIZE, BANK_SIZE);
   }
 
   private static byte CalculateBankMask(int bankCount)
@@ -249,7 +267,7 @@ unsafe public ref partial struct Mapper
   private static bool HasKnownKoreanHash(uint crc)
   {
     if (Hashes.Korean.Contains(crc))
-      throw new Exception("Korean-style mapper not yet supported.");
+      return true;
     return false;
   }
 
