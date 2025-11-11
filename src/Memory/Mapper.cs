@@ -1,5 +1,7 @@
 using System;
+using System.IO.Hashing;
 using System.Runtime.CompilerServices;
+
 using Quill.Common.Extensions;
 using Quill.Memory.Definitions;
 
@@ -21,7 +23,7 @@ unsafe public ref partial struct Mapper
 
   public Mapper(byte[] program)
   {
-    var headerOffset = (program.Length % BANK_SIZE == HEADER_SIZE) 
+    var headerOffset = HasHeader(program)
                      ? HEADER_SIZE
                      : 0;
     var romLength = program.Length - headerOffset;
@@ -182,8 +184,8 @@ unsafe public ref partial struct Mapper
   private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
   {
     var bank = controlByte & _bankMask;
-    var index = bank % _bankCount;
-    return _rom.Slice(index * BANK_SIZE, BANK_SIZE);
+    var mirrored = bank % _bankCount;
+    return _rom.Slice(mirrored * BANK_SIZE, BANK_SIZE);
   }
 
   private static byte CalculateBankMask(int bankCount)
@@ -201,23 +203,61 @@ unsafe public ref partial struct Mapper
       _       =>  0b_1111_1111
     };
   }
-
+  
   private static MapperType GetMapperType(byte[] rom)
   {
-    if (rom.Length < 0x7FE8)
+    if (rom.Length < 0x8000)
       return MapperType.SEGA;
+
+    if (HasCodemastersHeader(rom))
+      return MapperType.Codemasters;
+
+    var hash = GetCRC32Hash(rom);
+
+    if (HasKnownKoreanHash(hash))
+      return MapperType.Korean;
+
+    if (HasKnownMSXHash(hash))
+      return MapperType.MSX;
+
+    return MapperType.SEGA;
+  }
+
+  private static bool HasHeader(byte[] rom) => rom.Length % BANK_SIZE == HEADER_SIZE;
+
+  private static bool HasCodemastersHeader(byte[] rom)
+  {
+    if (rom.Length < 0x7FEA)
+      return false;
 
     var checksum = rom[0x7FE7].Concat(rom[0x7FE6]);
     if (checksum == 0x0)
-      return MapperType.SEGA;
+      return false;
 
     var result = (ushort)(0x10000 - checksum);
     var answer = rom[0x7FE9].Concat(rom[0x7FE8]);
+    return result == answer;
+  }
 
-    if (result == answer)
-      return MapperType.Codemasters;
-    else
-      return MapperType.SEGA;
+  private static uint GetCRC32Hash(byte[] rom)
+  {
+    var headerOffset = HasHeader(rom) ? HEADER_SIZE : 0;
+    var hash = Crc32.Hash(rom.AsSpan(headerOffset, rom.Length - headerOffset));
+    return BitConverter.ToUInt32(hash);
+  }
+
+  private static bool HasKnownKoreanHash(uint crc)
+  {
+    if (Hashes.Korean.Contains(crc))
+      throw new Exception("Korean-style mapper not yet supported.");
+    return false;
+  }
+
+  private static bool HasKnownMSXHash(uint crc)
+  {
+    if (Hashes.MSX.Contains(crc))
+      throw new Exception("MSX-style mapper not yet supported.");
+    return false;
   }
   #endregion
 }

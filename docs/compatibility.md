@@ -1,6 +1,6 @@
 # MASTER SYSTEM
 
-## SUPPORTED
+## WORKING
 * 20-em-1
 * Action Fighter
 * Addams Family
@@ -30,6 +30,7 @@
 * Back to the Future Part II
 * Back to the Future Part III
 * Baku Baku Animals
+* Bank Panic
 * Basketball Nightmare
 * Batman Returns
 * Battle Outrun
@@ -52,6 +53,7 @@
 * Chuck Rock II - Son of Chuck
 * Cloud Master
 * Columns
+* Con-Dori
 * Cool Spot
 * The Cyber Shinobi
 * Daffy Duck in Hollywood
@@ -70,6 +72,7 @@
 * Dynamite Duke
 * Dynamite Dux
 * Dynamite Headdy
+* Eagles 5
 * Earthworm Jim 
 * Ecco the Dolphin
 * Enduro Racer
@@ -90,6 +93,7 @@
 * Flight of the Pigarus
 * Fushigi no Oshiro Pit Pot
 * Gain Ground
+* Galaxian
 * Galaxy Force
 * Gauntlet
 * Geraldinho
@@ -101,6 +105,7 @@
 * Golden Axe Warrior 
 * Golf Mania
 * Golvellius - Valley of Doom
+* Great Golf
 * Hang-On
 * Heroes of the Lance
 * Home Alone
@@ -151,6 +156,7 @@
 * Penguin Land
 * Phantasy Star
 * Pit Fighter
+* Pooyan
 * Populous
 * Power Strike
 * Power Strike II
@@ -160,6 +166,7 @@
 * Psychic World
 * Psycho Fox
 * Putt and Putter
+* Puznic
 * Quartet
 * Rainbow Islands: The Story of Bubble Bobble 2
 * Rambo: First Blood Part II
@@ -222,6 +229,7 @@
 * Thunder Bladebart vs the space mutants
 * Time Soldiers
 * Tom and Jerry: The Movie
+* Toto World 3
 * Transbot
 * Turma da Mônica em O Resgate
 * Ultima IV: Quest of the Avatar
@@ -237,28 +245,30 @@
 * Zillion
 * Zillion II: The Tri-Formation Cycle
 
-## UNSUPPORTED
+## NOT WORKING
 * Ace of Aces (PAL)
 * Alex Kidd BMX Trial (paddle)
-* Alibaba and 40 Thieves (custom mapper)
+* Alibaba and 40 Thieves
 * Alien Storm (PAL)
-* Bank Panic (PAL)
-* Block Hole (custom mapper)
+* Block Hole
 * California Games II (PAL)
-* Cosmic Spacehead (Codemasters mapper)
+* Cosmic Spacehead (Codemasters)
 * Desert Speedtrap Starring Roadrunner (PAL)
-* Excellent Dizzy Collection (Codemasters mapper)
+* E.I. - Exa Innova
+* Excellent Dizzy Collection (Codemasters)
+* Flashpoint
 * Galactic Protector (paddle)
 * Gangster Town (phaser)
-* King & Balloon (custom mapper)
-* Knightmare II: The Maze of Galious (custom mapper)
+* King & Balloon
+* Knightmare II: The Maze of Galious
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
 * Missile Defence 3D (phaser)
 * Operation: Wolf (phaser)
-* Parlour Games (custom mapper)
+* Parlour Games
 * Rambo III (phaser)
 * Rescue Mission (phaser)
+* Run! Dodgeball King
 * Safari Hunt (phaser)
 * Sega Chess (PAL)
 * Shooting Galery (phaser)
@@ -266,11 +276,12 @@
 * Trap Shooting (phaser)
 * Wanted! (phaser)
 * Woody Pop (paddle)
+* Xyzolog
 * Zool: Warrior of the "Nth" Dimension (PAL)
 
 # SG-1000
 
-## SUPPORTED
+## WORKING
 * Bank Panic
 * Bomb Jack
 * Borderline
@@ -309,7 +320,7 @@
 * Star Jacker 
 * Wonder Boy
 
-## UNSUPPORTED
+## NOT WORKING
 * Bomberman Special
 * Exerion
 * Hang-On II

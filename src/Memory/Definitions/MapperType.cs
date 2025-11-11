@@ -4,5 +4,6 @@ public enum MapperType
 {
   SEGA,
   Codemasters,
-  Korean
+  Korean,
+  MSX
 }

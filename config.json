@@ -15,7 +15,7 @@
   },
   "rewind":
   {
-    "snapshotCount":    10000,
+    "snapshotCount":    1000,
     "frameInterval":    3
   },
   "system":
