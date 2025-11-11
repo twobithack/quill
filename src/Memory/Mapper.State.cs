@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+
 using Quill.Common.Extensions;
 using Quill.Core;
+using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
@@ -20,8 +22,9 @@ unsafe public ref partial struct Mapper
   private ReadOnlySpan<byte> _slot2;
   private Span<byte> _sram;
 
-  private readonly int _pageCount;
-  private readonly byte _pageMask;
+  private readonly MapperType _mapper;
+  private readonly int _bankCount;
+  private readonly byte _bankMask;
   private byte _slot0Control;
   private byte _slot1Control;
   private byte _slot2Control;
