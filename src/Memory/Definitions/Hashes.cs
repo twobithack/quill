@@ -15,7 +15,6 @@ public static class Hashes
     0x77efe84a, // Cyborg Z
     0x06965ed9, // F-1 Spirit - The way to Formula-1
     0xf89af3cc, // Knightmare II: The Maze of Galious
-    0x0ae470e5, // King & Balloon
     0xe316c06d, // Nemesis
     0x0a77fa5e, // Nemesis 2
     0x445525e2, // Penguin Adventure

@@ -78,22 +78,22 @@ unsafe public ref partial struct Mapper
       {
         _sramEnable = value.TestBit(3);
         _sramSelect = value.TestBit(2);
-        UpdateSlots();
+        UpdateMappings();
       }
       else if (address == SLOT0_CONTROL)
       {
         _slot0Control = (byte)(value & _bankMask);
-        UpdateSlots();
+        UpdateMappings();
       }
       else if (address == SLOT1_CONTROL)
       {
         _slot1Control = (byte)(value & _bankMask);
-        UpdateSlots();
+        UpdateMappings();
       }
       else if (address == SLOT2_CONTROL)
       {
         _slot2Control = (byte)(value & _bankMask);
-        UpdateSlots();
+        UpdateMappings();
       }
 
       if (address < BANK_SIZE * 3)
@@ -114,17 +114,17 @@ unsafe public ref partial struct Mapper
       if (address < BANK_SIZE)
       {
         _slot0Control = (byte)(value & _bankMask);
-        UpdateSlots();
+        UpdateMappings();
       }
       else if (address < BANK_SIZE * 2)
       {
         _slot1Control = (byte)(value & _bankMask);
-        UpdateSlots();
+        UpdateMappings();
       }
       else if (address < BANK_SIZE * 3)
       {
         _slot2Control = (byte)(value & _bankMask);
-        UpdateSlots();
+        UpdateMappings();
       }
       else
       {
@@ -137,7 +137,7 @@ unsafe public ref partial struct Mapper
       if (address == 0xA000)
       {
         _slot2Control = (byte)(value & _bankMask);
-        UpdateSlots();
+        UpdateMappings();
       }
       else if (address >= BANK_SIZE * 3)
       {
@@ -167,11 +167,11 @@ unsafe public ref partial struct Mapper
     _slot2Control = _mapper == MapperType.SEGA
                   ? (byte)0x2
                   : (byte)0x1;
-    UpdateSlots();
+    UpdateMappings();
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateSlots()
+  private void UpdateMappings()
   {
     if (_mapper == MapperType.SEGA)
     {
@@ -236,7 +236,7 @@ unsafe public ref partial struct Mapper
       return MapperType.Korean;
 
     if (HasKnownMSXHash(hash))
-      return MapperType.MSX;
+      throw new Exception("MSX-style mapper not yet supported.");
 
     return MapperType.SEGA;
   }
@@ -264,18 +264,8 @@ unsafe public ref partial struct Mapper
     return BitConverter.ToUInt32(hash);
   }
 
-  private static bool HasKnownKoreanHash(uint crc)
-  {
-    if (Hashes.Korean.Contains(crc))
-      return true;
-    return false;
-  }
+  private static bool HasKnownKoreanHash(uint crc) => Hashes.Korean.Contains(crc);
 
-  private static bool HasKnownMSXHash(uint crc)
-  {
-    if (Hashes.MSX.Contains(crc))
-      throw new Exception("MSX-style mapper not yet supported.");
-    return false;
-  }
+  private static bool HasKnownMSXHash(uint crc) => Hashes.MSX.Contains(crc);
   #endregion
 }

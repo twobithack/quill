@@ -43,7 +43,7 @@ unsafe public ref partial struct Mapper
     _slot2Control = state.Slot2Control;
     _sramEnable   = state.EnableSRAM;
     _sramSelect   = state.SelectSRAM;
-    UpdateSlots();
+    UpdateMappings();
   }
 
   public readonly void SaveState(Snapshot state)
