@@ -1,5 +1,3 @@
-using System;
-using System.IO.Hashing;
 using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
@@ -10,7 +8,8 @@ namespace Quill.Memory;
 unsafe public ref partial struct Mapper
 {
   #region Constants
-  private const ushort SLOT2_CONTROL_KOREAN = 0xA000;
+  private const ushort KOREAN_SLOT_SIZE     = BANK_SIZE * 2;
+  private const ushort KOREAN_SLOT2_CONTROL = 0xA000;
   #endregion
 
   #region Methods
@@ -22,26 +21,31 @@ unsafe public ref partial struct Mapper
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void HandleWriteKorean(ushort address, byte value)
+  private void WriteByteKorean(ushort address, byte value)
   {
-    if (address == SLOT2_CONTROL_KOREAN)
+    if (address == KOREAN_SLOT2_CONTROL)
     {
-      _slot2Control = (byte)(value & _bankMask);
-      UpdateMappings();
+      _slot2Control = value;
+      UpdateSlots();
     }
     else if (address >= BANK_SIZE * 3)
     {
-      var index = address & (RAM_SIZE - 1);
+      var index = address & (BANK_SIZE - 1);
       _ram[index] = value;
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateMappingsKorean()
+  private void RemapSlotsKorean()
   {
-    _slot0 = GetBank(0);
-    _slot1 = GetBank(1);
-    _slot2 = GetBank(_slot2Control);
+    _slot0 = GetBank(0x0);
+    _slot1 = GetBank(0x1);
+    _slot2 = GetBank(0x2);
+    _slot3 = GetBank(0x3);
+
+    var bank = (byte)((_slot2Control << 1) & _bankMask);
+    _slot4 = GetBank(bank);
+    _slot5 = GetBank(bank.Increment());
   }
 
   private static bool HasKnownKoreanHash(uint crc) => Hashes.Korean.Contains(crc);

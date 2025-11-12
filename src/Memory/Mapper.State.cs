@@ -20,6 +20,9 @@ unsafe public ref partial struct Mapper
   private ReadOnlySpan<byte> _slot0;
   private ReadOnlySpan<byte> _slot1;
   private ReadOnlySpan<byte> _slot2;
+  private ReadOnlySpan<byte> _slot3;
+  private ReadOnlySpan<byte> _slot4;
+  private ReadOnlySpan<byte> _slot5;
   private Span<byte> _sram;
 
   private readonly MapperType _mapper;
@@ -28,6 +31,7 @@ unsafe public ref partial struct Mapper
   private byte _slot0Control;
   private byte _slot1Control;
   private byte _slot2Control;
+  private byte _slot3Control;
   private bool _sramEnable;
   private bool _sramSelect;
   #endregion
@@ -43,7 +47,7 @@ unsafe public ref partial struct Mapper
     _slot2Control = state.Slot2Control;
     _sramEnable   = state.EnableSRAM;
     _sramSelect   = state.SelectSRAM;
-    UpdateMappings();
+    UpdateSlots();
   }
 
   public readonly void SaveState(Snapshot state)

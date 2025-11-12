@@ -7,7 +7,7 @@ namespace Quill.Memory;
 unsafe public ref partial struct Mapper
 {
   #region Constants
-  
+  private const ushort CODEMASTERS_SLOT_SIZE = BANK_SIZE * 2;
   #endregion
 
   #region Methods
@@ -19,36 +19,44 @@ unsafe public ref partial struct Mapper
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void HandleWriteCodemasters(ushort address, byte value)
+  private void WriteByteCodemasters(ushort address, byte value)
   {
-    if (address < BANK_SIZE)
+    if (address < CODEMASTERS_SLOT_SIZE)
     {
-      _slot0Control = (byte)(value & _bankMask);
-      UpdateMappings();
+      _slot0Control = value;
+      RemapSlotsCodemasters();
     }
-    else if (address < BANK_SIZE * 2)
+    else if (address < CODEMASTERS_SLOT_SIZE * 2)
     {
-      _slot1Control = (byte)(value & _bankMask);
-      UpdateMappings();
+      _slot1Control = value;
+      RemapSlotsCodemasters();
     }
-    else if (address < BANK_SIZE * 3)
+    else if (address < CODEMASTERS_SLOT_SIZE * 3)
     {
-      _slot2Control = (byte)(value & _bankMask);
-      UpdateMappings();
+      _slot2Control = value;
+      RemapSlotsCodemasters();
     }
     else
     {
-      var index = address & (RAM_SIZE - 1);
+      var index = address & (BANK_SIZE - 1);
       _ram[index] = value;
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateMappingsCodemasters()
+  private void RemapSlotsCodemasters()
   {
-    _slot0 = GetBank(_slot0Control);
-    _slot1 = GetBank(_slot1Control);
-    _slot2 = GetBank(_slot2Control);
+    var bank0 = (byte)((_slot0Control << 1) & _bankMask);
+    _slot0 = GetBank(bank0);
+    _slot1 = GetBank(bank0.Increment());
+
+    var bank1 = (byte)((_slot1Control << 1) & _bankMask);
+    _slot2 = GetBank(bank1);
+    _slot3 = GetBank(bank1.Increment());
+
+    var bank2 = (byte)((_slot2Control << 1) & _bankMask);
+    _slot4 = GetBank(bank2);
+    _slot5 = GetBank(bank2.Increment());
   }
 
   private static bool HasCodemastersHeader(byte[] rom)

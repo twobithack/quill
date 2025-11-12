@@ -10,11 +10,11 @@ namespace Quill.Memory;
 unsafe public ref partial struct Mapper
 {
   #region Constants
-  public const ushort RAM_SIZE       = 0x2000;
-  public const ushort BANK_SIZE      = 0x4000;
-  
-  private const ushort HEADER_SIZE   = 0x0200;
-  private const ushort BANKING_START = 0x0400;
+  public const ushort BANK_SIZE     = 0x2000;
+
+  private const ushort HEADER_SIZE  = 0x0200;
+  private const ushort VECTORS_SIZE = 0x0400;
+  private const ushort RAM_BASE     = 0xC000;
   #endregion
 
   public Mapper(byte[] program)
@@ -37,16 +37,13 @@ unsafe public ref partial struct Mapper
     _sram  = _sram0;
 
     InitializeSlots();
-    _vectors = _mapper == MapperType.SEGA
-             ? _rom[..BANKING_START]
-             : _slot0[..BANKING_START];
   }
 
   #region Methods
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly byte ReadByte(ushort address)
   {
-    if (address < BANKING_START)
+    if (address < VECTORS_SIZE)
       return _vectors[address];
 
     if (address < BANK_SIZE)
@@ -60,7 +57,16 @@ unsafe public ref partial struct Mapper
     if (address < BANK_SIZE * 3)
       return _slot2[index];
 
-    index &= RAM_SIZE - 1;
+    if (address < BANK_SIZE * 4)
+      return _slot3[index];
+
+    if (address < BANK_SIZE * 5)
+      return _slot4[index];
+
+    if (address < BANK_SIZE * 6)
+      return _slot5[index];
+
+    index &= BANK_SIZE - 1;
     return _ram[index];
   }
 
@@ -70,19 +76,19 @@ unsafe public ref partial struct Mapper
     switch (_mapper)
     {
       case MapperType.SEGA:
-        HandleWriteSEGA(address, value);
+        WriteByteSEGA(address, value);
         return;
 
       case MapperType.Codemasters:
-        HandleWriteCodemasters(address, value);
+        WriteByteCodemasters(address, value);
         return;
 
       case MapperType.Korean:
-        HandleWriteKorean(address, value);
+        WriteByteKorean(address, value);
         return;
 
       case MapperType.MSX:
-        HandleWriteMSX(address, value);
+        WriteByteMSX(address, value);
         return;
     }
   }
@@ -103,33 +109,33 @@ unsafe public ref partial struct Mapper
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateMappings()
+  private void UpdateSlots()
   {
     switch (_mapper)
     {
       case MapperType.SEGA:
-        UpdateMappingsSEGA();
+        RemapSlotsSEGA();
         return;
 
       case MapperType.Codemasters:
-        UpdateMappingsCodemasters();
+        RemapSlotsCodemasters();
         return;
 
       case MapperType.Korean:
-        UpdateMappingsKorean();
+        RemapSlotsKorean();
         return;
 
       case MapperType.MSX:
-        UpdateMappingsMSX();
+        RemapSlotsMSX();
         return;
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
+  private readonly ReadOnlySpan<byte> GetBank(byte bank)
   {
-    var bank = controlByte % _bankCount;
-    return _rom.Slice(bank * BANK_SIZE, BANK_SIZE);
+    var mirrored = bank % _bankCount;
+    return _rom.Slice(mirrored * BANK_SIZE, BANK_SIZE);
   }
 
   private void InitializeSlots()
@@ -152,7 +158,11 @@ unsafe public ref partial struct Mapper
         InitializeSlotsMSX();
         break;
     }
-    UpdateMappings();
+
+    UpdateSlots();
+    _vectors = _mapper == MapperType.SEGA
+             ? _rom[..VECTORS_SIZE]
+             : _slot0[..VECTORS_SIZE];
   }
 
   private static byte GetBankMask(int bankCount)
@@ -185,7 +195,7 @@ unsafe public ref partial struct Mapper
       return MapperType.Korean;
 
     if (HasKnownMSXHash(hash))
-      throw new Exception("MSX-style mapper not yet supported.");
+      return MapperType.MSX;
 
     return MapperType.SEGA;
   }

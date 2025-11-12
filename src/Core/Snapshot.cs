@@ -60,9 +60,9 @@ public sealed class Snapshot : IEquatable<Snapshot>
 
   public Snapshot()
   {
-    RAM = new byte[Mapper.BANK_SIZE];
-    SRAM0 = new byte[Mapper.BANK_SIZE];
-    SRAM1 = new byte[Mapper.BANK_SIZE];
+    RAM = new byte[Mapper.BANK_SIZE*2];
+    SRAM0 = new byte[Mapper.BANK_SIZE*2];
+    SRAM1 = new byte[Mapper.BANK_SIZE*2];
     Palette = new int[VDP.CRAM_SIZE];
     VRAM = new byte[VDP.VRAM_SIZE];
     VRegisters = new byte[VDP.REGISTER_COUNT];
