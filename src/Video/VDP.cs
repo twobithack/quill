@@ -45,6 +45,7 @@ public sealed partial class VDP
   }
 
   #region Methods
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadStatus()
   {
     _controlWritePending = false;
@@ -59,6 +60,7 @@ public sealed partial class VDP
     return value;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteControl(byte value)
   {
     if (!_controlWritePending)
@@ -89,6 +91,7 @@ public sealed partial class VDP
     }
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadData()
   {
     _controlWritePending = false;
@@ -99,6 +102,7 @@ public sealed partial class VDP
     return data;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteData(byte value)
   {
     _controlWritePending = false;
@@ -115,6 +119,7 @@ public sealed partial class VDP
     IncrementAddress();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Step(int cycles)
   {
     _hCounter += (ushort)(cycles * HCOUNT_PER_CYCLE);
@@ -126,6 +131,7 @@ public sealed partial class VDP
     RenderScanline();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool FrameCompleted()
   {
     if (!_vBlankCompleted)
@@ -135,6 +141,7 @@ public sealed partial class VDP
     return true;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte[] ReadFramebuffer() => _framebuffer.ReadFrame();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

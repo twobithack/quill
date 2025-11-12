@@ -15,9 +15,13 @@ unsafe public ref partial struct Mapper
   #region Methods
   private void InitializeSlotsKorean()
   {
-    _slot0Control = 0x0;
-    _slot1Control = 0x1;
     _slot2Control = 0x1;
+    
+    _slot0 = GetBank(0x0);
+    _slot1 = GetBank(0x1);
+    _slot2 = GetBank(0x2);
+    _slot3 = GetBank(0x3);
+    _vectors = _rom[..VECTORS_SIZE];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -26,7 +30,7 @@ unsafe public ref partial struct Mapper
     if (address == KOREAN_SLOT2_CONTROL)
     {
       _slot2Control = value;
-      UpdateSlots();
+      RemapSlots();
     }
     else if (address >= BANK_SIZE * 3)
     {
@@ -36,17 +40,7 @@ unsafe public ref partial struct Mapper
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RemapSlotsKorean()
-  {
-    _slot0 = GetBank(0x0);
-    _slot1 = GetBank(0x1);
-    _slot2 = GetBank(0x2);
-    _slot3 = GetBank(0x3);
-
-    var bank = (byte)((_slot2Control << 1) & _bankMask);
-    _slot4 = GetBank(bank);
-    _slot5 = GetBank(bank.Increment());
-  }
+  private void RemapSlotsKorean() => GetBankPair(_slot2Control, out _slot4, out _slot5);
 
   private static bool HasKnownKoreanHash(uint crc) => Hashes.Korean.Contains(crc);
   #endregion

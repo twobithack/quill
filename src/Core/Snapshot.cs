@@ -127,14 +127,14 @@ public sealed class Snapshot : IEquatable<Snapshot>
     if (IRQ                 != other.IRQ)                     return false;
     if (ChannelLatch        != other.ChannelLatch)            return false;
     if (VolumeLatch         != other.VolumeLatch)             return false;
-    if (!RAM.AsSpan().SequenceEqual(other.RAM))               return false;
-    if (!SRAM0.AsSpan().SequenceEqual(other.SRAM0))           return false;
-    if (!SRAM1.AsSpan().SequenceEqual(other.SRAM1))           return false;
-    if (!Palette.AsSpan().SequenceEqual(other.Palette))       return false;
-    if (!VRAM.AsSpan().SequenceEqual(other.VRAM))             return false;
+    if (!RAM.AsSpan()       .SequenceEqual(other.RAM))        return false;
+    if (!SRAM0.AsSpan()     .SequenceEqual(other.SRAM0))      return false;
+    if (!SRAM1.AsSpan()     .SequenceEqual(other.SRAM1))      return false;
+    if (!Palette.AsSpan()   .SequenceEqual(other.Palette))    return false;
+    if (!VRAM.AsSpan()      .SequenceEqual(other.VRAM))       return false;
     if (!VRegisters.AsSpan().SequenceEqual(other.VRegisters)) return false;
-    if (!Tones.AsSpan().SequenceEqual(other.Tones))           return false;
-    if (!Volumes.AsSpan().SequenceEqual(other.Volumes))       return false;
+    if (!Tones.AsSpan()     .SequenceEqual(other.Tones))      return false;
+    if (!Volumes.AsSpan()   .SequenceEqual(other.Volumes))    return false;
     
     return true;
   }

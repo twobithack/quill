@@ -28,6 +28,7 @@ public sealed partial class PSG
   }
 
   #region Methods
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteData(byte value)
   {
     if (value.TestBit(7))
@@ -73,6 +74,7 @@ public sealed partial class PSG
     }
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Step(int cycles)
   {
     _cycleCounter += cycles;

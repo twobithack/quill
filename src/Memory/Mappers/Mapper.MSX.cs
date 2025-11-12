@@ -7,7 +7,6 @@ namespace Quill.Memory;
 unsafe public ref partial struct Mapper
 {
   #region Constants
-  private const ushort MSX_SLOT_SIZE     = BANK_SIZE;
   private const ushort MSX_SLOT0_CONTROL = 0x0002;
   private const ushort MSX_SLOT1_CONTROL = 0x0003;
   private const ushort MSX_SLOT2_CONTROL = 0x0000;
@@ -21,6 +20,10 @@ unsafe public ref partial struct Mapper
     _slot1Control = 0x1;
     _slot2Control = 0x2;
     _slot3Control = 0x3;
+    
+    _slot0 = GetBank(0x0);
+    _slot1 = GetBank(0x1);
+    _vectors = _rom[..VECTORS_SIZE];
   }
 
   private void WriteByteMSX(ushort address, byte value)
@@ -55,8 +58,6 @@ unsafe public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RemapSlotsMSX()
   {
-    _slot0 = GetBank(0x0);
-    _slot1 = GetBank(0x1);
     _slot2 = GetBank(_slot0Control);
     _slot3 = GetBank(_slot1Control);
     _slot4 = GetBank(_slot2Control);

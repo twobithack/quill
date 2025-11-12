@@ -32,8 +32,8 @@ unsafe public ref partial struct Mapper
 
     _rom   = romPadded;
     _ram   = new byte[BANK_SIZE];
-    _sram0 = new byte[BANK_SIZE];
-    _sram1 = new byte[BANK_SIZE];
+    _sram0 = new byte[BANK_SIZE*2];
+    _sram1 = new byte[BANK_SIZE*2];
     _sram  = _sram0;
 
     InitializeSlots();
@@ -109,7 +109,7 @@ unsafe public ref partial struct Mapper
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void UpdateSlots()
+  private void RemapSlots()
   {
     switch (_mapper)
     {
@@ -132,10 +132,20 @@ unsafe public ref partial struct Mapper
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private readonly ReadOnlySpan<byte> GetBank(byte bank)
+  private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
   {
-    var mirrored = bank % _bankCount;
-    return _rom.Slice(mirrored * BANK_SIZE, BANK_SIZE);
+    var index = controlByte % _bankCount;
+    return _rom.Slice(index * BANK_SIZE, BANK_SIZE);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly void GetBankPair(byte controlByte,
+                                    out ReadOnlySpan<byte> low,
+                                    out ReadOnlySpan<byte> high)
+  {
+    var index = (byte)((controlByte << 1) & _bankMask);
+    low  = GetBank(index);
+    high = GetBank(index.Increment());
   }
 
   private void InitializeSlots()
@@ -159,10 +169,7 @@ unsafe public ref partial struct Mapper
         break;
     }
 
-    UpdateSlots();
-    _vectors = _mapper == MapperType.SEGA
-             ? _rom[..VECTORS_SIZE]
-             : _slot0[..VECTORS_SIZE];
+    RemapSlots();
   }
 
   private static byte GetBankMask(int bankCount)

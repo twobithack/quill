@@ -39,7 +39,7 @@ unsafe public ref partial struct Mapper
   #region Methods
   public void LoadState(Snapshot state)
   {
-    state.RAM.AsSpan().CopyTo(_ram);
+    state.RAM.AsSpan(0, BANK_SIZE).CopyTo(_ram);
     state.SRAM0.AsSpan().CopyTo(_sram0);
     state.SRAM1.AsSpan().CopyTo(_sram1);
     _slot0Control = state.Slot0Control;
@@ -47,7 +47,7 @@ unsafe public ref partial struct Mapper
     _slot2Control = state.Slot2Control;
     _sramEnable   = state.EnableSRAM;
     _sramSelect   = state.SelectSRAM;
-    UpdateSlots();
+    RemapSlots();
   }
 
   public readonly void SaveState(Snapshot state)

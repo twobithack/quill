@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Quill.Core;
 using Quill.Memory;
 using Quill.Sound;
@@ -33,11 +34,19 @@ public ref struct Bus
   #endregion
 
   #region Methods
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly byte ReadByte(ushort address) => _memory.ReadByte(address);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly ushort ReadWord(ushort address) => _memory.ReadWord(address);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByte(ushort address, byte value) => _memory.WriteByte(address, value);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteWord(ushort address, ushort word) => _memory.WriteWord(address, word);
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly byte ReadPort(byte port) => port switch
   {
     0x3E => 0xFF,
@@ -68,6 +77,7 @@ public ref struct Bus
     _ => 0xFF
   };
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly void WritePort(byte port, byte value)
   {
     switch (port)
@@ -117,6 +127,7 @@ public ref struct Bus
     }
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly void Step(int cycles)
   {
     _psg.Step(cycles);

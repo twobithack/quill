@@ -20,6 +20,8 @@ unsafe public ref partial struct Mapper
     _slot0Control = 0x0;
     _slot1Control = 0x1;
     _slot2Control = 0x2;
+    
+    _vectors = _rom[..VECTORS_SIZE];
   }
 
   public void WriteByteSEGA(ushort address, byte value)
@@ -53,7 +55,7 @@ unsafe public ref partial struct Mapper
     {
       if (!_sramEnable)
         return;
-      var index = address & (BANK_SIZE - 1);
+      var index = address & (SEGA_SLOT_SIZE - 1);
       _sram[index] = value;
     }
     else
@@ -66,29 +68,20 @@ unsafe public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RemapSlotsSEGA()
   {
+    GetBankPair(_slot0Control, out _slot0, out _slot1);
+    GetBankPair(_slot1Control, out _slot2, out _slot3);
+
+    if (!_sramEnable)
+    {
+      GetBankPair(_slot2Control, out _slot4, out _slot5);
+      return;
+    }
+    
     _sram = _sramSelect
           ? _sram0
           : _sram1;
-
-    var bank0 = (byte)((_slot0Control << 1) & _bankMask);
-    _slot0 = GetBank(bank0);
-    _slot1 = GetBank(bank0.Increment());
-
-    var bank1 = (byte)((_slot1Control << 1) & _bankMask);
-    _slot2 = GetBank(bank1);
-    _slot3 = GetBank(bank1.Increment());
-
-    if (_sramEnable)
-    {
-      _slot4 = _sram.Slice(0,         BANK_SIZE);
-      _slot5 = _sram.Slice(BANK_SIZE, BANK_SIZE);
-    }
-    else
-    {
-      var bank2 = (byte)((_slot2Control << 1) & _bankMask);
-      _slot4 = GetBank(bank2);
-      _slot5 = GetBank(bank2.Increment());
-    }
+    _slot4 = _sram.Slice(0,         BANK_SIZE);
+    _slot5 = _sram.Slice(BANK_SIZE, BANK_SIZE);
   }
   #endregion
 }
