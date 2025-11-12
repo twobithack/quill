@@ -4,7 +4,7 @@ using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
-unsafe public ref partial struct Mapper
+public ref partial struct Mapper
 {
   #region Constants
   private const ushort MSX_SLOT0_CONTROL = 0x0002;
@@ -26,6 +26,7 @@ unsafe public ref partial struct Mapper
     _vectors = _rom[..VECTORS_SIZE];
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteMSX(ushort address, byte value)
   {
     if (address == MSX_SLOT0_CONTROL)
@@ -55,7 +56,6 @@ unsafe public ref partial struct Mapper
     }
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RemapSlotsMSX()
   {
     _slot2 = GetBank(_slot0Control);

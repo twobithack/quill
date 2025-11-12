@@ -4,7 +4,7 @@ using Quill.Common.Extensions;
 
 namespace Quill.Memory;
 
-unsafe public ref partial struct Mapper
+public ref partial struct Mapper
 {
   #region Constants
   private const ushort SEGA_SLOT_SIZE = BANK_SIZE * 2;
@@ -24,6 +24,7 @@ unsafe public ref partial struct Mapper
     _vectors = _rom[..VECTORS_SIZE];
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByteSEGA(ushort address, byte value)
   {
     if (address < SEGA_SLOT_SIZE * 2)
@@ -51,7 +52,7 @@ unsafe public ref partial struct Mapper
       RemapSlotsSEGA();
     }
 
-    if (address < SEGA_SLOT_SIZE * 3)
+    if (address < RAM_BASE)
     {
       if (!_sramEnable)
         return;
@@ -65,7 +66,6 @@ unsafe public ref partial struct Mapper
     }
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RemapSlotsSEGA()
   {
     GetBankPair(_slot0Control, out _slot0, out _slot1);

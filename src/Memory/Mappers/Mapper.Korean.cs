@@ -1,14 +1,12 @@
 using System.Runtime.CompilerServices;
 
-using Quill.Common.Extensions;
 using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
-unsafe public ref partial struct Mapper
+public ref partial struct Mapper
 {
   #region Constants
-  private const ushort KOREAN_SLOT_SIZE     = BANK_SIZE * 2;
   private const ushort KOREAN_SLOT2_CONTROL = 0xA000;
   #endregion
 
@@ -30,16 +28,15 @@ unsafe public ref partial struct Mapper
     if (address == KOREAN_SLOT2_CONTROL)
     {
       _slot2Control = value;
-      RemapSlots();
+      RemapSlotsKorean();
     }
-    else if (address >= BANK_SIZE * 3)
+    else if (address >= RAM_BASE)
     {
       var index = address & (BANK_SIZE - 1);
       _ram[index] = value;
     }
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RemapSlotsKorean() => GetBankPair(_slot2Control, out _slot4, out _slot5);
 
   private static bool HasKnownKoreanHash(uint crc) => Hashes.Korean.Contains(crc);

@@ -7,7 +7,7 @@ using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
-unsafe public ref partial struct Mapper
+public ref partial struct Mapper
 {
   #region Constants
   public const ushort BANK_SIZE     = 0x2000;
@@ -19,7 +19,7 @@ unsafe public ref partial struct Mapper
 
   public Mapper(byte[] program)
   {
-    var headerOffset = HasHeader(program)
+    var headerOffset = ContainsHeader(program)
                      ? HEADER_SIZE
                      : 0;
     var romLength = program.Length - headerOffset;
@@ -27,10 +27,10 @@ unsafe public ref partial struct Mapper
     _bankMask = GetBankMask(_bankCount);
     _mapper = DetectMapperType(program);
 
-    var romPadded = new byte[_bankCount * BANK_SIZE];
-    program.AsSpan(headerOffset, romLength).CopyTo(romPadded);
+    var paddedROM = new byte[_bankCount * BANK_SIZE];
+    program.AsSpan(headerOffset, romLength).CopyTo(paddedROM);
 
-    _rom   = romPadded;
+    _rom   = paddedROM;
     _ram   = new byte[BANK_SIZE];
     _sram0 = new byte[BANK_SIZE*2];
     _sram1 = new byte[BANK_SIZE*2];
@@ -46,28 +46,19 @@ unsafe public ref partial struct Mapper
     if (address < VECTORS_SIZE)
       return _vectors[address];
 
-    if (address < BANK_SIZE)
-      return _slot0[address];
-
+    var slot  = address >> 13;
     var index = address & (BANK_SIZE - 1);
 
-    if (address < BANK_SIZE * 2)
-      return _slot1[index];
-
-    if (address < BANK_SIZE * 3)
-      return _slot2[index];
-
-    if (address < BANK_SIZE * 4)
-      return _slot3[index];
-
-    if (address < BANK_SIZE * 5)
-      return _slot4[index];
-
-    if (address < BANK_SIZE * 6)
-      return _slot5[index];
-
-    index &= BANK_SIZE - 1;
-    return _ram[index];
+    return slot switch
+    {
+      0 => _slot0[index], // 0x0000 - 0x1FFF
+      1 => _slot1[index], // 0x2000 - 0x3FFF
+      2 => _slot2[index], // 0x4000 - 0x5FFF
+      3 => _slot3[index], // 0x6000 - 0x7FFF
+      4 => _slot4[index], // 0x8000 - 0x9FFF
+      5 => _slot5[index], // 0xA000 - 0xBFFF
+      _ => _ram[index]    // 0xC000 - 0xDFFF (or 0xE000 - 0xFFFF mirror)
+    };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -108,7 +99,6 @@ unsafe public ref partial struct Mapper
     WriteByte(address.Increment(), word.HighByte());
   }
   
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RemapSlots()
   {
     switch (_mapper)
@@ -131,21 +121,19 @@ unsafe public ref partial struct Mapper
     }
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
   {
     var index = controlByte % _bankCount;
     return _rom.Slice(index * BANK_SIZE, BANK_SIZE);
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly void GetBankPair(byte controlByte,
-                                    out ReadOnlySpan<byte> low,
-                                    out ReadOnlySpan<byte> high)
+                                    out ReadOnlySpan<byte> lowBank,
+                                    out ReadOnlySpan<byte> highBank)
   {
     var index = (byte)((controlByte << 1) & _bankMask);
-    low  = GetBank(index);
-    high = GetBank(index.Increment());
+    lowBank  = GetBank(index);
+    highBank = GetBank(index.Increment());
   }
 
   private void InitializeSlots()
@@ -168,7 +156,6 @@ unsafe public ref partial struct Mapper
         InitializeSlotsMSX();
         break;
     }
-
     RemapSlots();
   }
 
@@ -207,11 +194,11 @@ unsafe public ref partial struct Mapper
     return MapperType.SEGA;
   }
 
-  private static bool HasHeader(byte[] rom) => rom.Length % BANK_SIZE == HEADER_SIZE;
+  private static bool ContainsHeader(byte[] rom) => rom.Length % BANK_SIZE == HEADER_SIZE;
 
   private static uint GetCRC32Hash(byte[] rom)
   {
-    var headerOffset = HasHeader(rom) ? HEADER_SIZE : 0;
+    var headerOffset = ContainsHeader(rom) ? HEADER_SIZE : 0;
     var hash = Crc32.Hash(rom.AsSpan(headerOffset, rom.Length - headerOffset));
     return BitConverter.ToUInt32(hash);
   }

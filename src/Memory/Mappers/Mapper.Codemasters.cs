@@ -4,7 +4,7 @@ using Quill.Common.Extensions;
 
 namespace Quill.Memory;
 
-unsafe public ref partial struct Mapper
+public ref partial struct Mapper
 {
   #region Constants
   private const ushort CODEMASTERS_SLOT_SIZE = BANK_SIZE * 2;
@@ -43,7 +43,6 @@ unsafe public ref partial struct Mapper
     }
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RemapSlotsCodemasters()
   {
     GetBankPair(_slot0Control, out _slot0, out _slot1);
