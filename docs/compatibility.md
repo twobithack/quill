@@ -14,6 +14,7 @@
 * Alex Kidd: The Lost Stars
 * A.L.F.
 * Alien 3 
+* Alien Storm
 * Alien Syndrome
 * Altered Beast
 * Arcade Smash Hits
@@ -55,6 +56,8 @@
 * Columns
 * Con-Dori
 * Cool Spot
+* Cyborg Hunter
+* Cyborg Z
 * The Cyber Shinobi
 * Daffy Duck in Hollywood
 * Danan: The Jungle Fighter
@@ -75,6 +78,7 @@
 * Eagles 5
 * Earthworm Jim 
 * Ecco the Dolphin
+* E.I. - Exa Innova
 * Enduro Racer
 * E-SWAT - City under Siege
 * F1 Championship
@@ -95,6 +99,7 @@
 * Gain Ground
 * Galaxian
 * Galaxy Force
+* Gangcheol RoboCop
 * Gauntlet
 * Geraldinho
 * Ghostbusters
@@ -123,6 +128,7 @@
 * Kenseiden
 * King's Quest: Quest for the Crown
 * Klax
+* Knightmare II: The Maze of Galious
 * Krusty's Fun House
 * Kung Fu Kid
 * Land of Illusion Starring Mickey Mouse
@@ -253,19 +259,15 @@
 * Ace of Aces (PAL)
 * Alex Kidd BMX Trial (paddle)
 * Alibaba and 40 Thieves
-* Alien Storm (PAL)
 * Block Hole
 * California Games II (PAL)
 * Cosmic Spacehead (Codemasters)
 * Desert Speedtrap Starring Roadrunner (PAL)
-* E.I. - Exa Innova
 * Excellent Dizzy Collection (Codemasters)
 * Flashpoint
 * Galactic Protector (paddle)
-* Gangcheol RoboCop
 * Gangster Town (phaser)
 * King & Balloon
-* Knightmare II: The Maze of Galious
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
 * Missile Defence 3D (phaser)

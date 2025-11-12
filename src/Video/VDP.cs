@@ -397,6 +397,9 @@ public sealed partial class VDP
       if (color.TestBit(7))
         x -= 32;
 
+      if (x < 0)
+        continue;
+
       color &= 0b_0000_1111;
       if (color == TRANSPARENT)
         continue;
@@ -437,6 +440,9 @@ public sealed partial class VDP
     var data = _vram[address + offset];
     for (byte i = 0; i < TILE_SIZE; i++)
     {
+      if (x + i >= HORIZONTAL_RESOLUTION)
+        return;
+
       if (_spriteMask[x + i])
       {
         SpriteCollision = true;
