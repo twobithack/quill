@@ -15,10 +15,6 @@ unsafe public ref partial struct Mapper
   
   private const ushort HEADER_SIZE   = 0x0200;
   private const ushort BANKING_START = 0x0400;
-  private const ushort SRAM_CONTROL  = 0xFFFC;
-  private const ushort SLOT0_CONTROL = 0xFFFD;
-  private const ushort SLOT1_CONTROL = 0xFFFE;
-  private const ushort SLOT2_CONTROL = 0xFFFF;
   #endregion
 
   public Mapper(byte[] program)
@@ -28,8 +24,8 @@ unsafe public ref partial struct Mapper
                      : 0;
     var romLength = program.Length - headerOffset;
     _bankCount = (romLength + BANK_SIZE - 1) / BANK_SIZE;
-    _bankMask = CalculateBankMask(_bankCount);
-    _mapper = GetMapperType(program);
+    _bankMask = GetBankMask(_bankCount);
+    _mapper = DetectMapperType(program);
 
     var romPadded = new byte[_bankCount * BANK_SIZE];
     program.AsSpan(headerOffset, romLength).CopyTo(romPadded);
@@ -41,16 +37,17 @@ unsafe public ref partial struct Mapper
     _sram  = _sram0;
 
     InitializeSlots();
-    _fixed = _mapper == MapperType.SEGA
-           ? _rom[..BANKING_START]
-           : _slot0[..BANKING_START];
+    _vectors = _mapper == MapperType.SEGA
+             ? _rom[..BANKING_START]
+             : _slot0[..BANKING_START];
   }
 
   #region Methods
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly byte ReadByte(ushort address)
   {
     if (address < BANKING_START)
-      return _fixed[address];
+      return _vectors[address];
 
     if (address < BANK_SIZE)
       return _slot0[address];
@@ -67,86 +64,30 @@ unsafe public ref partial struct Mapper
     return _ram[index];
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByte(ushort address, byte value)
   {
-    if (_mapper == MapperType.SEGA)
+    switch (_mapper)
     {
-      if (address < BANK_SIZE * 2)
+      case MapperType.SEGA:
+        HandleWriteSEGA(address, value);
         return;
 
-      if (address == SRAM_CONTROL)
-      {
-        _sramEnable = value.TestBit(3);
-        _sramSelect = value.TestBit(2);
-        UpdateMappings();
-      }
-      else if (address == SLOT0_CONTROL)
-      {
-        _slot0Control = (byte)(value & _bankMask);
-        UpdateMappings();
-      }
-      else if (address == SLOT1_CONTROL)
-      {
-        _slot1Control = (byte)(value & _bankMask);
-        UpdateMappings();
-      }
-      else if (address == SLOT2_CONTROL)
-      {
-        _slot2Control = (byte)(value & _bankMask);
-        UpdateMappings();
-      }
+      case MapperType.Codemasters:
+        HandleWriteCodemasters(address, value);
+        return;
 
-      if (address < BANK_SIZE * 3)
-      {
-        if (!_sramEnable)
-          return;
-        var index = address & (BANK_SIZE - 1);
-        _sram[index] = value;
-      }
-      else
-      {
-        var index = address & (RAM_SIZE - 1);
-        _ram[index] = value;
-      }
-    }
-    else if (_mapper == MapperType.Codemasters)
-    {
-      if (address < BANK_SIZE)
-      {
-        _slot0Control = (byte)(value & _bankMask);
-        UpdateMappings();
-      }
-      else if (address < BANK_SIZE * 2)
-      {
-        _slot1Control = (byte)(value & _bankMask);
-        UpdateMappings();
-      }
-      else if (address < BANK_SIZE * 3)
-      {
-        _slot2Control = (byte)(value & _bankMask);
-        UpdateMappings();
-      }
-      else
-      {
-        var index = address & (RAM_SIZE - 1);
-        _ram[index] = value;
-      }
-    }
-    else if (_mapper == MapperType.Korean)
-    {
-      if (address == 0xA000)
-      {
-        _slot2Control = (byte)(value & _bankMask);
-        UpdateMappings();
-      }
-      else if (address >= BANK_SIZE * 3)
-      {
-        var index = address & (RAM_SIZE - 1);
-        _ram[index] = value;
-      }
+      case MapperType.Korean:
+        HandleWriteKorean(address, value);
+        return;
+
+      case MapperType.MSX:
+        HandleWriteMSX(address, value);
+        return;
     }
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly ushort ReadWord(ushort address)
   {
     var lowByte  = ReadByte(address);
@@ -154,48 +95,33 @@ unsafe public ref partial struct Mapper
     return highByte.Concat(lowByte);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteWord(ushort address, ushort word)
   {
     WriteByte(address, word.LowByte());
     WriteByte(address.Increment(), word.HighByte());
   }
   
-  private void InitializeSlots()
-  {
-    _slot0Control = 0x00;
-    _slot1Control = 0x01;
-    _slot2Control = _mapper == MapperType.SEGA
-                  ? (byte)0x2
-                  : (byte)0x1;
-    UpdateMappings();
-  }
-  
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void UpdateMappings()
   {
-    if (_mapper == MapperType.SEGA)
+    switch (_mapper)
     {
-      _sram = _sramSelect
-          ? _sram0
-          : _sram1;
+      case MapperType.SEGA:
+        UpdateMappingsSEGA();
+        return;
 
-      _slot0 = GetBank(_slot0Control);
-      _slot1 = GetBank(_slot1Control);
-      _slot2 = _sramEnable
-             ? _sram
-             : GetBank(_slot2Control);
-    }
-    else if (_mapper == MapperType.Codemasters)
-    {
-      _slot0 = GetBank(_slot0Control);
-      _slot1 = GetBank(_slot1Control);
-      _slot2 = GetBank(_slot2Control);
-    }
-    else if (_mapper == MapperType.Korean)
-    {
-      _slot0 = GetBank(0);
-      _slot1 = GetBank(1);
-      _slot2 = GetBank(_slot2Control);
+      case MapperType.Codemasters:
+        UpdateMappingsCodemasters();
+        return;
+
+      case MapperType.Korean:
+        UpdateMappingsKorean();
+        return;
+
+      case MapperType.MSX:
+        UpdateMappingsMSX();
+        return;
     }
   }
 
@@ -206,23 +132,46 @@ unsafe public ref partial struct Mapper
     return _rom.Slice(bank * BANK_SIZE, BANK_SIZE);
   }
 
-  private static byte CalculateBankMask(int bankCount)
+  private void InitializeSlots()
+  {
+    switch (_mapper)
+    {
+      case MapperType.SEGA:
+        InitializeSlotsSEGA();
+        break;
+
+      case MapperType.Codemasters:
+        InitializeSlotsCodemasters();
+        break;
+
+      case MapperType.Korean:
+        InitializeSlotsKorean();
+        break;
+
+      case MapperType.MSX:
+        InitializeSlotsMSX();
+        break;
+    }
+    UpdateMappings();
+  }
+
+  private static byte GetBankMask(int bankCount)
   {
     return bankCount switch
     {
-      <= 1    =>  0b_0000_0000,
-      <= 2    =>  0b_0000_0001,
-      <= 4    =>  0b_0000_0011,
-      <= 8    =>  0b_0000_0111,
-      <= 16   =>  0b_0000_1111,
-      <= 32   =>  0b_0001_1111,
-      <= 64   =>  0b_0011_1111,
-      <= 128  =>  0b_0111_1111,
-      _       =>  0b_1111_1111
+      <= 1   =>  0b_0000_0000,
+      <= 2   =>  0b_0000_0001,
+      <= 4   =>  0b_0000_0011,
+      <= 8   =>  0b_0000_0111,
+      <= 16  =>  0b_0000_1111,
+      <= 32  =>  0b_0001_1111,
+      <= 64  =>  0b_0011_1111,
+      <= 128 =>  0b_0111_1111,
+      _      =>  0b_1111_1111
     };
   }
   
-  private static MapperType GetMapperType(byte[] rom)
+  private static MapperType DetectMapperType(byte[] rom)
   {
     if (rom.Length < 0x8000)
       return MapperType.SEGA;
@@ -243,29 +192,11 @@ unsafe public ref partial struct Mapper
 
   private static bool HasHeader(byte[] rom) => rom.Length % BANK_SIZE == HEADER_SIZE;
 
-  private static bool HasCodemastersHeader(byte[] rom)
-  {
-    if (rom.Length < 0x7FEA)
-      return false;
-
-    var checksum = rom[0x7FE7].Concat(rom[0x7FE6]);
-    if (checksum == 0x0)
-      return false;
-
-    var result = (ushort)(0x10000 - checksum);
-    var answer = rom[0x7FE9].Concat(rom[0x7FE8]);
-    return result == answer;
-  }
-
   private static uint GetCRC32Hash(byte[] rom)
   {
     var headerOffset = HasHeader(rom) ? HEADER_SIZE : 0;
     var hash = Crc32.Hash(rom.AsSpan(headerOffset, rom.Length - headerOffset));
     return BitConverter.ToUInt32(hash);
   }
-
-  private static bool HasKnownKoreanHash(uint crc) => Hashes.Korean.Contains(crc);
-
-  private static bool HasKnownMSXHash(uint crc) => Hashes.MSX.Contains(crc);
   #endregion
 }

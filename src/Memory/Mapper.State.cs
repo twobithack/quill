@@ -16,7 +16,7 @@ unsafe public ref partial struct Mapper
   private readonly Span<byte> _sram0;
   private readonly Span<byte> _sram1;
 
-  private ReadOnlySpan<byte> _fixed;
+  private ReadOnlySpan<byte> _vectors;
   private ReadOnlySpan<byte> _slot0;
   private ReadOnlySpan<byte> _slot1;
   private ReadOnlySpan<byte> _slot2;
