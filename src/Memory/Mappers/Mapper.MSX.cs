@@ -20,10 +20,13 @@ public ref partial struct Mapper
     _slot1Control = 0x1;
     _slot2Control = 0x2;
     _slot3Control = 0x3;
-    
-    _slot0 = GetBank(0x0);
+
+    var bank0 = UseNemesisMapper()
+              ? (byte)0xF
+              : (byte)0x0;
+    _slot0 = GetBank(bank0);
     _slot1 = GetBank(0x1);
-    _vectors = _rom[..VECTORS_SIZE];
+    _vectors = _slot0[..VECTORS_SIZE];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -64,6 +67,7 @@ public ref partial struct Mapper
     _slot5 = GetBank(_slot3Control);
   }
 
+  private readonly bool UseNemesisMapper() => Hashes.Nemesis == GetCRC32Hash(_rom);
   private static bool HasKnownMSXHash(uint crc) => Hashes.MSX.Contains(crc);
   #endregion
 }

@@ -151,6 +151,8 @@
 * Mortal Kombat II
 * Mortal Kombat 3
 * Ms. Pac-Man
+* Nemesis
+* Nemesis 2
 * The New Zealand Story
 * The Ninja
 * Ninja Gaiden

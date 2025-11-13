@@ -19,13 +19,10 @@ public ref partial struct Mapper
 
   public Mapper(byte[] program)
   {
-    var headerOffset = ContainsHeader(program)
-                     ? HEADER_SIZE
-                     : 0;
+    var headerOffset = GetHeaderOffset(program);
     var romLength = program.Length - headerOffset;
     _bankCount = (romLength + BANK_SIZE - 1) / BANK_SIZE;
     _bankMask = GetBankMask(_bankCount);
-    _mapper = DetectMapperType(program);
 
     var paddedROM = new byte[_bankCount * BANK_SIZE];
     program.AsSpan(headerOffset, romLength).CopyTo(paddedROM);
@@ -36,6 +33,7 @@ public ref partial struct Mapper
     _sram1 = new byte[BANK_SIZE*2];
     _sram  = _sram0;
 
+    _mapper = DetectMapperType(program);
     InitializeSlots();
   }
 
@@ -98,6 +96,29 @@ public ref partial struct Mapper
     WriteByte(address, word.LowByte());
     WriteByte(address.Increment(), word.HighByte());
   }
+
+  private void InitializeSlots()
+  {
+    switch (_mapper)
+    {
+      case MapperType.SEGA:
+        InitializeSlotsSEGA();
+        break;
+
+      case MapperType.Codemasters:
+        InitializeSlotsCodemasters();
+        break;
+
+      case MapperType.Korean:
+        InitializeSlotsKorean();
+        break;
+
+      case MapperType.MSX:
+        InitializeSlotsMSX();
+        break;
+    }
+    RemapSlots();
+  }
   
   private void RemapSlots()
   {
@@ -136,29 +157,6 @@ public ref partial struct Mapper
     highBank = GetBank(index.Increment());
   }
 
-  private void InitializeSlots()
-  {
-    switch (_mapper)
-    {
-      case MapperType.SEGA:
-        InitializeSlotsSEGA();
-        break;
-
-      case MapperType.Codemasters:
-        InitializeSlotsCodemasters();
-        break;
-
-      case MapperType.Korean:
-        InitializeSlotsKorean();
-        break;
-
-      case MapperType.MSX:
-        InitializeSlotsMSX();
-        break;
-    }
-    RemapSlots();
-  }
-
   private static byte GetBankMask(int bankCount)
   {
     return bankCount switch
@@ -177,7 +175,7 @@ public ref partial struct Mapper
   
   private static MapperType DetectMapperType(byte[] rom)
   {
-    if (rom.Length < 0x8000)
+    if (rom.Length < BANK_SIZE * 4)
       return MapperType.SEGA;
 
     if (HasCodemastersHeader(rom))
@@ -194,12 +192,18 @@ public ref partial struct Mapper
     return MapperType.SEGA;
   }
 
-  private static bool ContainsHeader(byte[] rom) => rom.Length % BANK_SIZE == HEADER_SIZE;
-
-  private static uint GetCRC32Hash(byte[] rom)
+  private static int GetHeaderOffset(ReadOnlySpan<byte> rom)
   {
-    var headerOffset = ContainsHeader(rom) ? HEADER_SIZE : 0;
-    var hash = Crc32.Hash(rom.AsSpan(headerOffset, rom.Length - headerOffset));
+    var containsHeader = rom.Length % BANK_SIZE == HEADER_SIZE;
+    return containsHeader
+         ? HEADER_SIZE
+         : 0;
+  }
+
+  private static uint GetCRC32Hash(ReadOnlySpan<byte> rom)
+  {
+    var headerOffset = GetHeaderOffset(rom);
+    var hash = Crc32.Hash(rom[headerOffset..]);
     return BitConverter.ToUInt32(hash);
   }
   #endregion
