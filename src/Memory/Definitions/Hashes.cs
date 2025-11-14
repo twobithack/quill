@@ -22,6 +22,8 @@ public static class Hashes
     0x9195c34c, // Super Boy 3
     0xa05258f5, // Wonsiin
   ];
-  
+
   public static readonly uint Nemesis = 0xe316c06d;
+
+  public static readonly uint Janggun = 0x192949d5;
 }

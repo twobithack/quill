@@ -13,41 +13,40 @@ public ref partial struct Mapper
   #region Methods
   private void InitializeSlotsCodemasters()
   {
-    _slot0Control = 0x0;
-    _slot1Control = 0x1;
-    _slot2Control = 0x1;
+    _slotControl0 = 0x0;
+    _slotControl1 = 0x1;
+    _slotControl2 = 0x1;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteCodemasters(ushort address, byte value)
   {
-    if (address < CODEMASTERS_SLOT_SIZE)
+    if (address >= RAM_BASE)
     {
-      _slot0Control = value;
+      WriteRAM(address, value);
+    }
+    else if (address < CODEMASTERS_SLOT_SIZE)
+    {
+      _slotControl0 = value;
       RemapSlotsCodemasters();
     }
     else if (address < CODEMASTERS_SLOT_SIZE * 2)
     {
-      _slot1Control = value;
+      _slotControl1 = value;
       RemapSlotsCodemasters();
     }
     else if (address < CODEMASTERS_SLOT_SIZE * 3)
     {
-      _slot2Control = value;
+      _slotControl2 = value;
       RemapSlotsCodemasters();
-    }
-    else
-    {
-      var index = address & (BANK_SIZE - 1);
-      _ram[index] = value;
     }
   }
 
   private void RemapSlotsCodemasters()
   {
-    GetBankPair(_slot0Control, out _slot0, out _slot1);
-    GetBankPair(_slot1Control, out _slot2, out _slot3);
-    GetBankPair(_slot2Control, out _slot4, out _slot5);
+    GetBankPair(_slotControl0, out _slot0, out _slot1);
+    GetBankPair(_slotControl1, out _slot2, out _slot3);
+    GetBankPair(_slotControl2, out _slot4, out _slot5);
     
     _vectors = _slot0[..VECTORS_SIZE];
   }

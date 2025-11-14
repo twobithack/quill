@@ -36,9 +36,9 @@ public sealed class Snapshot : IEquatable<Snapshot>
   [Key(19)] public byte[] SRAM1;
   [Key(20)] public bool EnableSRAM;
   [Key(21)] public bool SelectSRAM;
-  [Key(22)] public byte Slot0Control;
-  [Key(23)] public byte Slot1Control;
-  [Key(24)] public byte Slot2Control;
+  [Key(22)] public byte SlotControl0;
+  [Key(23)] public byte SlotControl1;
+  [Key(24)] public byte SlotControl2;
 
   [Key(25)] public int[] Palette;
   [Key(26)] public byte[] VRAM;
@@ -114,9 +114,9 @@ public sealed class Snapshot : IEquatable<Snapshot>
     if (IFF2                != other.IFF2)                    return false;
     if (EnableSRAM          != other.EnableSRAM)              return false;
     if (SelectSRAM          != other.SelectSRAM)              return false;
-    if (Slot0Control        != other.Slot0Control)            return false;
-    if (Slot1Control        != other.Slot1Control)            return false;
-    if (Slot2Control        != other.Slot2Control)            return false;
+    if (SlotControl0        != other.SlotControl0)            return false;
+    if (SlotControl1        != other.SlotControl1)            return false;
+    if (SlotControl2        != other.SlotControl2)            return false;
     if (VDPStatus           != other.VDPStatus)               return false;
     if (ControlWord         != other.ControlWord)             return false;
     if (DataPort            != other.DataPort)                return false;

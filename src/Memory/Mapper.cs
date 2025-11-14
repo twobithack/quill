@@ -79,6 +79,10 @@ public ref partial struct Mapper
       case MapperType.MSX:
         WriteByteMSX(address, value);
         return;
+
+      case MapperType.Janggun:
+        WriteByteJanggun(address, value);
+        return;
     }
   }
 
@@ -95,6 +99,13 @@ public ref partial struct Mapper
   {
     WriteByte(address, word.LowByte());
     WriteByte(address.Increment(), word.HighByte());
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly void WriteRAM(ushort address, byte value)
+  {
+    var index = address & (BANK_SIZE - 1);
+    _ram[index] = value;
   }
 
   private void InitializeSlots()
@@ -115,6 +126,10 @@ public ref partial struct Mapper
 
       case MapperType.MSX:
         InitializeSlotsMSX();
+        break;
+
+      case MapperType.Janggun:
+        InitializeSlotsJanggun();
         break;
     }
     RemapSlots();
@@ -139,22 +154,27 @@ public ref partial struct Mapper
       case MapperType.MSX:
         RemapSlotsMSX();
         return;
+
+      case MapperType.Janggun:
+        RemapSlotsJanggun();
+        return;
     }
   }
 
   private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
   {
-    var index = controlByte % _bankCount;
-    return _rom.Slice(index * BANK_SIZE, BANK_SIZE);
+    var index = controlByte & _bankMask;
+    var mirrored = index % _bankCount;
+    return _rom.Slice(mirrored * BANK_SIZE, BANK_SIZE);
   }
 
   private readonly void GetBankPair(byte controlByte,
                                     out ReadOnlySpan<byte> lowBank,
                                     out ReadOnlySpan<byte> highBank)
   {
-    var index = (byte)((controlByte << 1) & _bankMask);
-    lowBank  = GetBank(index);
-    highBank = GetBank(index.Increment());
+    var lowIndex = (byte)(controlByte << 1);
+    lowBank  = GetBank(lowIndex);
+    highBank = GetBank(lowIndex.Increment());
   }
 
   private static byte GetBankMask(int bankCount)
@@ -188,6 +208,9 @@ public ref partial struct Mapper
 
     if (HasKnownMSXHash(hash))
       return MapperType.MSX;
+
+    if (HasJanggunHash(hash))
+      return MapperType.Janggun;
 
     return MapperType.SEGA;
   }

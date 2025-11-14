@@ -17,9 +17,9 @@ public ref partial struct Mapper
   #region Methods
   private void InitializeSlotsSEGA()
   {
-    _slot0Control = 0x0;
-    _slot1Control = 0x1;
-    _slot2Control = 0x2;
+    _slotControl0 = 0x0;
+    _slotControl1 = 0x1;
+    _slotControl2 = 0x2;
     
     _vectors = _rom[..VECTORS_SIZE];
   }
@@ -27,9 +27,6 @@ public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByteSEGA(ushort address, byte value)
   {
-    if (address < SEGA_SLOT_SIZE * 2)
-      return;
-
     if (address == SRAM_CONTROL)
     {
       _sramEnable = value.TestBit(3);
@@ -38,42 +35,40 @@ public ref partial struct Mapper
     }
     else if (address == SLOT0_CONTROL)
     {
-      _slot0Control = value;
+      _slotControl0 = value;
       RemapSlotsSEGA();
     }
     else if (address == SLOT1_CONTROL)
     {
-      _slot1Control = value;
+      _slotControl1 = value;
       RemapSlotsSEGA();
     }
     else if (address == SLOT2_CONTROL)
     {
-      _slot2Control = value;
+      _slotControl2 = value;
       RemapSlotsSEGA();
     }
 
-    if (address < RAM_BASE)
+    if (address >= RAM_BASE)
     {
-      if (!_sramEnable)
-        return;
+      WriteRAM(address, value);
+    }
+    else if (_sramEnable &&
+             address >= SEGA_SLOT_SIZE * 2)
+    {
       var index = address & (SEGA_SLOT_SIZE - 1);
       _sram[index] = value;
-    }
-    else
-    {
-      var index = address & (BANK_SIZE - 1);
-      _ram[index] = value;
     }
   }
 
   private void RemapSlotsSEGA()
   {
-    GetBankPair(_slot0Control, out _slot0, out _slot1);
-    GetBankPair(_slot1Control, out _slot2, out _slot3);
+    GetBankPair(_slotControl0, out _slot0, out _slot1);
+    GetBankPair(_slotControl1, out _slot2, out _slot3);
 
     if (!_sramEnable)
     {
-      GetBankPair(_slot2Control, out _slot4, out _slot5);
+      GetBankPair(_slotControl2, out _slot4, out _slot5);
       return;
     }
     

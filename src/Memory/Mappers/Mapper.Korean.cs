@@ -13,7 +13,7 @@ public ref partial struct Mapper
   #region Methods
   private void InitializeSlotsKorean()
   {
-    _slot2Control = 0x1;
+    _slotControl2 = 0x1;
     
     _slot0 = GetBank(0x0);
     _slot1 = GetBank(0x1);
@@ -25,19 +25,18 @@ public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteKorean(ushort address, byte value)
   {
-    if (address == KOREAN_SLOT2_CONTROL)
+    if (address >= RAM_BASE)
     {
-      _slot2Control = value;
-      RemapSlotsKorean();
+      WriteRAM(address, value);
     }
-    else if (address >= RAM_BASE)
+    else if (address == KOREAN_SLOT2_CONTROL)
     {
-      var index = address & (BANK_SIZE - 1);
-      _ram[index] = value;
+      _slotControl2 = value;
+      RemapSlotsKorean();
     }
   }
 
-  private void RemapSlotsKorean() => GetBankPair(_slot2Control, out _slot4, out _slot5);
+  private void RemapSlotsKorean() => GetBankPair(_slotControl2, out _slot4, out _slot5);
 
   private static bool HasKnownKoreanHash(uint crc) => Hashes.Korean.Contains(crc);
   #endregion

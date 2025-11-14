@@ -16,55 +16,54 @@ public ref partial struct Mapper
   #region Methods
   private void InitializeSlotsMSX()
   {
-    _slot0Control = 0x0;
-    _slot1Control = 0x1;
-    _slot2Control = 0x2;
-    _slot3Control = 0x3;
+    _slotControl0 = 0x0;
+    _slotControl1 = 0x1;
+    _slotControl2 = 0x2;
+    _slotControl3 = 0x3;
 
     var bank0 = UseNemesisMapper()
               ? (byte)0xF
               : (byte)0x0;
     _slot0 = GetBank(bank0);
     _slot1 = GetBank(0x1);
-    _vectors = _slot0[..VECTORS_SIZE];
+    _vectors = _rom[..VECTORS_SIZE];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteMSX(ushort address, byte value)
   {
-    if (address == MSX_SLOT0_CONTROL)
+    if (address >= RAM_BASE)
     {
-      _slot0Control = (byte)(value & _bankMask);
+      WriteRAM(address, value);
+    }
+    else if (address == MSX_SLOT0_CONTROL)
+    {
+      _slotControl0 = value;
       RemapSlotsMSX();
     }
     else if (address == MSX_SLOT1_CONTROL)
     {
-      _slot1Control = (byte)(value & _bankMask);
+      _slotControl1 = value;
       RemapSlotsMSX();
     }
     else if (address == MSX_SLOT2_CONTROL)
     {
-      _slot2Control = (byte)(value & _bankMask);
+      _slotControl2 = value;
       RemapSlotsMSX();
     }
     else if (address == MSX_SLOT3_CONTROL)
     {
-      _slot3Control = (byte)(value & _bankMask);
+      _slotControl3 = value;
       RemapSlotsMSX();
-    }
-    else if (address >= RAM_BASE)
-    {
-      var index = address & (BANK_SIZE - 1);
-      _ram[index] = value;
     }
   }
 
   private void RemapSlotsMSX()
   {
-    _slot2 = GetBank(_slot0Control);
-    _slot3 = GetBank(_slot1Control);
-    _slot4 = GetBank(_slot2Control);
-    _slot5 = GetBank(_slot3Control);
+    _slot2 = GetBank(_slotControl0);
+    _slot3 = GetBank(_slotControl1);
+    _slot4 = GetBank(_slotControl2);
+    _slot5 = GetBank(_slotControl3);
   }
 
   private readonly bool UseNemesisMapper() => Hashes.Nemesis == GetCRC32Hash(_rom);

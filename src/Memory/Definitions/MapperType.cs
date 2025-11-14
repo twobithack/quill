@@ -5,5 +5,6 @@ public enum MapperType
   SEGA,
   Codemasters,
   Korean,
-  MSX
+  MSX,
+  Janggun
 }

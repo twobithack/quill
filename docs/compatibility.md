@@ -121,6 +121,7 @@
 * Indiana Jones and the Last Crusade
 * James 'Buster' Douglas Knockout Boxing
 * James Pond 2 - Codename Robocod
+* Janggun-ui Adeul
 * Jang Pung II
 * Jang Pung 3
 * The Jungle Book

@@ -28,12 +28,14 @@ unsafe public ref partial struct Mapper
   private readonly MapperType _mapper;
   private readonly int _bankCount;
   private readonly byte _bankMask;
-  private byte _slot0Control;
-  private byte _slot1Control;
-  private byte _slot2Control;
-  private byte _slot3Control;
+  private byte _slotControl0;
+  private byte _slotControl1;
+  private byte _slotControl2;
+  private byte _slotControl3;
   private bool _sramEnable;
   private bool _sramSelect;
+
+  private ReadOnlySpan<byte> _romReversed;
   #endregion
 
   #region Methods
@@ -42,9 +44,9 @@ unsafe public ref partial struct Mapper
     state.RAM.AsSpan(0, BANK_SIZE).CopyTo(_ram);
     state.SRAM0.AsSpan().CopyTo(_sram0);
     state.SRAM1.AsSpan().CopyTo(_sram1);
-    _slot0Control = state.Slot0Control;
-    _slot1Control = state.Slot1Control;
-    _slot2Control = state.Slot2Control;
+    _slotControl0 = state.SlotControl0;
+    _slotControl1 = state.SlotControl1;
+    _slotControl2 = state.SlotControl2;
     _sramEnable   = state.EnableSRAM;
     _sramSelect   = state.SelectSRAM;
     RemapSlots();
@@ -55,9 +57,9 @@ unsafe public ref partial struct Mapper
     _ram.CopyTo(state.RAM);
     _sram0.CopyTo(state.SRAM0);
     _sram1.CopyTo(state.SRAM1);
-    state.Slot0Control = _slot0Control;
-    state.Slot1Control = _slot1Control;
-    state.Slot2Control = _slot2Control;
+    state.SlotControl0 = _slotControl0;
+    state.SlotControl1 = _slotControl1;
+    state.SlotControl2 = _slotControl2;
     state.EnableSRAM   = _sramEnable;
     state.SelectSRAM   = _sramSelect;
   }
@@ -103,7 +105,7 @@ unsafe public ref partial struct Mapper
   public override readonly string ToString()
   {
     var banking = _sramEnable ? $"enabled (Bank {_sramSelect.ToBit()})" : "disabled";
-    return $"Memory: RAM banking {banking} | P0: {_slot0Control.ToHex()}, P1: {_slot1Control.ToHex()}, P2: {_slot2Control.ToHex()}";
+    return $"Memory: RAM banking {banking} | P0: {_slotControl0.ToHex()}, P1: {_slotControl1.ToHex()}, P2: {_slotControl2.ToHex()}";
   }
   #endregion
 }
