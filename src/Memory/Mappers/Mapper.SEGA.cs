@@ -49,9 +49,9 @@ public ref partial struct Mapper
       RemapSlotsSEGA();
     }
 
-    if (address >= RAM_BASE)
+    if (address >= WRAM_BASE)
     {
-      WriteRAM(address, value);
+      WriteWRAM(address, value);
     }
     else if (_sramEnable &&
              address >= SEGA_SLOT_SIZE * 2)

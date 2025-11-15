@@ -14,7 +14,7 @@ public ref partial struct Mapper
 
   private const ushort HEADER_SIZE  = 0x0200;
   private const ushort VECTORS_SIZE = 0x0400;
-  private const ushort RAM_BASE     = 0xC000;
+  private const ushort WRAM_BASE    = 0xC000;
   #endregion
 
   public Mapper(byte[] program)
@@ -28,7 +28,7 @@ public ref partial struct Mapper
     program.AsSpan(headerOffset, romLength).CopyTo(paddedROM);
 
     _rom   = paddedROM;
-    _ram   = new byte[BANK_SIZE];
+    _wram   = new byte[BANK_SIZE];
     _sram0 = new byte[BANK_SIZE*2];
     _sram1 = new byte[BANK_SIZE*2];
     _sram  = _sram0;
@@ -55,7 +55,7 @@ public ref partial struct Mapper
       3 => _slot3[index], // 0x6000 - 0x7FFF
       4 => _slot4[index], // 0x8000 - 0x9FFF
       5 => _slot5[index], // 0xA000 - 0xBFFF
-      _ => _ram[index]    // 0xC000 - 0xDFFF (or 0xE000 - 0xFFFF mirror)
+      _ => _wram[index]   // 0xC000 - 0xDFFF (or 0xE000 - 0xFFFF mirror)
     };
   }
 
@@ -64,25 +64,11 @@ public ref partial struct Mapper
   {
     switch (_mapper)
     {
-      case MapperType.SEGA:
-        WriteByteSEGA(address, value);
-        return;
-
-      case MapperType.Codemasters:
-        WriteByteCodemasters(address, value);
-        return;
-
-      case MapperType.Korean:
-        WriteByteKorean(address, value);
-        return;
-
-      case MapperType.MSX:
-        WriteByteMSX(address, value);
-        return;
-
-      case MapperType.Janggun:
-        WriteByteJanggun(address, value);
-        return;
+      case MapperType.SEGA:        WriteByteSEGA(address, value);        return;
+      case MapperType.Codemasters: WriteByteCodemasters(address, value); return;
+      case MapperType.Korean:      WriteByteKorean(address, value);      return;
+      case MapperType.MSX:         WriteByteMSX(address, value);         return;
+      case MapperType.Janggun:     WriteByteJanggun(address, value);     return;
     }
   }
 
@@ -102,35 +88,24 @@ public ref partial struct Mapper
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private readonly void WriteRAM(ushort address, byte value)
+  public void WriteControl(byte value) => _memoryControl = value;
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly void WriteWRAM(ushort address, byte value)
   {
     var index = address & (BANK_SIZE - 1);
-    _ram[index] = value;
+    _wram[index] = value;
   }
 
   private void InitializeSlots()
   {
     switch (_mapper)
     {
-      case MapperType.SEGA:
-        InitializeSlotsSEGA();
-        break;
-
-      case MapperType.Codemasters:
-        InitializeSlotsCodemasters();
-        break;
-
-      case MapperType.Korean:
-        InitializeSlotsKorean();
-        break;
-
-      case MapperType.MSX:
-        InitializeSlotsMSX();
-        break;
-
-      case MapperType.Janggun:
-        InitializeSlotsJanggun();
-        break;
+      case MapperType.SEGA:        InitializeSlotsSEGA();        break;
+      case MapperType.Codemasters: InitializeSlotsCodemasters(); break;
+      case MapperType.Korean:      InitializeSlotsKorean();      break;
+      case MapperType.MSX:         InitializeSlotsMSX();         break;
+      case MapperType.Janggun:     InitializeSlotsJanggun();     break;
     }
     RemapSlots();
   }
@@ -139,25 +114,11 @@ public ref partial struct Mapper
   {
     switch (_mapper)
     {
-      case MapperType.SEGA:
-        RemapSlotsSEGA();
-        return;
-
-      case MapperType.Codemasters:
-        RemapSlotsCodemasters();
-        return;
-
-      case MapperType.Korean:
-        RemapSlotsKorean();
-        return;
-
-      case MapperType.MSX:
-        RemapSlotsMSX();
-        return;
-
-      case MapperType.Janggun:
-        RemapSlotsJanggun();
-        return;
+      case MapperType.SEGA:        RemapSlotsSEGA();        return;
+      case MapperType.Codemasters: RemapSlotsCodemasters(); return;
+      case MapperType.Korean:      RemapSlotsKorean();      return;
+      case MapperType.MSX:         RemapSlotsMSX();         return;
+      case MapperType.Janggun:     RemapSlotsJanggun();     return;
     }
   }
 

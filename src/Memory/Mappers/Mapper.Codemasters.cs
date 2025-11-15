@@ -21,9 +21,9 @@ public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteCodemasters(ushort address, byte value)
   {
-    if (address >= RAM_BASE)
+    if (address >= WRAM_BASE)
     {
-      WriteRAM(address, value);
+      WriteWRAM(address, value);
     }
     else if (address < CODEMASTERS_SLOT_SIZE)
     {

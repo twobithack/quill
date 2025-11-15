@@ -40,9 +40,9 @@ public ref partial struct Mapper
       RemapSlotsJanggun();
     }
     
-    if (address >= RAM_BASE)
+    if (address >= WRAM_BASE)
     {
-      WriteRAM(address, value);
+      WriteWRAM(address, value);
       return;
     }
 

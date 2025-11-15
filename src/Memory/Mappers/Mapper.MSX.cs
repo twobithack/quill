@@ -32,9 +32,9 @@ public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteMSX(ushort address, byte value)
   {
-    if (address >= RAM_BASE)
+    if (address >= WRAM_BASE)
     {
-      WriteRAM(address, value);
+      WriteWRAM(address, value);
     }
     else if (address == MSX_SLOT0_CONTROL)
     {

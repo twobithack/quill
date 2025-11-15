@@ -25,9 +25,9 @@ public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteKorean(ushort address, byte value)
   {
-    if (address >= RAM_BASE)
+    if (address >= WRAM_BASE)
     {
-      WriteRAM(address, value);
+      WriteWRAM(address, value);
     }
     else if (address == KOREAN_SLOT2_CONTROL)
     {

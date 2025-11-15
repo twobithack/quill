@@ -31,7 +31,7 @@ public sealed class Snapshot : IEquatable<Snapshot>
   [Key(15)] public bool IFF1;
   [Key(16)] public bool IFF2;
 
-  [Key(17)] public byte[] RAM;
+  [Key(17)] public byte[] WRAM;
   [Key(18)] public byte[] SRAM0;
   [Key(19)] public byte[] SRAM1;
   [Key(20)] public bool EnableSRAM;
@@ -60,7 +60,7 @@ public sealed class Snapshot : IEquatable<Snapshot>
 
   public Snapshot()
   {
-    RAM = new byte[Mapper.BANK_SIZE*2];
+    WRAM = new byte[Mapper.BANK_SIZE*2];
     SRAM0 = new byte[Mapper.BANK_SIZE*2];
     SRAM1 = new byte[Mapper.BANK_SIZE*2];
     Palette = new int[VDP.CRAM_SIZE];
@@ -127,7 +127,7 @@ public sealed class Snapshot : IEquatable<Snapshot>
     if (IRQ                 != other.IRQ)                     return false;
     if (ChannelLatch        != other.ChannelLatch)            return false;
     if (VolumeLatch         != other.VolumeLatch)             return false;
-    if (!RAM.AsSpan()       .SequenceEqual(other.RAM))        return false;
+    if (!WRAM.AsSpan()      .SequenceEqual(other.WRAM))       return false;
     if (!SRAM0.AsSpan()     .SequenceEqual(other.SRAM0))      return false;
     if (!SRAM1.AsSpan()     .SequenceEqual(other.SRAM1))      return false;
     if (!Palette.AsSpan()   .SequenceEqual(other.Palette))    return false;

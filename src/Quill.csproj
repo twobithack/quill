@@ -27,9 +27,10 @@
       <IncludeInSingleFile>true</IncludeInSingleFile>
       <LogicalName>icon.rgba</LogicalName>
     </EmbeddedResource>
-    <None Update="../config.json">
+    <Content Include="..\config.json" Link="config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -37,5 +38,9 @@
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="System.IO.Hashing" Version="10.0.0" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>8509</NoWarn>
+  </PropertyGroup>
 
 </Project>

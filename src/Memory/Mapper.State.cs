@@ -12,9 +12,9 @@ unsafe public ref partial struct Mapper
 {
   #region Fields
   private readonly ReadOnlySpan<byte> _rom;
-  private readonly Span<byte> _ram;
   private readonly Span<byte> _sram0;
   private readonly Span<byte> _sram1;
+  private readonly Span<byte> _wram;
 
   private ReadOnlySpan<byte> _vectors;
   private ReadOnlySpan<byte> _slot0;
@@ -28,6 +28,8 @@ unsafe public ref partial struct Mapper
   private readonly MapperType _mapper;
   private readonly int _bankCount;
   private readonly byte _bankMask;
+
+  private byte _memoryControl;
   private byte _slotControl0;
   private byte _slotControl1;
   private byte _slotControl2;
@@ -38,10 +40,17 @@ unsafe public ref partial struct Mapper
   private ReadOnlySpan<byte> _romReversed;
   #endregion
 
+  #region Properties
+  private readonly bool EnableBIOS      => _memoryControl.TestBit(3);
+  private readonly bool EnableWRAM      => _memoryControl.TestBit(4);
+  private readonly bool EnableCard      => _memoryControl.TestBit(5);
+  private readonly bool EnableCartridge => _memoryControl.TestBit(3);
+  #endregion
+
   #region Methods
   public void LoadState(Snapshot state)
   {
-    state.RAM.AsSpan(0, BANK_SIZE).CopyTo(_ram);
+    state.WRAM.AsSpan(0, BANK_SIZE).CopyTo(_wram);
     state.SRAM0.AsSpan().CopyTo(_sram0);
     state.SRAM1.AsSpan().CopyTo(_sram1);
     _slotControl0 = state.SlotControl0;
@@ -54,7 +63,7 @@ unsafe public ref partial struct Mapper
 
   public readonly void SaveState(Snapshot state)
   {
-    _ram.CopyTo(state.RAM);
+    _wram.CopyTo(state.WRAM);
     _sram0.CopyTo(state.SRAM0);
     _sram1.CopyTo(state.SRAM1);
     state.SlotControl0 = _slotControl0;
@@ -64,7 +73,7 @@ unsafe public ref partial struct Mapper
     state.SelectSRAM   = _sramSelect;
   }
 
-  public readonly void DumpRAM(string path)
+  public readonly void DumpWRAM(string path)
   {
     var memory = new List<string>();
     var row = string.Empty;
@@ -76,7 +85,7 @@ unsafe public ref partial struct Mapper
         memory.Add(row);
         row = string.Empty;
       }
-      row += _ram[address].ToHex();
+      row += _wram[address].ToHex();
     }
 
     File.WriteAllLines(path, memory);
