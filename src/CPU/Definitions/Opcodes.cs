@@ -58,8 +58,8 @@ public readonly struct Opcodes
     new(Operation.DEC8,   Operand.L,          Operand.Implied,     4),
     new(Operation.LD8,    Operand.L,          Operand.Immediate,   7),
     new(Operation.CPL,    Operand.Implied,    Operand.Implied,     4),
-      
-    // Opcodes 0x30 - 0x3F  
+
+    // Opcodes 0x30 - 0x3F
     new(Operation.JR,     Operand.Immediate,  Operand.NonCarry,    7),
     new(Operation.LD16,   Operand.SP,         Operand.Immediate,  10),
     new(Operation.LD8,    Operand.Indirect,   Operand.A,          13),
@@ -76,7 +76,7 @@ public readonly struct Opcodes
     new(Operation.DEC8,   Operand.A,          Operand.Implied,     4),
     new(Operation.LD8,    Operand.A,          Operand.Immediate,   7),
     new(Operation.CCF,    Operand.Implied,    Operand.Implied,     4),
-    
+
     // Opcodes 0x40 - 0x4F
     new(),
     new(Operation.LD8,    Operand.B,          Operand.C,           4),
@@ -87,7 +87,7 @@ public readonly struct Opcodes
     new(Operation.LD8,    Operand.B,          Operand.HLi,         7),
     new(Operation.LD8,    Operand.B,          Operand.A,           4),
     new(Operation.LD8,    Operand.C,          Operand.B,           4),
-    new(), 
+    new(),
     new(Operation.LD8,    Operand.C,          Operand.D,           4),
     new(Operation.LD8,    Operand.C,          Operand.E,           4),
     new(Operation.LD8,    Operand.C,          Operand.H,           4),
@@ -95,10 +95,10 @@ public readonly struct Opcodes
     new(Operation.LD8,    Operand.C,          Operand.HLi,         7),
     new(Operation.LD8,    Operand.C,          Operand.A,           4),
 
-    // Opcodes 0x50 - 0x5F    
+    // Opcodes 0x50 - 0x5F
     new(Operation.LD8,    Operand.D,          Operand.B,           4),
     new(Operation.LD8,    Operand.D,          Operand.C,           4),
-    new(), 
+    new(),
     new(Operation.LD8,    Operand.D,          Operand.E,           4),
     new(Operation.LD8,    Operand.D,          Operand.H,           4),
     new(Operation.LD8,    Operand.D,          Operand.L,           4),
@@ -107,18 +107,18 @@ public readonly struct Opcodes
     new(Operation.LD8,    Operand.E,          Operand.B,           4),
     new(Operation.LD8,    Operand.E,          Operand.C,           4),
     new(Operation.LD8,    Operand.E,          Operand.D,           4),
-    new(), 
+    new(),
     new(Operation.LD8,    Operand.E,          Operand.H,           4),
     new(Operation.LD8,    Operand.E,          Operand.L,           4),
     new(Operation.LD8,    Operand.E,          Operand.HLi,         7),
     new(Operation.LD8,    Operand.E,          Operand.A,           4),
 
-    // Opcodes 0x60 - 0x6F    
+    // Opcodes 0x60 - 0x6F
     new(Operation.LD8,    Operand.H,          Operand.B,           4),
     new(Operation.LD8,    Operand.H,          Operand.C,           4),
     new(Operation.LD8,    Operand.H,          Operand.D,           4),
     new(Operation.LD8,    Operand.H,          Operand.E,           4),
-    new(), 
+    new(),
     new(Operation.LD8,    Operand.H,          Operand.L,           4),
     new(Operation.LD8,    Operand.H,          Operand.HLi,         7),
     new(Operation.LD8,    Operand.H,          Operand.A,           4),
@@ -127,11 +127,11 @@ public readonly struct Opcodes
     new(Operation.LD8,    Operand.L,          Operand.D,           4),
     new(Operation.LD8,    Operand.L,          Operand.E,           4),
     new(Operation.LD8,    Operand.L,          Operand.H,           4),
-    new(), 
+    new(),
     new(Operation.LD8,    Operand.L,          Operand.HLi,         7),
     new(Operation.LD8,    Operand.L,          Operand.A,           4),
 
-    // Opcodes 0x70 - 0x7F    
+    // Opcodes 0x70 - 0x7F
     new(Operation.LD8,    Operand.HLi,        Operand.B,           7),
     new(Operation.LD8,    Operand.HLi,        Operand.C,           7),
     new(Operation.LD8,    Operand.HLi,        Operand.D,           7),
@@ -147,9 +147,9 @@ public readonly struct Opcodes
     new(Operation.LD8,    Operand.A,          Operand.H,           4),
     new(Operation.LD8,    Operand.A,          Operand.L,           4),
     new(Operation.LD8,    Operand.A,          Operand.HLi,         7),
-    new(), 
+    new(),
 
-    // Opcodes 0x80 - 0x8F    
+    // Opcodes 0x80 - 0x8F
     new(Operation.ADD8,   Operand.Implied,    Operand.B,           4),
     new(Operation.ADD8,   Operand.Implied,    Operand.C,           4),
     new(Operation.ADD8,   Operand.Implied,    Operand.D,           4),
@@ -167,7 +167,7 @@ public readonly struct Opcodes
     new(Operation.ADC8,   Operand.Implied,    Operand.HLi,         7),
     new(Operation.ADC8,   Operand.Implied,    Operand.A,           4),
 
-    // Opcodes 0x90 - 0x9F  
+    // Opcodes 0x90 - 0x9F
     new(Operation.SUB,    Operand.Implied,    Operand.B,           4),
     new(Operation.SUB,    Operand.Implied,    Operand.C,           4),
     new(Operation.SUB,    Operand.Implied,    Operand.D,           4),
@@ -185,7 +185,7 @@ public readonly struct Opcodes
     new(Operation.SBC8,   Operand.Implied,    Operand.HLi,         7),
     new(Operation.SBC8,   Operand.Implied,    Operand.A,           4),
 
-    // Opcodes 0xA0 - 0xAF    
+    // Opcodes 0xA0 - 0xAF
     new(Operation.AND,    Operand.Implied,    Operand.B,           4),
     new(Operation.AND,    Operand.Implied,    Operand.C,           4),
     new(Operation.AND,    Operand.Implied,    Operand.D,           4),
@@ -203,7 +203,7 @@ public readonly struct Opcodes
     new(Operation.XOR,    Operand.Implied,    Operand.HLi,         7),
     new(Operation.XOR,    Operand.Implied,    Operand.A,           4),
 
-    // Opcodes 0xB0 - 0xBF    
+    // Opcodes 0xB0 - 0xBF
     new(Operation.OR,     Operand.Implied,    Operand.B,           4),
     new(Operation.OR,     Operand.Implied,    Operand.C,           4),
     new(Operation.OR,     Operand.Implied,    Operand.D,           4),
@@ -221,7 +221,7 @@ public readonly struct Opcodes
     new(Operation.CP,     Operand.Implied,    Operand.HLi,         7),
     new(Operation.CP,     Operand.Implied,    Operand.A,           4),
 
-    // Opcodes 0xC0 - 0xCF    
+    // Opcodes 0xC0 - 0xCF
     new(Operation.RET,    Operand.Implied,    Operand.NonZero,     5),
     new(Operation.POP,    Operand.BC,         Operand.Implied,    10),
     new(Operation.JP,     Operand.Immediate,  Operand.NonZero,    10),
@@ -233,13 +233,13 @@ public readonly struct Opcodes
     new(Operation.RET,    Operand.Implied,    Operand.Zero,        5),
     new(Operation.RET,    Operand.Implied,    Operand.Implied,    10),
     new(Operation.JP,     Operand.Immediate,  Operand.Zero,       10),
-    new(),   
+    new(),
     new(Operation.CALL,   Operand.Immediate,  Operand.Zero,       10),
     new(Operation.CALL,   Operand.Immediate,  Operand.Implied,    17),
     new(Operation.ADC8,   Operand.A,          Operand.Immediate,   7),
     new(Operation.RST,    (Operand) 0x08,     Operand.Implied,    11),
 
-    // Opcodes 0xD0 - 0xDF    
+    // Opcodes 0xD0 - 0xDF
     new(Operation.RET,    Operand.Implied,    Operand.NonCarry,    5),
     new(Operation.POP,    Operand.DE,         Operand.Implied,    10),
     new(Operation.JP,     Operand.Immediate,  Operand.NonCarry,   10),
@@ -253,11 +253,11 @@ public readonly struct Opcodes
     new(Operation.JP,     Operand.Immediate,  Operand.Carry,      10),
     new(Operation.IN,     Operand.A,          Operand.Immediate,  11),
     new(Operation.CALL,   Operand.Immediate,  Operand.Carry,      10),
-    new(),  
+    new(),
     new(Operation.SBC8,   Operand.A,          Operand.Immediate,   7),
     new(Operation.RST,    (Operand) 0x18,     Operand.Implied,    11),
 
-    // Opcodes 0xE0 - 0xEF    
+    // Opcodes 0xE0 - 0xEF
     new(Operation.RET,    Operand.Implied,    Operand.Odd,         5),
     new(Operation.POP,    Operand.HL,         Operand.Implied,    10),
     new(Operation.JP,     Operand.Immediate,  Operand.Odd,        10),
@@ -271,11 +271,11 @@ public readonly struct Opcodes
     new(Operation.JP,     Operand.Immediate,  Operand.Even,       10),
     new(Operation.EX,     Operand.DE,         Operand.HL,          4),
     new(Operation.CALL,   Operand.Immediate,  Operand.Even,       10),
-    new(),   
+    new(),
     new(Operation.XOR,    Operand.Implied,    Operand.Immediate,   7),
     new(Operation.RST,    (Operand) 0x28,     Operand.Implied,    11),
 
-    // Opcodes 0xF0 - 0xFF    
+    // Opcodes 0xF0 - 0xFF
     new(Operation.RET,    Operand.Implied,    Operand.Positive,    5),
     new(Operation.POP,    Operand.AF,         Operand.Implied,    10),
     new(Operation.JP,     Operand.Immediate,  Operand.Positive,   10),
@@ -289,12 +289,12 @@ public readonly struct Opcodes
     new(Operation.JP,     Operand.Immediate,  Operand.Negative,   10),
     new(Operation.EI,     Operand.Implied,    Operand.Implied,     4),
     new(Operation.CALL,   Operand.Immediate,  Operand.Negative,   10),
-    new(),  
+    new(),
     new(Operation.CP,     Operand.Implied,    Operand.Immediate,   7),
     new(Operation.RST,    (Operand) 0x38,     Operand.Implied,    11),
   ];
 
-  public static readonly Instruction[ ] CB =
+  public static readonly Instruction[] CB =
   [
     // Opcodes 0x00 - 0x0F
     new(Operation.RLC,    Operand.B,          Operand.Implied,     8),
@@ -332,7 +332,7 @@ public readonly struct Opcodes
     new(Operation.RR,     Operand.HLi,        Operand.Implied,    15),
     new(Operation.RR,     Operand.A,          Operand.Implied,     8),
 
-    // Opcodes 0x20 - 0x2F 
+    // Opcodes 0x20 - 0x2F
     new(Operation.SLA,    Operand.B,          Operand.Implied,     8),
     new(Operation.SLA,    Operand.C,          Operand.Implied,     8),
     new(Operation.SLA,    Operand.D,          Operand.Implied,     8),
@@ -349,8 +349,8 @@ public readonly struct Opcodes
     new(Operation.SRA,    Operand.L,          Operand.Implied,     8),
     new(Operation.SRA,    Operand.HLi,        Operand.Implied,    15),
     new(Operation.SRA,    Operand.A,          Operand.Implied,     8),
-      
-    // Opcodes 0x30 - 0x3F  
+
+    // Opcodes 0x30 - 0x3F
     new(Operation.SLL,    Operand.B,          Operand.Implied,     8),
     new(Operation.SLL,    Operand.C,          Operand.Implied,     8),
     new(Operation.SLL,    Operand.D,          Operand.Implied,     8),
@@ -367,8 +367,8 @@ public readonly struct Opcodes
     new(Operation.SRL,    Operand.L,          Operand.Implied,     8),
     new(Operation.SRL,    Operand.HLi,        Operand.Implied,    15),
     new(Operation.SRL,    Operand.A,          Operand.Implied,     8),
-    
-    // Opcodes 0x40 - 0x4F 
+
+    // Opcodes 0x40 - 0x4F
     new(Operation.BIT,    (Operand) 0,        Operand.B,           8),
     new(Operation.BIT,    (Operand) 0,        Operand.C,           8),
     new(Operation.BIT,    (Operand) 0,        Operand.D,           8),
@@ -385,8 +385,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 1,        Operand.L,           8),
     new(Operation.BIT,    (Operand) 1,        Operand.HLi,        12),
     new(Operation.BIT,    (Operand) 1,        Operand.A,           8),
-    
-    // Opcodes 0x50 - 0x5F 
+
+    // Opcodes 0x50 - 0x5F
     new(Operation.BIT,    (Operand) 2,        Operand.B,           8),
     new(Operation.BIT,    (Operand) 2,        Operand.C,           8),
     new(Operation.BIT,    (Operand) 2,        Operand.D,           8),
@@ -403,8 +403,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 3,        Operand.L,           8),
     new(Operation.BIT,    (Operand) 3,        Operand.HLi,        12),
     new(Operation.BIT,    (Operand) 3,        Operand.A,           8),
-    
-    // Opcodes 0x60 - 0x6F 
+
+    // Opcodes 0x60 - 0x6F
     new(Operation.BIT,    (Operand) 4,        Operand.B,           8),
     new(Operation.BIT,    (Operand) 4,        Operand.C,           8),
     new(Operation.BIT,    (Operand) 4,        Operand.D,           8),
@@ -421,8 +421,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 5,        Operand.L,           8),
     new(Operation.BIT,    (Operand) 5,        Operand.HLi,        12),
     new(Operation.BIT,    (Operand) 5,        Operand.A,           8),
-    
-    // Opcodes 0x70 - 0x7F 
+
+    // Opcodes 0x70 - 0x7F
     new(Operation.BIT,    (Operand) 6,        Operand.B,           8),
     new(Operation.BIT,    (Operand) 6,        Operand.C,           8),
     new(Operation.BIT,    (Operand) 6,        Operand.D,           8),
@@ -439,8 +439,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 7,        Operand.L,           8),
     new(Operation.BIT,    (Operand) 7,        Operand.HLi,        12),
     new(Operation.BIT,    (Operand) 7,        Operand.A,           8),
-    
-    // Opcodes 0x80 - 0x8F 
+
+    // Opcodes 0x80 - 0x8F
     new(Operation.RES0,   Operand.B,          Operand.Implied,     8),
     new(Operation.RES0,   Operand.C,          Operand.Implied,     8),
     new(Operation.RES0,   Operand.D,          Operand.Implied,     8),
@@ -458,7 +458,7 @@ public readonly struct Opcodes
     new(Operation.RES1,   Operand.HLi,        Operand.Implied,    15),
     new(Operation.RES1,   Operand.A,          Operand.Implied,     8),
 
-    // Opcodes 0x90 - 0x9F 
+    // Opcodes 0x90 - 0x9F
     new(Operation.RES2,   Operand.B,          Operand.Implied,     8),
     new(Operation.RES2,   Operand.C,          Operand.Implied,     8),
     new(Operation.RES2,   Operand.D,          Operand.Implied,     8),
@@ -475,8 +475,8 @@ public readonly struct Opcodes
     new(Operation.RES3,   Operand.L,          Operand.Implied,     8),
     new(Operation.RES3,   Operand.HLi,        Operand.Implied,    15),
     new(Operation.RES3,   Operand.A,          Operand.Implied,     8),
-    
-    // Opcodes 0xA0 - 0xAF 
+
+    // Opcodes 0xA0 - 0xAF
     new(Operation.RES4,   Operand.B,          Operand.Implied,     8),
     new(Operation.RES4,   Operand.C,          Operand.Implied,     8),
     new(Operation.RES4,   Operand.D,          Operand.Implied,     8),
@@ -494,7 +494,7 @@ public readonly struct Opcodes
     new(Operation.RES5,   Operand.HLi,        Operand.Implied,    15),
     new(Operation.RES5,   Operand.A,          Operand.Implied,     8),
 
-    // Opcodes 0xB0 - 0xBF 
+    // Opcodes 0xB0 - 0xBF
     new(Operation.RES6,   Operand.B,          Operand.Implied,     8),
     new(Operation.RES6,   Operand.C,          Operand.Implied,     8),
     new(Operation.RES6,   Operand.D,          Operand.Implied,     8),
@@ -512,7 +512,7 @@ public readonly struct Opcodes
     new(Operation.RES7,   Operand.HLi,        Operand.Implied,    15),
     new(Operation.RES7,   Operand.A,          Operand.Implied,     8),
 
-    // Opcodes 0xC0 - 0xCF 
+    // Opcodes 0xC0 - 0xCF
     new(Operation.SET0,   Operand.B,          Operand.Implied,     8),
     new(Operation.SET0,   Operand.C,          Operand.Implied,     8),
     new(Operation.SET0,   Operand.D,          Operand.Implied,     8),
@@ -530,7 +530,7 @@ public readonly struct Opcodes
     new(Operation.SET1,   Operand.HLi,        Operand.Implied,    15),
     new(Operation.SET1,   Operand.A,          Operand.Implied,     8),
 
-    // Opcodes 0xD0 - 0xDF 
+    // Opcodes 0xD0 - 0xDF
     new(Operation.SET2,   Operand.B,          Operand.Implied,     8),
     new(Operation.SET2,   Operand.C,          Operand.Implied,     8),
     new(Operation.SET2,   Operand.D,          Operand.Implied,     8),
@@ -548,7 +548,7 @@ public readonly struct Opcodes
     new(Operation.SET3,   Operand.HLi,        Operand.Implied,    15),
     new(Operation.SET3,   Operand.A,          Operand.Implied,     8),
 
-    // Opcodes 0xE0 - 0xEF 
+    // Opcodes 0xE0 - 0xEF
     new(Operation.SET4,   Operand.B,          Operand.Implied,     8),
     new(Operation.SET4,   Operand.C,          Operand.Implied,     8),
     new(Operation.SET4,   Operand.D,          Operand.Implied,     8),
@@ -566,7 +566,7 @@ public readonly struct Opcodes
     new(Operation.SET5,   Operand.HLi,        Operand.Implied,    15),
     new(Operation.SET5,   Operand.A,          Operand.Implied,     8),
 
-    // Opcodes 0xF0 - 0xFF 
+    // Opcodes 0xF0 - 0xFF
     new(Operation.SET6,   Operand.B,          Operand.Implied,     8),
     new(Operation.SET6,   Operand.C,          Operand.Implied,     8),
     new(Operation.SET6,   Operand.D,          Operand.Implied,     8),
@@ -585,79 +585,79 @@ public readonly struct Opcodes
     new(Operation.SET7,   Operand.A,          Operand.Implied,     8),
   ];
 
-  public static readonly Instruction[ ] DD =
+  public static readonly Instruction[] DD =
   [
     // Opcodes 0x00 - 0x0F
-    new(),
-    new(),  
-    new(),
-    new(),  
-    new(Operation.INC8,   Operand.B,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.B,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.B,          Operand.Immediate,  11),   
-    new(),  
-    new(),  
-    new(Operation.ADD16,  Operand.IX,         Operand.BC,         15),  
-    new(),  
-    new(),  
-    new(Operation.INC8,   Operand.C,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.C,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.C,          Operand.Immediate,  11), 
-    new(), 
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.LD16,   Operand.BC,         Operand.Immediate,  14),
+    new(Operation.LD8,    Operand.BCi,        Operand.A,          11),
+    new(Operation.INC16,  Operand.BC,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.B,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.B,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.B,          Operand.Immediate,  11),
+    new(Operation.RLCA,   Operand.Implied,    Operand.Implied,     8),
+    new(Operation.EX,     Operand.AF,         Operand.Implied,     8),
+    new(Operation.ADD16,  Operand.IX,         Operand.BC,         15),
+    new(Operation.LD8,    Operand.A,          Operand.BCi,        11),
+    new(Operation.DEC16,  Operand.BC,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.C,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.C,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.C,          Operand.Immediate,  11),
+    new(Operation.RRCA,   Operand.Implied,    Operand.Implied,     8),
 
     // Opcodes 0x10 - 0x1F
-    new(),
-    new(),  
-    new(),
-    new(),  
-    new(Operation.INC8,   Operand.D,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.D,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.D,          Operand.Immediate,  11),   
-    new(),  
-    new(),  
-    new(Operation.ADD16,  Operand.IX,         Operand.DE,         15),  
-    new(),  
-    new(),  
-    new(Operation.INC8,   Operand.E,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.E,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.E,          Operand.Immediate,  11), 
-    new(), 
+    new(Operation.DJNZ,   Operand.Implied,    Operand.Implied,    12),
+    new(Operation.LD16,   Operand.DE,         Operand.Immediate,  14),
+    new(Operation.LD8,    Operand.DEi,        Operand.A,          11),
+    new(Operation.INC16,  Operand.DE,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.D,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.D,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.D,          Operand.Immediate,  11),
+    new(Operation.RLA,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.JR,     Operand.Immediate,  Operand.Implied,    16),
+    new(Operation.ADD16,  Operand.IX,         Operand.DE,         15),
+    new(Operation.LD8,    Operand.A,          Operand.DEi,        11),
+    new(Operation.DEC16,  Operand.DE,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.E,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.E,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.E,          Operand.Immediate,  11),
+    new(Operation.RRA,    Operand.Implied,    Operand.Implied,     8),
 
     // Opcodes 0x20 - 0x2F
-    new(),  
-    new(Operation.LD16,   Operand.IX,         Operand.Immediate,  14),  
+    new(Operation.JR,     Operand.Immediate,  Operand.NonZero,    11),
+    new(Operation.LD16,   Operand.IX,         Operand.Immediate,  14),
     new(Operation.LD16,   Operand.Indirect,   Operand.IX,         20),
-    new(Operation.INC16,  Operand.IX,         Operand.Implied,    10), 
-    new(Operation.INC8,   Operand.IXh,        Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.IXh,        Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.IXh,        Operand.Immediate,  11),   
-    new(),  
-    new(),  
-    new(Operation.ADD16,  Operand.IX,         Operand.IX,         15),  
-    new(Operation.LD16,   Operand.IX,         Operand.Indirect,   20),  
-    new(Operation.DEC16,  Operand.IX,         Operand.Implied,    10),  
-    new(Operation.INC8,   Operand.IXl,        Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.IXl,        Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.IXl,        Operand.Immediate,  11), 
-    new(), 
+    new(Operation.INC16,  Operand.IX,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.IXh,        Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.IXh,        Operand.Implied,     8),
+    new(Operation.LD8,    Operand.IXh,        Operand.Immediate,  11),
+    new(Operation.DAA,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.JR,     Operand.Immediate,  Operand.Zero,       11),
+    new(Operation.ADD16,  Operand.IX,         Operand.IX,         15),
+    new(Operation.LD16,   Operand.IX,         Operand.Indirect,   20),
+    new(Operation.DEC16,  Operand.IX,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.IXl,        Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.IXl,        Operand.Implied,     8),
+    new(Operation.LD8,    Operand.IXl,        Operand.Immediate,  11),
+    new(Operation.CPL,    Operand.Implied,    Operand.Implied,     8),
 
     // Opcodes 0x30 - 0x3F
-    new(),
-    new(),  
-    new(),
-    new(),  
-    new(Operation.INC8,   Operand.IXd,        Operand.Implied,    23),  
-    new(Operation.DEC8,   Operand.IXd,        Operand.Implied,    23),  
-    new(Operation.LD8,    Operand.IXd,        Operand.Immediate,  19),   
-    new(),  
-    new(),  
-    new(Operation.ADD16,  Operand.IX,         Operand.SP,         15),  
-    new(),  
-    new(),  
-    new(Operation.INC8,   Operand.A,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.A,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.A,          Operand.Immediate,  11), 
-    new(),
+    new(Operation.JR,     Operand.Immediate,  Operand.NonCarry,   11),
+    new(Operation.LD16,   Operand.SP,         Operand.Immediate,  14),
+    new(Operation.LD8,    Operand.Indirect,   Operand.A,          17),
+    new(Operation.INC16,  Operand.SP,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.IXd,        Operand.Implied,    23),
+    new(Operation.DEC8,   Operand.IXd,        Operand.Implied,    23),
+    new(Operation.LD8,    Operand.IXd,        Operand.Immediate,  19),
+    new(Operation.SCF,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.JR,     Operand.Immediate,  Operand.Carry,      11),
+    new(Operation.ADD16,  Operand.IX,         Operand.SP,         15),
+    new(Operation.LD8,    Operand.A,          Operand.Indirect,   17),
+    new(Operation.DEC16,  Operand.SP,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.A,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.A,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.A,          Operand.Immediate,  11),
+    new(Operation.CCF,    Operand.Implied,    Operand.Implied,     8),
 
     // Opcodes 0x40 - 0x4F
     new(Operation.LD8,    Operand.B,          Operand.B,           8),
@@ -720,7 +720,7 @@ public readonly struct Opcodes
     new(Operation.LD8,    Operand.IXd,        Operand.E,          19),
     new(Operation.LD8,    Operand.IXd,        Operand.H,          19),
     new(Operation.LD8,    Operand.IXd,        Operand.L,          19),
-    new(),
+    new(Operation.HALT,   Operand.Implied,    Operand.Implied,     8),
     new(Operation.LD8,    Operand.IXd,        Operand.A,          19),
     new(Operation.LD8,    Operand.A,          Operand.B,           8),
     new(Operation.LD8,    Operand.A,          Operand.C,           8),
@@ -804,79 +804,79 @@ public readonly struct Opcodes
     new(Operation.CP,     Operand.Implied,    Operand.A,           8),
 
     // Opcodes 0xC0 - 0xCF
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
+    new(Operation.RET,    Operand.Implied,    Operand.NonZero,     9),
+    new(Operation.POP,    Operand.BC,         Operand.Implied,    14),
+    new(Operation.JP,     Operand.Immediate,  Operand.NonZero,    14),
+    new(Operation.JP,     Operand.Immediate,  Operand.Implied,    14),
+    new(Operation.CALL,   Operand.Immediate,  Operand.NonZero,    14),
+    new(Operation.PUSH,   Operand.Implied,    Operand.BC,         15),
+    new(Operation.ADD8,   Operand.A,          Operand.Immediate,  11),
+    new(Operation.RST,    (Operand) 0x00,     Operand.Implied,    15),
+    new(Operation.RET,    Operand.Implied,    Operand.Zero,        9),
+    new(Operation.RET,    Operand.Implied,    Operand.Implied,    14),
+    new(Operation.JP,     Operand.Immediate,  Operand.Zero,       14),
     new(),
+    new(Operation.CALL,   Operand.Immediate,  Operand.Zero,       14),
+    new(Operation.CALL,   Operand.Immediate,  Operand.Implied,    21),
+    new(Operation.ADC8,   Operand.A,          Operand.Immediate,  11),
+    new(Operation.RST,    (Operand) 0x08,     Operand.Implied,    15),
 
     // Opcodes 0xD0 - 0xDF
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
+    new(Operation.RET,    Operand.Implied,    Operand.NonCarry,    9),
+    new(Operation.POP,    Operand.DE,         Operand.Implied,    14),
+    new(Operation.JP,     Operand.Immediate,  Operand.NonCarry,   14),
+    new(Operation.OUT,    Operand.Immediate,  Operand.A,          15),
+    new(Operation.CALL,   Operand.Immediate,  Operand.NonCarry,   14),
+    new(Operation.PUSH,   Operand.Implied,    Operand.DE,         15),
+    new(Operation.SUB,    Operand.A,          Operand.Immediate,  11),
+    new(Operation.RST,    (Operand) 0x10,     Operand.Implied,    15),
+    new(Operation.RET,    Operand.Implied,    Operand.Carry,       9),
+    new(Operation.EXX,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.JP,     Operand.Immediate,  Operand.Carry,      14),
+    new(Operation.IN,     Operand.A,          Operand.Immediate,  15),
+    new(Operation.CALL,   Operand.Immediate,  Operand.Carry,      14),
     new(),
+    new(Operation.SBC8,   Operand.A,          Operand.Immediate,  11),
+    new(Operation.RST,    (Operand) 0x18,     Operand.Implied,    15),
 
     // Opcodes 0xE0 - 0xEF
-    new(),
+    new(Operation.RET,    Operand.Implied,    Operand.Odd,         9),
     new(Operation.POP,    Operand.IX,         Operand.Implied,    14),
-    new(),
+    new(Operation.JP,     Operand.Immediate,  Operand.Odd,        14),
     new(Operation.EX,     Operand.SP,         Operand.IX,         23),
-    new(),
+    new(Operation.CALL,   Operand.Immediate,  Operand.Odd,        14),
     new(Operation.PUSH,   Operand.Implied,    Operand.IX,         15),
-    new(),
-    new(),
-    new(),
+    new(Operation.AND,    Operand.A,          Operand.Immediate,  11),
+    new(Operation.RST,    (Operand) 0x20,     Operand.Implied,    15),
+    new(Operation.RET,    Operand.Implied,    Operand.Even,        9),
     new(Operation.JP,     Operand.IX,         Operand.Implied,     8),
+    new(Operation.JP,     Operand.Immediate,  Operand.Even,       14),
+    new(Operation.EX,     Operand.DE,         Operand.HL,          8),
+    new(Operation.CALL,   Operand.Immediate,  Operand.Even,       14),
     new(),
-    new(),
-    new(),
-    new(),
-    new(),
-    new(),
+    new(Operation.XOR,    Operand.Implied,    Operand.Immediate,  11),
+    new(Operation.RST,    (Operand) 0x28,     Operand.Implied,    15),
 
     // Opcodes 0xF0 - 0xFF
-    new(),
-    new(),
-    new(),
-    new(),
-    new(),
-    new(),
-    new(),
-    new(),
-    new(),
+    new(Operation.RET,    Operand.Implied,    Operand.Positive,    9),
+    new(Operation.POP,    Operand.AF,         Operand.Implied,    14),
+    new(Operation.JP,     Operand.Immediate,  Operand.Positive,   14),
+    new(Operation.DI,     Operand.Implied,    Operand.Implied,     8),
+    new(Operation.CALL,   Operand.Immediate,  Operand.Positive,   14),
+    new(Operation.PUSH,   Operand.Implied,    Operand.AF,         15),
+    new(Operation.OR,     Operand.Implied,    Operand.Immediate,  11),
+    new(Operation.RST,    (Operand) 0x30,     Operand.Implied,    15),
+    new(Operation.RET,    Operand.Implied,    Operand.Negative,    9),
     new(Operation.LD16,   Operand.SP,         Operand.IX,         10),
+    new(Operation.JP,     Operand.Immediate,  Operand.Negative,   14),
+    new(Operation.EI,     Operand.Implied,    Operand.Implied,     8),
+    new(Operation.CALL,   Operand.Immediate,  Operand.Negative,   14),
     new(),
-    new(),
-    new(),
-    new(),
-    new(),
-    new()
+    new(Operation.CP,     Operand.Implied,    Operand.Immediate,  11),
+    new(Operation.RST,    (Operand) 0x38,     Operand.Implied,    15)
   ];
-  
-  public static readonly Instruction[ ] DDCB =
+
+  public static readonly Instruction[] DDCB =
   [
     // Opcodes 0x00 - 0x0F
     new(Operation.RLC,    Operand.IXd,        Operand.B,          23),
@@ -896,7 +896,7 @@ public readonly struct Opcodes
     new(Operation.RRC,    Operand.IXd,        Operand.Implied,    23),
     new(Operation.RRC,    Operand.IXd,        Operand.A,          23),
 
-    // Opcodes 0x10 - 0x1F 
+    // Opcodes 0x10 - 0x1F
     new(Operation.RL,     Operand.IXd,        Operand.B,          23),
     new(Operation.RL,     Operand.IXd,        Operand.C,          23),
     new(Operation.RL,     Operand.IXd,        Operand.D,          23),
@@ -914,7 +914,7 @@ public readonly struct Opcodes
     new(Operation.RR,     Operand.IXd,        Operand.Implied,    23),
     new(Operation.RR,     Operand.IXd,        Operand.A,          23),
 
-    // Opcodes 0x20 - 0x2F  
+    // Opcodes 0x20 - 0x2F
     new(Operation.SLA,    Operand.IXd,        Operand.B,          23),
     new(Operation.SLA,    Operand.IXd,        Operand.C,          23),
     new(Operation.SLA,    Operand.IXd,        Operand.D,          23),
@@ -931,8 +931,8 @@ public readonly struct Opcodes
     new(Operation.SRA,    Operand.IXd,        Operand.L,          23),
     new(Operation.SRA,    Operand.IXd,        Operand.Implied,    23),
     new(Operation.SRA,    Operand.IXd,        Operand.A,          23),
-        
-    // Opcodes 0x30 - 0x3F   
+
+    // Opcodes 0x30 - 0x3F
     new(Operation.SLL,    Operand.IXd,        Operand.B,          23),
     new(Operation.SLL,    Operand.IXd,        Operand.C,          23),
     new(Operation.SLL,    Operand.IXd,        Operand.D,          23),
@@ -949,8 +949,8 @@ public readonly struct Opcodes
     new(Operation.SRL,    Operand.IXd,        Operand.L,          23),
     new(Operation.SRL,    Operand.IXd,        Operand.Implied,    23),
     new(Operation.SRL,    Operand.IXd,        Operand.A,          23),
-      
-    // Opcodes 0x40 - 0x4F  
+
+    // Opcodes 0x40 - 0x4F
     new(Operation.BIT,    (Operand) 0,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 0,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 0,        Operand.IXd,        20),
@@ -967,8 +967,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 1,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 1,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 1,        Operand.IXd,        20),
-      
-    // Opcodes 0x50 - 0x5F  
+
+    // Opcodes 0x50 - 0x5F
     new(Operation.BIT,    (Operand) 2,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 2,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 2,        Operand.IXd,        20),
@@ -985,8 +985,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 3,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 3,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 3,        Operand.IXd,        20),
-      
-    // Opcodes 0x60 - 0x6F  
+
+    // Opcodes 0x60 - 0x6F
     new(Operation.BIT,    (Operand) 4,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 4,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 4,        Operand.IXd,        20),
@@ -1003,8 +1003,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 5,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 5,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 5,        Operand.IXd,        20),
-      
-    // Opcodes 0x70 - 0x7F  
+
+    // Opcodes 0x70 - 0x7F
     new(Operation.BIT,    (Operand) 6,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 6,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 6,        Operand.IXd,        20),
@@ -1021,8 +1021,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 7,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 7,        Operand.IXd,        20),
     new(Operation.BIT,    (Operand) 7,        Operand.IXd,        20),
-      
-    // Opcodes 0x80 - 0x8F  
+
+    // Opcodes 0x80 - 0x8F
     new(Operation.RES0,   Operand.IXd,        Operand.B,          23),
     new(Operation.RES0,   Operand.IXd,        Operand.C,          23),
     new(Operation.RES0,   Operand.IXd,        Operand.D,          23),
@@ -1040,7 +1040,7 @@ public readonly struct Opcodes
     new(Operation.RES1,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.RES1,   Operand.IXd,        Operand.A,          23),
 
-    // Opcodes 0x90 - 0x9F  
+    // Opcodes 0x90 - 0x9F
     new(Operation.RES2,   Operand.IXd,        Operand.B,          23),
     new(Operation.RES2,   Operand.IXd,        Operand.C,          23),
     new(Operation.RES2,   Operand.IXd,        Operand.D,          23),
@@ -1057,8 +1057,8 @@ public readonly struct Opcodes
     new(Operation.RES3,   Operand.IXd,        Operand.L,          23),
     new(Operation.RES3,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.RES3,   Operand.IXd,        Operand.A,          23),
-      
-    // Opcodes 0xA0 - 0xAF  
+
+    // Opcodes 0xA0 - 0xAF
     new(Operation.RES4,   Operand.IXd,        Operand.B,          23),
     new(Operation.RES4,   Operand.IXd,        Operand.C,          23),
     new(Operation.RES4,   Operand.IXd,        Operand.D,          23),
@@ -1076,7 +1076,7 @@ public readonly struct Opcodes
     new(Operation.RES5,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.RES5,   Operand.IXd,        Operand.A,          23),
 
-    // Opcodes 0xB0 - 0xBF  
+    // Opcodes 0xB0 - 0xBF
     new(Operation.RES6,   Operand.IXd,        Operand.B,          23),
     new(Operation.RES6,   Operand.IXd,        Operand.C,          23),
     new(Operation.RES6,   Operand.IXd,        Operand.D,          23),
@@ -1094,7 +1094,7 @@ public readonly struct Opcodes
     new(Operation.RES7,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.RES7,   Operand.IXd,        Operand.A,          23),
 
-    // Opcodes 0xC0 - 0xCF  
+    // Opcodes 0xC0 - 0xCF
     new(Operation.SET0,   Operand.IXd,        Operand.B,          23),
     new(Operation.SET0,   Operand.IXd,        Operand.C,          23),
     new(Operation.SET0,   Operand.IXd,        Operand.D,          23),
@@ -1112,7 +1112,7 @@ public readonly struct Opcodes
     new(Operation.SET1,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.SET1,   Operand.IXd,        Operand.A,          23),
 
-    // Opcodes 0xD0 - 0xDF  
+    // Opcodes 0xD0 - 0xDF
     new(Operation.SET2,   Operand.IXd,        Operand.B,          23),
     new(Operation.SET2,   Operand.IXd,        Operand.C,          23),
     new(Operation.SET2,   Operand.IXd,        Operand.D,          23),
@@ -1130,7 +1130,7 @@ public readonly struct Opcodes
     new(Operation.SET3,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.SET3,   Operand.IXd,        Operand.A,          23),
 
-    // Opcodes 0xE0 - 0xEF  
+    // Opcodes 0xE0 - 0xEF
     new(Operation.SET4,   Operand.IXd,        Operand.B,          23),
     new(Operation.SET4,   Operand.IXd,        Operand.C,          23),
     new(Operation.SET4,   Operand.IXd,        Operand.D,          23),
@@ -1148,7 +1148,7 @@ public readonly struct Opcodes
     new(Operation.SET5,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.SET5,   Operand.IXd,        Operand.A,          23),
 
-    // Opcodes 0xF0 - 0xFF  
+    // Opcodes 0xF0 - 0xFF
     new(Operation.SET6,   Operand.IXd,        Operand.B,          23),
     new(Operation.SET6,   Operand.IXd,        Operand.C,          23),
     new(Operation.SET6,   Operand.IXd,        Operand.D,          23),
@@ -1166,80 +1166,80 @@ public readonly struct Opcodes
     new(Operation.SET7,   Operand.IXd,        Operand.Implied,    23),
     new(Operation.SET7,   Operand.IXd,        Operand.A,          23),
   ];
-  
-  public static readonly Instruction[ ] ED =
+
+  public static readonly Instruction[] ED =
   [
     // Opcodes 0x00 - 0x0F
-    new(),
-    new(),
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),
-    
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+
     // Opcodes 0x10 - 0x1F
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
 
     // Opcodes 0x20 - 0x2F
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
 
     // Opcodes 0x30 - 0x3F
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),  
-    new(),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
 
     // Opcodes 0x40 - 0x4F
     new(Operation.IN,     Operand.B,          Operand.C,          12),
@@ -1254,210 +1254,210 @@ public readonly struct Opcodes
     new(Operation.OUT,    Operand.C,          Operand.C,          12),
     new(Operation.ADC16,  Operand.Implied,    Operand.BC,         15),
     new(Operation.LD16,   Operand.BC,         Operand.Indirect,   20),
-    new(),   
+    new(Operation.NEG,    Operand.Implied,    Operand.Implied,     8),
     new(Operation.RETI,   Operand.Implied,    Operand.Implied,    14),
-    new(),   
+    new(Operation.IM,     (Operand) 0,        Operand.Implied,     8),
     new(Operation.LD8,    Operand.R,          Operand.A,           9),
 
-    // Opcodes 0x50 - 0x5F 
+    // Opcodes 0x50 - 0x5F
     new(Operation.IN,     Operand.D,          Operand.C,          12),
     new(Operation.OUT,    Operand.C,          Operand.D,          12),
     new(Operation.SBC16,  Operand.Implied,    Operand.DE,         15),
     new(Operation.LD16,   Operand.Indirect,   Operand.DE,         20),
-    new(),
-    new(),
+    new(Operation.NEG,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.RETN,   Operand.Implied,    Operand.Implied,    14),
     new(Operation.IM,     (Operand) 1,        Operand.Implied,     8),
     new(Operation.LD8,    Operand.A,          Operand.I,           9),
     new(Operation.IN,     Operand.E,          Operand.C,          12),
     new(Operation.OUT,    Operand.C,          Operand.E,          12),
     new(Operation.ADC16,  Operand.Implied,    Operand.DE,         15),
     new(Operation.LD16,   Operand.DE,         Operand.Indirect,   20),
-    new(),    
-    new(),    
+    new(Operation.NEG,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.RETN,   Operand.Implied,    Operand.Implied,    14),
     new(Operation.IM,     (Operand) 2,        Operand.Implied,     8),
     new(Operation.LD8,    Operand.A,          Operand.R,           9),
 
-    // Opcodes 0x60 - 0x6F 
+    // Opcodes 0x60 - 0x6F
     new(Operation.IN,     Operand.H,          Operand.C,          12),
     new(Operation.OUT,    Operand.C,          Operand.H,          12),
     new(Operation.SBC16,  Operand.Implied,    Operand.HL,         15),
     new(Operation.LD16,   Operand.Indirect,   Operand.HL,         20),
-    new(),    
-    new(),    
-    new(),    
+    new(Operation.NEG,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.RETN,   Operand.Implied,    Operand.Implied,    14),
+    new(Operation.IM,     (Operand) 0,        Operand.Implied,     8),
     new(Operation.RRD,    Operand.Implied,    Operand.Implied,    18),
     new(Operation.IN,     Operand.L,          Operand.C,          12),
     new(Operation.OUT,    Operand.C,          Operand.L,          12),
     new(Operation.ADC16,  Operand.Implied,    Operand.HL,         15),
-    new(Operation.LD16,   Operand.HL,         Operand.Indirect,   20),   
-    new(),   
-    new(),   
-    new(),   
+    new(Operation.LD16,   Operand.HL,         Operand.Indirect,   20),
+    new(Operation.NEG,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.RETN,   Operand.Implied,    Operand.Implied,    14),
+    new(Operation.IM,     (Operand) 0,        Operand.Implied,     8),
     new(Operation.RLD,    Operand.Implied,    Operand.Implied,    18),
 
-    // Opcodes 0x70 - 0x7F 
+    // Opcodes 0x70 - 0x7F
     new(Operation.IN,     Operand.Implied,    Operand.C,          12),
     new(Operation.OUT,    Operand.C,          (Operand) 0x00,     12),
     new(Operation.SBC16,  Operand.Implied,    Operand.SP,         15),
     new(Operation.LD16,   Operand.Indirect,   Operand.SP,         20),
-    new(),    
-    new(),    
-    new(),    
-    new(),    
+    new(Operation.NEG,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.RETN,   Operand.Implied,    Operand.Implied,    14),
+    new(Operation.IM,     (Operand) 1,        Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
     new(Operation.IN,     Operand.A,          Operand.C,          12),
     new(Operation.OUT,    Operand.C,          Operand.A,          12),
     new(Operation.ADC16,  Operand.Implied,    Operand.SP,         15),
     new(Operation.LD16,   Operand.SP,         Operand.Indirect,   20),
-    new(),   
-    new(),   
-    new(),   
-    new(), 
+    new(Operation.NEG,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.RETN,   Operand.Implied,    Operand.Implied,    14),
+    new(Operation.IM,     (Operand) 2,        Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
 
-    // Opcodes 0x80 - 0x8F 
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(), 
+    // Opcodes 0x80 - 0x8F
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
 
-    // Opcodes 0x90 - 0x9F 
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(),   
-    new(), 
+    // Opcodes 0x90 - 0x9F
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
 
-    // Opcodes 0xA0 - 0xAF 
+    // Opcodes 0xA0 - 0xAF
     new(Operation.LDI,    Operand.Implied,    Operand.Implied,    16),
     new(Operation.CPI,    Operand.Implied,    Operand.Implied,    16),
     new(Operation.INI,    Operand.Implied,    Operand.Implied,    16),
     new(Operation.OUTI,   Operand.Implied,    Operand.Implied,    16),
-    new(),    
-    new(),    
-    new(),    
-    new(),    
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
     new(Operation.LDD,    Operand.Implied,    Operand.Implied,    16),
     new(Operation.CPD,    Operand.Implied,    Operand.Implied,    16),
     new(Operation.IND,    Operand.Implied,    Operand.Implied,    16),
     new(Operation.OUTD,   Operand.Implied,    Operand.Implied,    16),
-    new(),   
-    new(),   
-    new(),   
-    new(), 
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
 
-    // Opcodes 0xB0 - 0xBF 
+    // Opcodes 0xB0 - 0xBF
     new(Operation.LDIR,   Operand.Implied,    Operand.Implied,    16),
     new(Operation.CPIR,   Operand.Implied,    Operand.Implied,    16),
     new(Operation.INIR,   Operand.Implied,    Operand.Implied,    16),
     new(Operation.OTIR,   Operand.Implied,    Operand.Implied,    16),
-    new(),   
-    new(),   
-    new(),   
-    new(),   
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
     new(Operation.LDDR,   Operand.Implied,    Operand.Implied,    16),
     new(Operation.CPDR,   Operand.Implied,    Operand.Implied,    16),
     new(Operation.INDR,   Operand.Implied,    Operand.Implied,    16),
     new(Operation.OTDR,   Operand.Implied,    Operand.Implied,    16),
-    new(),  
-    new(),  
-    new(),  
-    new()
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
+    new(Operation.NOP,    Operand.Implied,    Operand.Implied,     8),
   ];
-  
-  public static readonly Instruction[ ] FD =
+
+  public static readonly Instruction[] FD =
   [
     // Opcodes 0x00 - 0x0F
     new(),
-    new(),  
     new(),
-    new(),  
-    new(Operation.INC8,   Operand.B,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.B,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.B,          Operand.Immediate,  11),   
-    new(),  
-    new(),  
-    new(Operation.ADD16,  Operand.IY,         Operand.BC,         15),  
-    new(),  
-    new(),  
-    new(Operation.INC8,   Operand.C,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.C,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.C,          Operand.Immediate,  11), 
-    new(), 
+    new(),
+    new(),
+    new(Operation.INC8,   Operand.B,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.B,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.B,          Operand.Immediate,  11),
+    new(),
+    new(),
+    new(Operation.ADD16,  Operand.IY,         Operand.BC,         15),
+    new(),
+    new(),
+    new(Operation.INC8,   Operand.C,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.C,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.C,          Operand.Immediate,  11),
+    new(),
 
     // Opcodes 0x10 - 0x1F
     new(),
-    new(),  
     new(),
-    new(),  
-    new(Operation.INC8,   Operand.D,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.D,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.D,          Operand.Immediate,  11),   
-    new(),  
-    new(),  
-    new(Operation.ADD16,  Operand.IY,         Operand.DE,         15),  
-    new(),  
-    new(),  
-    new(Operation.INC8,   Operand.E,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.E,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.E,          Operand.Immediate,  11), 
-    new(), 
+    new(),
+    new(),
+    new(Operation.INC8,   Operand.D,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.D,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.D,          Operand.Immediate,  11),
+    new(),
+    new(),
+    new(Operation.ADD16,  Operand.IY,         Operand.DE,         15),
+    new(),
+    new(),
+    new(Operation.INC8,   Operand.E,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.E,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.E,          Operand.Immediate,  11),
+    new(),
 
     // Opcodes 0x20 - 0x2F
-    new(),  
-    new(Operation.LD16,   Operand.IY,         Operand.Immediate,  14),  
+    new(),
+    new(Operation.LD16,   Operand.IY,         Operand.Immediate,  14),
     new(Operation.LD16,   Operand.Indirect,   Operand.IY,         20),
-    new(Operation.INC16,  Operand.IY,         Operand.Implied,    10), 
-    new(Operation.INC8,   Operand.IYh,        Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.IYh,        Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.IYh,        Operand.Immediate,  11),   
-    new(),  
-    new(),  
-    new(Operation.ADD16,  Operand.IY,         Operand.IY,         15),  
-    new(Operation.LD16,   Operand.IY,         Operand.Indirect,   20),  
-    new(Operation.DEC16,  Operand.IY,         Operand.Immediate,  10),  
-    new(Operation.INC8,   Operand.IYl,        Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.IYl,        Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.IYl,        Operand.Immediate,  11), 
-    new(), 
+    new(Operation.INC16,  Operand.IY,         Operand.Implied,    10),
+    new(Operation.INC8,   Operand.IYh,        Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.IYh,        Operand.Implied,     8),
+    new(Operation.LD8,    Operand.IYh,        Operand.Immediate,  11),
+    new(),
+    new(),
+    new(Operation.ADD16,  Operand.IY,         Operand.IY,         15),
+    new(Operation.LD16,   Operand.IY,         Operand.Indirect,   20),
+    new(Operation.DEC16,  Operand.IY,         Operand.Immediate,  10),
+    new(Operation.INC8,   Operand.IYl,        Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.IYl,        Operand.Implied,     8),
+    new(Operation.LD8,    Operand.IYl,        Operand.Immediate,  11),
+    new(),
 
     // Opcodes 0x30 - 0x3F
     new(),
-    new(),  
     new(),
-    new(),  
-    new(Operation.INC8,   Operand.IYd,        Operand.Implied,    23),  
-    new(Operation.DEC8,   Operand.IYd,        Operand.Implied,    23),  
-    new(Operation.LD8,    Operand.IYd,        Operand.Immediate,  19),   
-    new(),  
-    new(),  
-    new(Operation.ADD16,  Operand.IY,         Operand.SP,         15),  
-    new(),  
-    new(),  
-    new(Operation.INC8,   Operand.A,          Operand.Implied,     8),  
-    new(Operation.DEC8,   Operand.A,          Operand.Implied,     8),  
-    new(Operation.LD8,    Operand.A,          Operand.Immediate,  11), 
+    new(),
+    new(),
+    new(Operation.INC8,   Operand.IYd,        Operand.Implied,    23),
+    new(Operation.DEC8,   Operand.IYd,        Operand.Implied,    23),
+    new(Operation.LD8,    Operand.IYd,        Operand.Immediate,  19),
+    new(),
+    new(),
+    new(Operation.ADD16,  Operand.IY,         Operand.SP,         15),
+    new(),
+    new(),
+    new(Operation.INC8,   Operand.A,          Operand.Implied,     8),
+    new(Operation.DEC8,   Operand.A,          Operand.Implied,     8),
+    new(Operation.LD8,    Operand.A,          Operand.Immediate,  11),
     new(),
 
     // Opcodes 0x40 - 0x4F
@@ -1605,39 +1605,39 @@ public readonly struct Opcodes
     new(Operation.CP,     Operand.Implied,    Operand.A,           8),
 
     // Opcodes 0xC0 - 0xCF
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
     new(),
 
     // Opcodes 0xD0 - 0xDF
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
-    new(), 
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
+    new(),
     new(),
 
     // Opcodes 0xE0 - 0xEF
@@ -1676,8 +1676,8 @@ public readonly struct Opcodes
     new(),
     new()
   ];
-  
-  public static readonly Instruction[ ] FDCB =
+
+  public static readonly Instruction[] FDCB =
   [
     // Opcodes 0x00 - 0x0F
     new(Operation.RLC,    Operand.IYd,        Operand.B,          23),
@@ -1697,7 +1697,7 @@ public readonly struct Opcodes
     new(Operation.RRC,    Operand.IYd,        Operand.Implied,    23),
     new(Operation.RRC,    Operand.IYd,        Operand.A,          23),
 
-    // Opcodes 0x10 - 0x1F 
+    // Opcodes 0x10 - 0x1F
     new(Operation.RL,     Operand.IYd,        Operand.B,          23),
     new(Operation.RL,     Operand.IYd,        Operand.C,          23),
     new(Operation.RL,     Operand.IYd,        Operand.D,          23),
@@ -1715,7 +1715,7 @@ public readonly struct Opcodes
     new(Operation.RR,     Operand.IYd,        Operand.Implied,    23),
     new(Operation.RR,     Operand.IYd,        Operand.A,          23),
 
-    // Opcodes 0x20 - 0x2F  
+    // Opcodes 0x20 - 0x2F
     new(Operation.SLA,    Operand.IYd,        Operand.B,          23),
     new(Operation.SLA,    Operand.IYd,        Operand.C,          23),
     new(Operation.SLA,    Operand.IYd,        Operand.D,          23),
@@ -1732,8 +1732,8 @@ public readonly struct Opcodes
     new(Operation.SRA,    Operand.IYd,        Operand.L,          23),
     new(Operation.SRA,    Operand.IYd,        Operand.Implied,    23),
     new(Operation.SRA,    Operand.IYd,        Operand.A,          23),
-        
-    // Opcodes 0x30 - 0x3F   
+
+    // Opcodes 0x30 - 0x3F
     new(Operation.SLL,    Operand.IYd,        Operand.B,          23),
     new(Operation.SLL,    Operand.IYd,        Operand.C,          23),
     new(Operation.SLL,    Operand.IYd,        Operand.D,          23),
@@ -1750,8 +1750,8 @@ public readonly struct Opcodes
     new(Operation.SRL,    Operand.IYd,        Operand.L,          23),
     new(Operation.SRL,    Operand.IYd,        Operand.Implied,    23),
     new(Operation.SRL,    Operand.IYd,        Operand.A,          23),
-      
-    // Opcodes 0x40 - 0x4F  
+
+    // Opcodes 0x40 - 0x4F
     new(Operation.BIT,    (Operand) 0,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 0,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 0,        Operand.IYd,        20),
@@ -1768,8 +1768,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 1,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 1,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 1,        Operand.IYd,        20),
-      
-    // Opcodes 0x50 - 0x5F  
+
+    // Opcodes 0x50 - 0x5F
     new(Operation.BIT,    (Operand) 2,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 2,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 2,        Operand.IYd,        20),
@@ -1786,8 +1786,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 3,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 3,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 3,        Operand.IYd,        20),
-      
-    // Opcodes 0x60 - 0x6F  
+
+    // Opcodes 0x60 - 0x6F
     new(Operation.BIT,    (Operand) 4,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 4,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 4,        Operand.IYd,        20),
@@ -1804,8 +1804,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 5,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 5,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 5,        Operand.IYd,        20),
-      
-    // Opcodes 0x70 - 0x7F  
+
+    // Opcodes 0x70 - 0x7F
     new(Operation.BIT,    (Operand) 6,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 6,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 6,        Operand.IYd,        20),
@@ -1822,8 +1822,8 @@ public readonly struct Opcodes
     new(Operation.BIT,    (Operand) 7,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 7,        Operand.IYd,        20),
     new(Operation.BIT,    (Operand) 7,        Operand.IYd,        20),
-      
-    // Opcodes 0x80 - 0x8F  
+
+    // Opcodes 0x80 - 0x8F
     new(Operation.RES0,   Operand.IYd,        Operand.B,          23),
     new(Operation.RES0,   Operand.IYd,        Operand.C,          23),
     new(Operation.RES0,   Operand.IYd,        Operand.D,          23),
@@ -1841,7 +1841,7 @@ public readonly struct Opcodes
     new(Operation.RES1,   Operand.IYd,        Operand.Implied,    23),
     new(Operation.RES1,   Operand.IYd,        Operand.A,          23),
 
-    // Opcodes 0x90 - 0x9F  
+    // Opcodes 0x90 - 0x9F
     new(Operation.RES2,   Operand.IYd,        Operand.B,          23),
     new(Operation.RES2,   Operand.IYd,        Operand.C,          23),
     new(Operation.RES2,   Operand.IYd,        Operand.D,          23),
@@ -1858,8 +1858,8 @@ public readonly struct Opcodes
     new(Operation.RES3,   Operand.IYd,        Operand.L,          23),
     new(Operation.RES3,   Operand.IYd,        Operand.Implied,    23),
     new(Operation.RES3,   Operand.IYd,        Operand.A,          23),
-      
-    // Opcodes 0xA0 - 0xAF  
+
+    // Opcodes 0xA0 - 0xAF
     new(Operation.RES4,   Operand.IYd,        Operand.B,          23),
     new(Operation.RES4,   Operand.IYd,        Operand.C,          23),
     new(Operation.RES4,   Operand.IYd,        Operand.D,          23),
@@ -1877,7 +1877,7 @@ public readonly struct Opcodes
     new(Operation.RES5,   Operand.IYd,        Operand.Implied,    23),
     new(Operation.RES5,   Operand.IYd,        Operand.A,          23),
 
-    // Opcodes 0xB0 - 0xBF  
+    // Opcodes 0xB0 - 0xBF
     new(Operation.RES6,   Operand.IYd,        Operand.B,          23),
     new(Operation.RES6,   Operand.IYd,        Operand.C,          23),
     new(Operation.RES6,   Operand.IYd,        Operand.D,          23),
@@ -1895,7 +1895,7 @@ public readonly struct Opcodes
     new(Operation.RES7,   Operand.IYd,        Operand.Implied,    23),
     new(Operation.RES7,   Operand.IYd,        Operand.A,          23),
 
-    // Opcodes 0xC0 - 0xCF  
+    // Opcodes 0xC0 - 0xCF
     new(Operation.SET0,   Operand.IYd,        Operand.B,          23),
     new(Operation.SET0,   Operand.IYd,        Operand.C,          23),
     new(Operation.SET0,   Operand.IYd,        Operand.D,          23),
@@ -1913,7 +1913,7 @@ public readonly struct Opcodes
     new(Operation.SET1,   Operand.IYd,        Operand.Implied,    23),
     new(Operation.SET1,   Operand.IYd,        Operand.A,          23),
 
-    // Opcodes 0xD0 - 0xDF  
+    // Opcodes 0xD0 - 0xDF
     new(Operation.SET2,   Operand.IYd,        Operand.B,          23),
     new(Operation.SET2,   Operand.IYd,        Operand.C,          23),
     new(Operation.SET2,   Operand.IYd,        Operand.D,          23),
@@ -1931,7 +1931,7 @@ public readonly struct Opcodes
     new(Operation.SET3,   Operand.IYd,        Operand.Implied,    23),
     new(Operation.SET3,   Operand.IYd,        Operand.A,          23),
 
-    // Opcodes 0xE0 - 0xEF  
+    // Opcodes 0xE0 - 0xEF
     new(Operation.SET4,   Operand.IYd,        Operand.B,          23),
     new(Operation.SET4,   Operand.IYd,        Operand.C,          23),
     new(Operation.SET4,   Operand.IYd,        Operand.D,          23),
@@ -1949,7 +1949,7 @@ public readonly struct Opcodes
     new(Operation.SET5,   Operand.IYd,        Operand.Implied,    23),
     new(Operation.SET5,   Operand.IYd,        Operand.A,          23),
 
-    // Opcodes 0xF0 - 0xFF  
+    // Opcodes 0xF0 - 0xFF
     new(Operation.SET6,   Operand.IYd,        Operand.B,          23),
     new(Operation.SET6,   Operand.IYd,        Operand.C,          23),
     new(Operation.SET6,   Operand.IYd,        Operand.D,          23),

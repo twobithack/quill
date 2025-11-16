@@ -68,7 +68,7 @@ unsafe public ref partial struct Z80
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte FetchByte() => _bus.ReadByte(_pc++);
-    
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private sbyte FetchSignedByte() => (sbyte)FetchByte();
 
@@ -94,7 +94,7 @@ unsafe public ref partial struct Z80
     _sp += 2;
     return value;
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void DecodeInstruction()
   {
@@ -110,50 +110,65 @@ unsafe public ref partial struct Z80
     };
     _r++;
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Instruction DecodeCBInstruction()
   {
     _r++;
     return Opcodes.CB[FetchByte()];
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Instruction DecodeDDInstruction()
   {
     _r++;
     var op = FetchByte();
-    if (op != 0xCB)
-      return Opcodes.DD[op];
-    
-    _memPtr = (ushort)(IX + FetchSignedByte());
-    return Opcodes.DDCB[FetchByte()];
+
+    switch (op)
+    {
+      case 0xCB:
+        _memPtr = (ushort)(IX + FetchSignedByte());
+        return Opcodes.DDCB[FetchByte()];
+
+      case 0xDD: return DecodeDDInstruction();
+      case 0xED: return DecodeEDInstruction();
+      case 0xFD: return DecodeFDInstruction();
+      default:   return Opcodes.DD[op];
+    };
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Instruction DecodeEDInstruction()
   {
     _r++;
     return Opcodes.ED[FetchByte()];
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Instruction DecodeFDInstruction()
   {
     _r++;
     var op = FetchByte();
-    if (op != 0xCB)
-      return Opcodes.FD[op];
-      
-    _memPtr = (ushort)(IY + FetchSignedByte());
-    return Opcodes.FDCB[FetchByte()];
+
+    switch (op)
+    {
+      case 0xCB:
+        _memPtr = (ushort)(IY + FetchSignedByte());
+        return Opcodes.FDCB[FetchByte()];
+
+      case 0xDD: return DecodeDDInstruction();
+      case 0xED: return DecodeEDInstruction();
+      case 0xFD: return DecodeFDInstruction();
+      default:   return Opcodes.FD[op];
+    };
+
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ExecuteInstruction()
   {
     switch (_instruction.Operation)
-    {                                         
+    {
       case Operation.ADC8:  ADC8();   return;
       case Operation.ADC16: ADC16();  return;
       case Operation.ADD8:  ADD8();   return;
@@ -308,13 +323,13 @@ unsafe public ref partial struct Z80
       case Operand.IY:        return IY;
       case Operand.SP:        return _sp;
 
-      case Operand.Indirect: 
+      case Operand.Indirect:
         address = FetchWord();
         break;
 
       default: throw new Exception($"Invalid word operand: {_instruction}");
     }
-    return _bus.ReadWord(address); 
+    return _bus.ReadWord(address);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -328,7 +343,7 @@ unsafe public ref partial struct Z80
   {
     ushort address;
     switch (destination)
-    { 
+    {
       case Operand.A:   _a = value;   return;
       case Operand.B:   _b = value;   return;
       case Operand.C:   _c = value;   return;
@@ -352,7 +367,7 @@ unsafe public ref partial struct Z80
         address = _memPtr ?? (ushort)(IX + FetchSignedByte());
         break;
 
-      case Operand.IYd: 
+      case Operand.IYd:
         address = _memPtr ?? (ushort)(IY + FetchSignedByte());
         break;
 
@@ -378,7 +393,7 @@ unsafe public ref partial struct Z80
       case Operand.IX:  IX = value;   return;
       case Operand.IY:  IY = value;   return;
       case Operand.SP:  _sp = value;  return;
-      
+
       default: throw new Exception($"Invalid word destination: {_instruction}");
     }
   }
@@ -426,7 +441,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly bool GetFlag(Flags flag) => (_flags & flag) != 0;
   private void SetFlag(Flags flag, bool value) => _flags = value
-                                                ? _flags | flag 
+                                                ? _flags | flag
                                                 : _flags & ~flag;
   #endregion
 }

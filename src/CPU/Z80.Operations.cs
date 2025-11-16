@@ -14,7 +14,7 @@ unsafe public ref partial struct Z80
     var addend = ReadByteOperand(_instruction.Source);
     var carry = CarryFlag ? 1 : 0;
     var sum = _a + addend + carry;
-    
+
     var flags = (Flags)(sum & 0b_1010_1000);
     if ((byte)sum == 0)
       flags |= Flags.Zero;
@@ -101,13 +101,13 @@ unsafe public ref partial struct Z80
     _a = result;
     _flags = flags;
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void BIT()
   {
     var value = ReadByteOperand(_instruction.Source);
     var index = (byte)_instruction.Destination;
-    
+
     // TODO: Handle undocumented flags for HLi and indexed cases
     var flags = Flags.Halfcarry;
     if (!value.TestBit(index))
@@ -146,7 +146,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Halfcarry;
     else
       flags |= Flags.Carry;
-    
+
     _flags = flags;
   }
 
@@ -177,7 +177,7 @@ unsafe public ref partial struct Z80
 
     HL--;
     BC--;
-          
+
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
     if (_a == subtrahend)
       flags |= Flags.Zero;
@@ -207,7 +207,7 @@ unsafe public ref partial struct Z80
 
     HL++;
     BC--;
-    
+
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
     if (_a == subtrahend)
       flags |= Flags.Zero;
@@ -233,9 +233,9 @@ unsafe public ref partial struct Z80
   private void CPL()
   {
     _a = (byte)~_a;
-    _flags = (Flags)(0b_1100_0101 & (byte)_flags) | 
-             (Flags)(0b_0010_1000 & _a) | 
-              Flags.Halfcarry | 
+    _flags = (Flags)(0b_1100_0101 & (byte)_flags) |
+             (Flags)(0b_0010_1000 & _a) |
+              Flags.Halfcarry |
               Flags.Negative;
   }
 
@@ -318,25 +318,19 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void EX()
   {
-    ushort temp;
-
     if (_instruction.Destination == Operand.AF)
     {
-      temp = AF;
-      AF = _afShadow;
-      _afShadow = temp;
+      (AF, _afShadow) = (_afShadow, AF);
       return;
     }
 
     if (_instruction.Destination == Operand.DE)
     {
-      temp = DE;
-      DE = HL;
-      HL = temp;
+      (DE, HL) = (HL, DE);
       return;
     }
 
-    temp = _bus.ReadWord(_sp);
+    var temp = _bus.ReadWord(_sp);
     switch (_instruction.Source)
     {
       case Operand.HL:
@@ -359,19 +353,9 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void EXX()
   {
-    ushort temp;
-
-    temp = BC;
-    BC = _bcShadow;
-    _bcShadow = temp;
-
-    temp = DE;
-    DE = _deShadow;
-    _deShadow = temp;
-
-    temp = HL;
-    HL = _hlShadow;
-    _hlShadow = temp;
+    (BC, _bcShadow) = (_bcShadow, BC);
+    (DE, _deShadow) = (_deShadow, DE);
+    (HL, _hlShadow) = (_hlShadow, HL);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -442,7 +426,7 @@ unsafe public ref partial struct Z80
 
     HL--;
     _b--;
-    
+
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
     if (_b == 0)
       flags |= Flags.Zero;
@@ -468,7 +452,7 @@ unsafe public ref partial struct Z80
 
     HL++;
     _b--;
-    
+
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
     if (_b == 0)
       flags |= Flags.Zero;
@@ -498,7 +482,7 @@ unsafe public ref partial struct Z80
   private void JR()
   {
     var displacement = FetchSignedByte();
-    if (EvaluateCondition()) 
+    if (EvaluateCondition())
       _pc = (ushort)(_pc + displacement);
   }
 
@@ -515,21 +499,21 @@ unsafe public ref partial struct Z80
     var value = ReadWordOperand(_instruction.Source);
     WriteWordResult(value);
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void LDD()
   {
     var value = _bus.ReadByte(HL);
     _bus.WriteByte(DE, value);
-    
+
     DE--;
     HL--;
     BC--;
-    
+
     var flags = (Flags)((byte)_flags & 0b_1110_1001);
-    if (BC != 0) 
-      flags |= Flags.Parity; 
-    
+    if (BC != 0)
+      flags |= Flags.Parity;
+
     _flags = flags;
   }
 
@@ -546,15 +530,15 @@ unsafe public ref partial struct Z80
   {
     var value = _bus.ReadByte(HL);
     _bus.WriteByte(DE, value);
-    
+
     DE++;
     HL++;
     BC--;
 
     var flags = (Flags)((byte)_flags & 0b_1110_1001);
     if (BC != 0)
-      flags |= Flags.Parity; 
-    
+      flags |= Flags.Parity;
+
     _flags = flags;
   }
 
@@ -570,7 +554,7 @@ unsafe public ref partial struct Z80
   private void NEG()
   {
     var difference = 0 - _a;
-    
+
     var flags = (Flags)(difference & 0b_1010_1000) | Flags.Negative;
     if ((byte)difference == 0)
       flags |= Flags.Zero;
@@ -582,7 +566,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Carry;
 
     _a = (byte)difference;
-    _flags = flags;   
+    _flags = flags;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -620,7 +604,7 @@ unsafe public ref partial struct Z80
 
     HL--;
     _b--;
-    
+
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
     if (_b == 0)
       flags |= Flags.Zero;
@@ -646,7 +630,7 @@ unsafe public ref partial struct Z80
 
     HL++;
     _b--;
-    
+
     var flags = (Flags)(_b & 0b_1010_1000) | Flags.Negative;
     if (_b == 0)
       flags |= Flags.Zero;
@@ -726,7 +710,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Carry;
 
     WriteByteResult(value);
-    _flags = flags;  
+    _flags = flags;
 
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
@@ -738,13 +722,13 @@ unsafe public ref partial struct Z80
     var value = (byte)(_a << 1);
     if (CarryFlag) value++;
 
-    var flags = (Flags)(0b_1100_0100 & (byte)_flags) | 
+    var flags = (Flags)(0b_1100_0100 & (byte)_flags) |
                 (Flags)(0b_0010_1000 & value);
     if (_a.MSB())
       flags |= Flags.Carry;
 
     _a = value;
-    _flags = flags;  
+    _flags = flags;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -754,7 +738,7 @@ unsafe public ref partial struct Z80
     var msb = value.MSB();
     value = (byte)(value << 1);
     if (msb) value++;
-    
+
     var flags = (Flags)(value & 0b_1010_1000);
     if (value == 0)
       flags |= Flags.Zero;
@@ -764,7 +748,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Carry;
 
     WriteByteResult(value);
-    _flags = flags;  
+    _flags = flags;
 
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
@@ -827,8 +811,8 @@ unsafe public ref partial struct Z80
       flags |= Flags.Carry;
 
     WriteByteResult(value);
-    _flags = flags;  
-    
+    _flags = flags;
+
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
   }
@@ -841,8 +825,8 @@ unsafe public ref partial struct Z80
 
     if (CarryFlag)
       _a |= 0b_1000_0000;
-    
-    var flags = (Flags)(0b_1100_0100 & (byte)_flags) | 
+
+    var flags = (Flags)(0b_1100_0100 & (byte)_flags) |
                 (Flags)(0b_0010_1000 & _a);
     if (lsb)
       flags |= Flags.Carry;
@@ -857,7 +841,7 @@ unsafe public ref partial struct Z80
     var lsb = value.LSB();
     value = (byte)(value >> 1);
 
-    if (lsb) 
+    if (lsb)
       value |= 0b_1000_0000;
 
     var flags = (Flags)(value & 0b_1010_1000);
@@ -869,8 +853,8 @@ unsafe public ref partial struct Z80
       flags |= Flags.Carry;
 
     WriteByteResult(value);
-    _flags = flags;  
-    
+    _flags = flags;
+
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
   }
@@ -880,15 +864,15 @@ unsafe public ref partial struct Z80
   {
     var lsb = _a.LSB();
     _a = (byte)(_a >> 1);
-    
-    if (lsb) 
+
+    if (lsb)
       _a |= 0b_1000_0000;
-    
-    var flags = (Flags)(0b_1100_0100 & (byte)_flags) | 
+
+    var flags = (Flags)(0b_1100_0100 & (byte)_flags) |
                 (Flags)(0b_0010_1000 & _a);
     if (lsb)
       flags |= Flags.Carry;
-      
+
     _flags = flags;
   }
 
@@ -909,7 +893,7 @@ unsafe public ref partial struct Z80
       flags |= Flags.Parity;
     if (CarryFlag)
       flags |= Flags.Carry;
-    
+
     _bus.WriteByte(address, value);
     _flags = flags;
   }
@@ -975,7 +959,7 @@ unsafe public ref partial struct Z80
   {
     var value = ReadByteOperand(_instruction.Destination).SetBit(index);
     WriteByteResult(value);
-    
+
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
   }
@@ -997,7 +981,7 @@ unsafe public ref partial struct Z80
 
     WriteByteResult(value);
     _flags = flags;
-    
+
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
   }
@@ -1020,7 +1004,7 @@ unsafe public ref partial struct Z80
 
     WriteByteResult(value);
     _flags = flags;
-    
+
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
   }
@@ -1046,7 +1030,7 @@ unsafe public ref partial struct Z80
 
     WriteByteResult(value);
     _flags = flags;
-    
+
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
   }
@@ -1068,7 +1052,7 @@ unsafe public ref partial struct Z80
 
     WriteByteResult(value);
     _flags = flags;
-    
+
     if (_instruction.Source != Operand.Implied)
       WriteByteResult(value, _instruction.Source);
   }
@@ -1097,7 +1081,7 @@ unsafe public ref partial struct Z80
   private void XOR()
   {
     var result = _a ^ ReadByteOperand(_instruction.Source);
-    
+
     var flags = (Flags)(result & 0b_1010_1000);
     if ((byte)result == 0)
       flags |= Flags.Zero;
