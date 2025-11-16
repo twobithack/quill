@@ -1,7 +1,7 @@
 # Quill &middot; [![build](https://github.com/twobithack/quill/actions/workflows/dotnet.yml/badge.svg)](https://github.com/twobithack/quill/actions/workflows/dotnet.yml)
 A cross-platform Sega Master System emulator built on .NET and OpenTK.
 
-![Screenshot](/docs/screenshots/Sonic%20the%20Hedgehog.png)
+![Screenshot](/docs/screenshots/Power%20Strike%20II.png)
 
 ## Features
 
