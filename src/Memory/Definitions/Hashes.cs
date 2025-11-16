@@ -5,7 +5,8 @@ namespace Quill.Memory.Definitions;
 public static class Hashes
 {
   public static readonly HashSet<uint> Korean = [
-    0x89b79e77, // Run! Dodgeball King,
+    0x89b79e77, // Dallyeora Pigu Wang
+    0x61e8806f, // Flashpoint
     0x929222c4, // Jang Pung II
     0x18fb98a3, // Jang Pung 3
     0x97d03541, // Samgukji III

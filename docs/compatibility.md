@@ -264,10 +264,9 @@
 * Alibaba and 40 Thieves
 * Block Hole
 * California Games II (PAL)
-* Cosmic Spacehead (Codemasters)
+* Cosmic Spacehead
 * Desert Speedtrap Starring Roadrunner (PAL)
-* Excellent Dizzy Collection (Codemasters)
-* Flashpoint
+* Excellent Dizzy Collection
 * Galactic Protector (paddle)
 * Gangster Town (phaser)
 * King & Balloon
@@ -319,6 +318,7 @@
 * Pachinko II
 * Pitfall II: The Lost Caverns
 * Q-bert
+* Rock n' Bolt
 * Sega Flipper
 * Sega Galaga
 * Sindbad Mystery
@@ -335,5 +335,4 @@
 * Hang-On II
 * James Bond 007
 * Pop Flamer
-* Rock n' Bolt
 * Yamato
