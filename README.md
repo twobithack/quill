@@ -7,6 +7,7 @@ A cross-platform Sega Master System emulator built on .NET and OpenTK.
 
 * Cycle-accurate emulation of Z80 CPU, 315-5124 VDP, and SN76489 PSG
 * Savestates: quicksave, quickload, and rewind functionality
+* Optional CRT shader, overscan cropping, and aspect ratio correction
 * Cross-platform: Windows, Linux, and macOS supported
 
 ## Compatibility
