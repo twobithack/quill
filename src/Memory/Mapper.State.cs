@@ -41,10 +41,11 @@ unsafe public ref partial struct Mapper
   #endregion
 
   #region Properties
-  private readonly bool EnableBIOS      => _memoryControl.TestBit(3);
-  private readonly bool EnableWRAM      => _memoryControl.TestBit(4);
-  private readonly bool EnableCard      => _memoryControl.TestBit(5);
-  private readonly bool EnableCartridge => _memoryControl.TestBit(3);
+  private readonly bool EnableBIOS      => !_memoryControl.TestBit(3);
+  private readonly bool EnableWRAM      => !_memoryControl.TestBit(4);
+  private readonly bool EnableCard      => !_memoryControl.TestBit(5);
+  private readonly bool EnableCartridge => !_memoryControl.TestBit(6);
+  private readonly bool EnableExpansion => !_memoryControl.TestBit(7);
   #endregion
 
   #region Methods
@@ -90,7 +91,7 @@ unsafe public ref partial struct Mapper
 
     File.WriteAllLines(path, memory);
   }
-  
+
   public readonly void DumpROM(string path)
   {
     var dump = new List<string>();

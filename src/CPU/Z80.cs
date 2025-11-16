@@ -67,35 +67,6 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private byte FetchByte() => _bus.ReadByte(_pc++);
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private sbyte FetchSignedByte() => (sbyte)FetchByte();
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private ushort FetchWord()
-  {
-    var lowByte = FetchByte();
-    var highByte = FetchByte();
-    return highByte.Concat(lowByte);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void PushToStack(ushort value)
-  {
-    _sp -= 2;
-    _bus.WriteWord(_sp, value);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private ushort PopFromStack()
-  {
-    var value = _bus.ReadWord(_sp);
-    _sp += 2;
-    return value;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void DecodeInstruction()
   {
     var op = FetchByte();
@@ -261,6 +232,53 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private byte FetchByte() => ReadByte(_pc++);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private sbyte FetchSignedByte() => (sbyte)FetchByte();
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort FetchWord()
+  {
+    var lowByte  = FetchByte();
+    var highByte = FetchByte();
+    return highByte.Concat(lowByte);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void PushToStack(ushort value)
+  {
+    _sp -= 2;
+    WriteWord(_sp, value);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private ushort PopFromStack()
+  {
+    var value = ReadWord(_sp);
+    _sp += 2;
+    return value;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly byte ReadByte(ushort address) => _bus.ReadByte(address);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly ushort ReadWord(ushort address) => _bus.ReadWord(address);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void WriteByte(ushort address, byte value) => _bus.WriteByte(address, value);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private void WriteWord(ushort address, ushort value) => _bus.WriteWord(address, value);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly byte ReadPort(byte port) => _bus.ReadPort(port);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly void WritePort(byte port, byte value) => _bus.WritePort(port, value);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte ReadByteOperand(Operand operand)
   {
     ushort address;
@@ -305,7 +323,7 @@ unsafe public ref partial struct Z80
 
       default: throw new Exception($"Invalid byte operand: {_instruction}");
     }
-    return _bus.ReadByte(address);
+    return ReadByte(address);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -329,11 +347,8 @@ unsafe public ref partial struct Z80
 
       default: throw new Exception($"Invalid word operand: {_instruction}");
     }
-    return _bus.ReadWord(address);
+    return ReadWord(address);
   }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private readonly byte ReadPort(byte port) => _bus.ReadPort(port);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteResult(byte value) => WriteByteResult(value, _instruction.Destination);
@@ -373,7 +388,7 @@ unsafe public ref partial struct Z80
 
       default: throw new Exception($"Invalid byte destination: {destination}");
     }
-    _bus.WriteByte(address, value);
+    WriteByte(address, value);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -383,7 +398,7 @@ unsafe public ref partial struct Z80
     {
       case Operand.Indirect:
         var address = FetchWord();
-        _bus.WriteWord(address, value);
+        WriteWord(address, value);
         return;
 
       case Operand.AF:  AF = value;   return;
@@ -397,9 +412,6 @@ unsafe public ref partial struct Z80
       default: throw new Exception($"Invalid word destination: {_instruction}");
     }
   }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private readonly void WritePort(byte port, byte value) => _bus.WritePort(port, value);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly bool EvaluateCondition() => _instruction.Source switch

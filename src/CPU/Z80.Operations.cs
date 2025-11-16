@@ -172,7 +172,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void CPD()
   {
-    var subtrahend = _bus.ReadByte(HL);
+    var subtrahend = ReadByte(HL);
     var difference = _a - subtrahend;
 
     HL--;
@@ -202,7 +202,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void CPI()
   {
-    var subtrahend = _bus.ReadByte(HL);
+    var subtrahend = ReadByte(HL);
     var difference = _a - subtrahend;
 
     HL++;
@@ -330,21 +330,21 @@ unsafe public ref partial struct Z80
       return;
     }
 
-    var temp = _bus.ReadWord(_sp);
+    var temp = ReadWord(_sp);
     switch (_instruction.Source)
     {
       case Operand.HL:
-        _bus.WriteWord(_sp, HL);
+        WriteWord(_sp, HL);
         HL = temp;
         return;
 
       case Operand.IX:
-        _bus.WriteWord(_sp, IX);
+        WriteWord(_sp, IX);
         IX = temp;
         return;
 
       case Operand.IY:
-        _bus.WriteWord(_sp, IY);
+        WriteWord(_sp, IY);
         IY = temp;
         return;
     }
@@ -362,10 +362,12 @@ unsafe public ref partial struct Z80
   private void HALT() => _halt = true;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void IM()
+  private readonly void IM()
   {
+    #if DEBUG
     if (_instruction.Destination != (Operand)0x1)
       throw new Exception("Only interrupt mode 1 is supported.");
+    #endif
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -422,7 +424,7 @@ unsafe public ref partial struct Z80
   private void IND()
   {
     var value = ReadPort(_c);
-    _bus.WriteByte(HL, value);
+    WriteByte(HL, value);
 
     HL--;
     _b--;
@@ -448,7 +450,7 @@ unsafe public ref partial struct Z80
   private void INI()
   {
     var value = ReadPort(_c);
-    _bus.WriteByte(HL, value);
+    WriteByte(HL, value);
 
     HL++;
     _b--;
@@ -503,8 +505,8 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void LDD()
   {
-    var value = _bus.ReadByte(HL);
-    _bus.WriteByte(DE, value);
+    var value = ReadByte(HL);
+    WriteByte(DE, value);
 
     DE--;
     HL--;
@@ -528,8 +530,8 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void LDI()
   {
-    var value = _bus.ReadByte(HL);
-    _bus.WriteByte(DE, value);
+    var value = ReadByte(HL);
+    WriteByte(DE, value);
 
     DE++;
     HL++;
@@ -599,7 +601,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void OUTD()
   {
-    var value = _bus.ReadByte(HL);
+    var value = ReadByte(HL);
     WritePort(_c, value);
 
     HL--;
@@ -625,7 +627,7 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void OUTI()
   {
-    var value = _bus.ReadByte(HL);
+    var value = ReadByte(HL);
     WritePort(_c, value);
 
     HL++;
@@ -774,7 +776,7 @@ unsafe public ref partial struct Z80
   private void RLD()
   {
     var address = HL;
-    var value = _bus.ReadByte(address);
+    var value = ReadByte(address);
     var highNibble = value.HighNibble();
 
     value = (byte)((value.LowNibble() << 4) + _a.LowNibble());
@@ -788,7 +790,7 @@ unsafe public ref partial struct Z80
     if (CarryFlag)
       flags |= Flags.Carry;
 
-    _bus.WriteByte(address, value);
+    WriteByte(address, value);
     _flags = flags;
   }
 
@@ -880,7 +882,7 @@ unsafe public ref partial struct Z80
   private void RRD()
   {
     var address = HL;
-    var value = _bus.ReadByte(address);
+    var value = ReadByte(address);
     var lowNibble = value.LowNibble();
 
     value = (byte)((_a.LowNibble() << 4) + value.HighNibble());
@@ -894,7 +896,7 @@ unsafe public ref partial struct Z80
     if (CarryFlag)
       flags |= Flags.Carry;
 
-    _bus.WriteByte(address, value);
+    WriteByte(address, value);
     _flags = flags;
   }
 

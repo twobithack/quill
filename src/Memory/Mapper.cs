@@ -88,7 +88,11 @@ public ref partial struct Mapper
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void WriteControl(byte value) => _memoryControl = value;
+  public void WriteControl(byte value)
+  {
+    _memoryControl = value;
+    RemapSlots();
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly void WriteWRAM(ushort address, byte value)
@@ -109,7 +113,7 @@ public ref partial struct Mapper
     }
     RemapSlots();
   }
-  
+
   private void RemapSlots()
   {
     switch (_mapper)
@@ -153,7 +157,7 @@ public ref partial struct Mapper
       _      =>  0b_1111_1111
     };
   }
-  
+
   private static MapperType DetectMapperType(byte[] rom)
   {
     if (rom.Length < BANK_SIZE * 4)

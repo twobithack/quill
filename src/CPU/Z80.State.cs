@@ -18,8 +18,8 @@ unsafe public ref partial struct Z80
   private ushort _sp = 0xFFFF;
 
   private Flags _flags;
-  private bool _iff1 = true;
-  private bool _iff2 = true;
+  private bool _iff1 = false;
+  private bool _iff2 = false;
   private bool _halt = false;
   private bool _eiPending = false;
 
