@@ -27,18 +27,16 @@ public sealed class Window : GameWindow
   private readonly Renderer _renderer;
   private readonly Emulator _emulator;
   private readonly Thread _emulationThread;
-  private readonly Configuration _configuration;
   #endregion
 
   public Window(Emulator emulator, Configuration config) 
-    : base(GameWindowSettings.Default, CreateWindowSettings(config))
+    : base(GameWindowSettings.Default, CreateWindowSettings(config.Display))
   {
-    _configuration = config;
     _emulator = emulator;
     _emulationThread = new Thread(_emulator.Run) { IsBackground = true };
 
-    _audio = new Audio(_emulator.ReadAudioBuffer, _configuration);
-    _renderer = new Renderer(_emulator.ReadFramebuffer, _configuration);
+    _audio = new Audio(_emulator.ReadAudioBuffer, config.Audio);
+    _renderer = new Renderer(_emulator.ReadFramebuffer, config.Display);
     _input = new InputHandler(_emulator.UpdateInput);
   }
 
@@ -79,7 +77,7 @@ public sealed class Window : GameWindow
     _renderer.ResizeViewport(FramebufferSize);
   }
 
-  private static NativeWindowSettings CreateWindowSettings(Configuration config)
+  private static NativeWindowSettings CreateWindowSettings(DisplayOptions config)
   {
     var frameWidth = FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0);
     var frameHeight = FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0);

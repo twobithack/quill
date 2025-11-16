@@ -27,15 +27,20 @@
       <IncludeInSingleFile>true</IncludeInSingleFile>
       <LogicalName>icon.rgba</LogicalName>
     </EmbeddedResource>
-    <None Update="../config.json">
+    <Content Include="..\config.json" Link="config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0" />
     <PackageReference Include="MessagePack" Version="3.1.3" />
     <PackageReference Include="OpenTK" Version="4.9.4" />
+    <PackageReference Include="System.IO.Hashing" Version="10.0.0" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>8509</NoWarn>
+  </PropertyGroup>
 
 </Project>

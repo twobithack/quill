@@ -37,7 +37,7 @@ public static class Program
 
   private static Configuration LoadConfiguration()
   {
-    var configPath = Path.Join(Directory.GetCurrentDirectory(), "config.json");
+    var configPath = Path.Join(AppContext.BaseDirectory, "config.json");
     
     if (!File.Exists(configPath))
       return new Configuration();

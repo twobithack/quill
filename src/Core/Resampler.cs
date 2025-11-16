@@ -28,12 +28,12 @@ public sealed class Resampler : IAudioSink
   public Resampler(Configuration config)
   {
     _bufferLock = new object();
-    _bufferSize = config.AudioBufferSize;
+    _bufferSize = config.Audio.BufferSize;
     _buffer = new short[_bufferSize];
     _copyBuffer = new byte[_bufferSize * 2];
 
-    var rawSampleRate = (double) config.ClockRate / PSG.CYCLES_PER_SAMPLE;
-    _decimationFactor = rawSampleRate / config.AudioSampleRate;
+    var rawSampleRate = (double) config.System.ClockRate / PSG.CYCLES_PER_SAMPLE;
+    _decimationFactor = rawSampleRate / config.Audio.SampleRate;
     _rawSamplesNeeded = (int)_decimationFactor;
   }
   

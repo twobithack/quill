@@ -11,18 +11,17 @@ public sealed class Audio
   #region Fields
   private readonly Func<byte[]> _requestNextBuffer;
   private readonly Thread _bufferingThread;
+  private readonly AudioOptions _config;
   private readonly ALDevice _device;
   private readonly ALFormat _format;
 
   private readonly int[] _buffers;
-  private readonly int _bufferCount;
-  private readonly int _sampleRate;
   private readonly int _source;
   
   private volatile bool _playing;
   #endregion
 
-  public Audio(Func<byte[]> requestNextBuffer, Configuration config)
+  public Audio(Func<byte[]> requestNextBuffer, AudioOptions config)
   {
     _device = ALC.OpenDevice(null);
     var context = ALC.CreateContext(_device, (int[])null);
@@ -30,18 +29,17 @@ public sealed class Audio
     
     _requestNextBuffer = requestNextBuffer;
     _bufferingThread = new Thread(BufferAudio) { IsBackground = true };
-    
-    _bufferCount = config.AudioBufferCount;
-    _buffers = AL.GenBuffers(_bufferCount);
+
+    _config = config;
+    _buffers = AL.GenBuffers(_config.BufferCount);
     _source = AL.GenSource();
 
-    _sampleRate = config.AudioSampleRate;
     _format = ALFormat.Mono16;
     
-    var silence = new byte[(_sampleRate / 100) * sizeof(short)];
-    for (int buffer = 0; buffer < _bufferCount; buffer++)
-      AL.BufferData(_buffers[buffer], _format, silence, _sampleRate);
-    AL.SourceQueueBuffers(_source, _bufferCount, _buffers);
+    var silence = new byte[(_config.SampleRate / 100) * sizeof(short)];
+    for (int buffer = 0; buffer < _config.BufferCount; buffer++)
+      AL.BufferData(_buffers[buffer], _format, silence, _config.SampleRate);
+    AL.SourceQueueBuffers(_source, _config.BufferCount, _buffers);
   }
 
   #region Methods
@@ -77,7 +75,7 @@ public sealed class Audio
       {
         var buffer = AL.SourceUnqueueBuffer(_source);
         var data = _requestNextBuffer();
-        AL.BufferData(buffer, _format, data, _sampleRate);
+        AL.BufferData(buffer, _format, data, _config.SampleRate);
         AL.SourceQueueBuffer(_source, buffer);
         processed--;
       }
