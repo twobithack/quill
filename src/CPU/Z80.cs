@@ -44,7 +44,7 @@ unsafe public ref partial struct Z80
       _halt = false;
       _iff2 = _iff1;
       _iff1 = false;
-      _bus.NMI = false;
+      _bus.ClearNMI();
     }
 
     if (_eiPending)
@@ -55,7 +55,7 @@ unsafe public ref partial struct Z80
       return;
     }
 
-    if (_iff1 && _bus.IRQ)
+    if (_iff1 && _bus.INT)
     {
       PushToStack(_pc);
       _pc = 0x38;

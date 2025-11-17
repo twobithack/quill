@@ -29,8 +29,8 @@ public sealed class Window : GameWindow
   private readonly Thread _emulationThread;
   #endregion
 
-  public Window(Emulator emulator, Configuration config) 
-    : base(GameWindowSettings.Default, CreateWindowSettings(config.Display))
+  public Window(Emulator emulator, Configuration config)
+    : base(CreateGameWindowSettings(), CreateWindowSettings(config.Display))
   {
     _emulator = emulator;
     _emulationThread = new Thread(_emulator.Run) { IsBackground = true };
@@ -77,11 +77,13 @@ public sealed class Window : GameWindow
     _renderer.ResizeViewport(FramebufferSize);
   }
 
+  private static GameWindowSettings CreateGameWindowSettings() => GameWindowSettings.Default;
+
   private static NativeWindowSettings CreateWindowSettings(DisplayOptions config)
   {
     var frameWidth = FRAMEBUFFER_WIDTH - (config.CropLeftBorder ? LEFT_BORDER_WIDTH : 0);
     var frameHeight = FRAMEBUFFER_HEIGHT - (config.CropBottomBorder ? BOTTOM_BORDER_HEIGHT : 0);
-    
+
     var clientWidth = frameWidth * config.ScaleFactor;
     var clientHeight = frameHeight * config.ScaleFactor;
 

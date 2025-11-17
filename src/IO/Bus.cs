@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+
 using Quill.Core;
 using Quill.Memory;
 using Quill.Sound;
@@ -28,16 +29,14 @@ public ref struct Bus
   }
 
   #region Properties
-  public readonly bool IRQ => _vdp.IRQ;
-
-  public readonly bool NMI
-  {
-    get => _io.NMI;
-    set => _io.NMI = value;
-  }
+  public readonly bool INT => _vdp.IRQ;
+  public readonly bool NMI => _io.NMI;
   #endregion
 
   #region Methods
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public readonly void ClearNMI() => _io.NMI = false;
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly byte ReadByte(ushort address) => _memory.ReadByte(address);
 
