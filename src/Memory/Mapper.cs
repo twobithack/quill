@@ -10,8 +10,10 @@ namespace Quill.Memory;
 public ref partial struct Mapper
 {
   #region Constants
-  public const ushort BANK_SIZE     = 0x2000;
+  public const ushort WRAM_SIZE     = 0x2000;
+  public const ushort SRAM_SIZE     = 0x4000;
 
+  private const ushort BANK_SIZE    = 0x2000;
   private const ushort HEADER_SIZE  = 0x0200;
   private const ushort VECTORS_SIZE = 0x0400;
   private const ushort WRAM_BASE    = 0xC000;

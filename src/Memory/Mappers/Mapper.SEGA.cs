@@ -13,14 +13,14 @@ public ref partial struct Mapper
   private const ushort SLOT1_CONTROL  = 0xFFFE;
   private const ushort SLOT2_CONTROL  = 0xFFFF;
   #endregion
-  
+
   #region Methods
   private void InitializeSlotsSEGA()
   {
     _slotControl0 = 0x0;
     _slotControl1 = 0x1;
     _slotControl2 = 0x2;
-    
+
     _vectors = _rom[..VECTORS_SIZE];
   }
 
@@ -71,10 +71,10 @@ public ref partial struct Mapper
       GetBankPair(_slotControl2, out _slot4, out _slot5);
       return;
     }
-    
+
     _sram = _sramSelect
-          ? _sram0
-          : _sram1;
+          ? _sram1
+          : _sram0;
     _slot4 = _sram.Slice(0,         BANK_SIZE);
     _slot5 = _sram.Slice(BANK_SIZE, BANK_SIZE);
   }

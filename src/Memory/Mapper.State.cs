@@ -57,6 +57,7 @@ unsafe public ref partial struct Mapper
     _slotControl0 = state.SlotControl0;
     _slotControl1 = state.SlotControl1;
     _slotControl2 = state.SlotControl2;
+    _slotControl3 = state.SlotControl3;
     _sramEnable   = state.EnableSRAM;
     _sramSelect   = state.SelectSRAM;
     RemapSlots();
@@ -70,6 +71,7 @@ unsafe public ref partial struct Mapper
     state.SlotControl0 = _slotControl0;
     state.SlotControl1 = _slotControl1;
     state.SlotControl2 = _slotControl2;
+    state.SlotControl3 = _slotControl3;
     state.EnableSRAM   = _sramEnable;
     state.SelectSRAM   = _sramSelect;
   }
