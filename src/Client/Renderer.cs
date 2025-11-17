@@ -18,7 +18,7 @@ public sealed class Renderer
 
   #region Fields
   private readonly Func<byte[]> _requestNextFrame;
-  private readonly Configuration _config;
+  private readonly DisplayOptions _config;
 
   private readonly byte[] _framebuffer;
   private int _texture;
@@ -32,7 +32,7 @@ public sealed class Renderer
   private int _uEnableCRTLoc;
   #endregion
 
-  public Renderer(Func<byte[]> requestNextFrame, Configuration config)
+  public Renderer(Func<byte[]> requestNextFrame, DisplayOptions config)
   {
     _framebuffer = new byte[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT * 4];
     _requestNextFrame = requestNextFrame;

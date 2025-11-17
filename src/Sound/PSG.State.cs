@@ -5,16 +5,6 @@ namespace Quill.Sound;
 
 public sealed partial class PSG
 {
-  #region Constants
-  public const int CYCLES_PER_SAMPLE = 16;
-  public const int CHANNEL_COUNT = 4;
-
-  private const int TONE0 = 0b_00;
-  private const int TONE1 = 0b_01;
-  private const int TONE2 = 0b_10;
-  private const int NOISE = 0b_11;
-  #endregion
-
   #region Fields
   private readonly IAudioSink _audioSink;
   private readonly Channel[] _channels;

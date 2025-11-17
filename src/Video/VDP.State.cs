@@ -103,6 +103,7 @@ public sealed partial class VDP
   
   private bool HLinePending => _hLineInterruptPending && HLineInterruptEnabled;
   private bool VSyncPending => VBlank && VBlankInterruptEnabled;
+  private bool DisplayMode3 => (_displayMode & DisplayMode.Mode_3) != 0;
   private bool DisplayMode4 => (_displayMode & DisplayMode.Mode_4) != 0;
   #endregion
 

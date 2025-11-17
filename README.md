@@ -1,18 +1,20 @@
 # Quill &middot; [![build](https://github.com/twobithack/quill/actions/workflows/dotnet.yml/badge.svg)](https://github.com/twobithack/quill/actions/workflows/dotnet.yml)
 A cross-platform Sega Master System emulator built on .NET and OpenTK.
 
-![Screenshot](/docs/screenshots/Sonic%20the%20Hedgehog.png)
+![Screenshot](/docs/screenshots/Power%20Strike%20II.png)
 
 ## Features
 
 * Cycle-accurate emulation of Z80 CPU, 315-5124 VDP, and SN76489 PSG
 * Savestates: quicksave, quickload, and rewind functionality
+* Optional CRT shader, overscan cropping, and aspect ratio correction
 * Cross-platform: Windows, Linux, and macOS supported
 
 ## Compatibility
 
-Supports most Master System and SG-1000 titles (see [`docs/compatibility.md`](/docs/compatibility.md)). 
-Notable exceptions include titles that require accessories (3-D Glasses, Light Phaser, Paddle Control), use custom memory mappers (e.g., Codemasters titles), or are PAL-only.
+Supports most Master System and SG-1000 titles (see [`docs/compatibility.md`](/docs/compatibility.md)). Notable exceptions include titles that:
+* Rely on the 315-5246 "SMS2" VDP (Codemasters titles, certain PAL exclusives)
+* Require special accessories (3-D Glasses, Light Phaser, Paddle Control)
 
 ## Getting Started
 

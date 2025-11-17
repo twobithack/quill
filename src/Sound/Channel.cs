@@ -59,7 +59,6 @@ public sealed class Channel
     _counter--;
     if (_counter <= 0)
     {
-      #pragma warning disable CS8509
       _counter = (Tone & 0b_11) switch
       {
         0x00 => 0x10,
@@ -67,9 +66,8 @@ public sealed class Channel
         0x02 => 0x40,
         0x03 => tone2
       };
-      #pragma warning restore CS8509
-
-            _polarity = !_polarity;
+      
+      _polarity = !_polarity;
       if (_polarity)
       {
         var input = WhiteNoiseMode

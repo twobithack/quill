@@ -1,6 +1,6 @@
 # MASTER SYSTEM
 
-## SUPPORTED
+## WORKING
 * 20-em-1
 * Action Fighter
 * Addams Family
@@ -14,6 +14,7 @@
 * Alex Kidd: The Lost Stars
 * A.L.F.
 * Alien 3 
+* Alien Storm
 * Alien Syndrome
 * Altered Beast
 * Arcade Smash Hits
@@ -30,6 +31,7 @@
 * Back to the Future Part II
 * Back to the Future Part III
 * Baku Baku Animals
+* Bank Panic
 * Basketball Nightmare
 * Batman Returns
 * Battle Outrun
@@ -52,7 +54,10 @@
 * Chuck Rock II - Son of Chuck
 * Cloud Master
 * Columns
+* Con-Dori
 * Cool Spot
+* Cyborg Hunter
+* Cyborg Z
 * The Cyber Shinobi
 * Daffy Duck in Hollywood
 * Danan: The Jungle Fighter
@@ -70,8 +75,10 @@
 * Dynamite Duke
 * Dynamite Dux
 * Dynamite Headdy
+* Eagles 5
 * Earthworm Jim 
 * Ecco the Dolphin
+* E.I. - Exa Innova
 * Enduro Racer
 * E-SWAT - City under Siege
 * F1 Championship
@@ -90,7 +97,9 @@
 * Flight of the Pigarus
 * Fushigi no Oshiro Pit Pot
 * Gain Ground
+* Galaxian
 * Galaxy Force
+* Gangcheol RoboCop
 * Gauntlet
 * Geraldinho
 * Ghostbusters
@@ -101,6 +110,7 @@
 * Golden Axe Warrior 
 * Golf Mania
 * Golvellius - Valley of Doom
+* Great Golf
 * Hang-On
 * Heroes of the Lance
 * Home Alone
@@ -111,11 +121,15 @@
 * Indiana Jones and the Last Crusade
 * James 'Buster' Douglas Knockout Boxing
 * James Pond 2 - Codename Robocod
+* Janggun-ui Adeul
+* Jang Pung II
+* Jang Pung 3
 * The Jungle Book
 * Jurassic Park
 * Kenseiden
 * King's Quest: Quest for the Crown
 * Klax
+* Knightmare II: The Maze of Galious
 * Krusty's Fun House
 * Kung Fu Kid
 * Land of Illusion Starring Mickey Mouse
@@ -138,6 +152,8 @@
 * Mortal Kombat II
 * Mortal Kombat 3
 * Ms. Pac-Man
+* Nemesis
+* Nemesis 2
 * The New Zealand Story
 * The Ninja
 * Ninja Gaiden
@@ -151,6 +167,7 @@
 * Penguin Land
 * Phantasy Star
 * Pit Fighter
+* Pooyan
 * Populous
 * Power Strike
 * Power Strike II
@@ -160,6 +177,7 @@
 * Psychic World
 * Psycho Fox
 * Putt and Putter
+* Puznic
 * Quartet
 * Rainbow Islands: The Story of Bubble Bobble 2
 * Rambo: First Blood Part II
@@ -174,8 +192,10 @@
 * RoboCop versus The Terminator
 * Rocky
 * R-Type
-* Running Battle:
+* Run! Dodgeball King
+* Running Battle
 * Sagaia
+* Samgukji III
 * Sapo Xulé: O Mestre do Kung Fu
 * Sapo Xulé: S.O.S. Lagoa Poluida
 * Scramble Spirits
@@ -222,6 +242,7 @@
 * Thunder Bladebart vs the space mutants
 * Time Soldiers
 * Tom and Jerry: The Movie
+* Toto World 3
 * Transbot
 * Turma da Mônica em O Resgate
 * Ultima IV: Quest of the Avatar
@@ -237,26 +258,23 @@
 * Zillion
 * Zillion II: The Tri-Formation Cycle
 
-## UNSUPPORTED
+## NOT WORKING
 * Ace of Aces (PAL)
 * Alex Kidd BMX Trial (paddle)
-* Alibaba and 40 Thieves (custom mapper)
-* Alien Storm (PAL)
-* Bank Panic (PAL)
-* Block Hole (custom mapper)
+* Alibaba and 40 Thieves
+* Block Hole
 * California Games II (PAL)
-* Cosmic Spacehead (Codemasters mapper)
+* Cosmic Spacehead
 * Desert Speedtrap Starring Roadrunner (PAL)
-* Excellent Dizzy Collection (Codemasters mapper)
+* Excellent Dizzy Collection
 * Galactic Protector (paddle)
 * Gangster Town (phaser)
-* King & Balloon (custom mapper)
-* Knightmare II: The Maze of Galious (custom mapper)
+* King & Balloon
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
 * Missile Defence 3D (phaser)
 * Operation: Wolf (phaser)
-* Parlour Games (custom mapper)
+* Parlour Games
 * Rambo III (phaser)
 * Rescue Mission (phaser)
 * Safari Hunt (phaser)
@@ -266,11 +284,12 @@
 * Trap Shooting (phaser)
 * Wanted! (phaser)
 * Woody Pop (paddle)
+* Xyzolog
 * Zool: Warrior of the "Nth" Dimension (PAL)
 
 # SG-1000
 
-## SUPPORTED
+## WORKING
 * Bank Panic
 * Bomb Jack
 * Borderline
@@ -299,6 +318,7 @@
 * Pachinko II
 * Pitfall II: The Lost Caverns
 * Q-bert
+* Rock n' Bolt
 * Sega Flipper
 * Sega Galaga
 * Sindbad Mystery
@@ -309,11 +329,10 @@
 * Star Jacker 
 * Wonder Boy
 
-## UNSUPPORTED
+## NOT WORKING
 * Bomberman Special
 * Exerion
 * Hang-On II
 * James Bond 007
 * Pop Flamer
-* Rock n' Bolt
 * Yamato

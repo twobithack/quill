@@ -1,225 +1,200 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
+using System.IO.Hashing;
+using System.Runtime.CompilerServices;
 
-using CommunityToolkit.HighPerformance;
 using Quill.Common.Extensions;
-using Quill.Core;
+using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
-unsafe public ref struct Mapper
+public ref partial struct Mapper
 {
   #region Constants
-  public const ushort PAGE_SIZE = 0x4000;
-  
-  private const ushort HEADER_SIZE = 0x200;
-  private const ushort PAGING_START = 0x400;
-  private const ushort MIRROR_SIZE = 0x2000;
-  private const ushort MIRROR_START = 0xE000;
-  private const ushort BANK_CONTROL = 0xFFFC;
-  private const ushort PAGE0_CONTROL = 0xFFFD;
-  private const ushort PAGE1_CONTROL = 0xFFFE;
-  private const ushort PAGE2_CONTROL = 0xFFFF;
-  #endregion
+  public const ushort WRAM_SIZE     = 0x2000;
+  public const ushort SRAM_SIZE     = 0x4000;
 
-  #region Fields
-  private readonly ReadOnlySpan2D<byte> _rom;
-  private readonly Span<byte> _ram;
-  private readonly Span<byte> _ramBank0;
-  private readonly Span<byte> _ramBank1;
-  private readonly byte _pageMask;
-  private bool _bankEnable;
-  private bool _bankSelect;
-  private byte _page0;
-  private byte _page1;
-  private byte _page2;
+  private const ushort BANK_SIZE    = 0x2000;
+  private const ushort HEADER_SIZE  = 0x0200;
+  private const ushort VECTORS_SIZE = 0x0400;
+  private const ushort WRAM_BASE    = 0xC000;
   #endregion
 
   public Mapper(byte[] program)
   {
-    var headerOffset = (program.Length % PAGE_SIZE == HEADER_SIZE) ? HEADER_SIZE : 0;
-    var pageCount = (program.Length + PAGE_SIZE - 1) / PAGE_SIZE;
-    var rom = new byte[pageCount, PAGE_SIZE];
-                     
-    for (int i = headerOffset; i < program.Length; i++)
-    {
-      var page = i / PAGE_SIZE;
-      var index = i % PAGE_SIZE;
-      rom[page, index] = program[i];
-    }
+    var headerOffset = GetHeaderOffset(program);
+    var romLength = program.Length - headerOffset;
+    _bankCount = (romLength + BANK_SIZE - 1) / BANK_SIZE;
+    _bankMask = GetBankMask(_bankCount);
 
-    _rom = new ReadOnlySpan2D<byte>(rom);
-    _page0 = 0x00;
-    _page1 = 0x01;
-    _page2 = 0x02;
-    
-    _pageMask = pageCount switch 
-    {
-      <= 4    =>  0b_0000_0011,
-      <= 8    =>  0b_0000_0111,
-      <= 16   =>  0b_0000_1111,
-      <= 32   =>  0b_0001_1111,
-      <= 64   =>  0b_0011_1111,
-      <= 128  =>  0b_0111_1111,
-      _       =>  0b_1111_1111
-    };
+    var paddedROM = new byte[_bankCount * BANK_SIZE];
+    program.AsSpan(headerOffset, romLength).CopyTo(paddedROM);
 
-    _ram = new Span<byte>(new byte[PAGE_SIZE]);
-    _ramBank0 = new Span<byte>(new byte[PAGE_SIZE]);
-    _ramBank1 = new Span<byte>(new byte[PAGE_SIZE]);
-    _bankEnable = false;
-    _bankSelect = false;
+    _rom   = paddedROM;
+    _wram   = new byte[BANK_SIZE];
+    _sram0 = new byte[BANK_SIZE*2];
+    _sram1 = new byte[BANK_SIZE*2];
+    _sram  = _sram0;
+
+    _mapper = DetectMapperType(program);
+    InitializeSlots();
   }
 
   #region Methods
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly byte ReadByte(ushort address)
   {
-    if (address < PAGING_START)
-      return _rom[0x00, address];
+    if (address < VECTORS_SIZE)
+      return _vectors[address];
 
-    if (address < PAGE_SIZE)
-      return _rom[_page0, address];
+    var slot  = address >> 13;
+    var index = address & (BANK_SIZE - 1);
 
-    var index = address % PAGE_SIZE;
-
-    if (address < PAGE_SIZE * 2)
-      return _rom[_page1, index];
-
-    if (address < PAGE_SIZE * 3)
+    return slot switch
     {
-      if (_bankEnable)
-        return _bankSelect
-             ? _ramBank0[index]
-             : _ramBank1[index];
-
-      return _rom[_page2, index];
-    }
-
-    if (address >= MIRROR_START)
-      index -= MIRROR_SIZE;
-
-    return _ram[index];
+      0 => _slot0[index], // 0x0000 - 0x1FFF
+      1 => _slot1[index], // 0x2000 - 0x3FFF
+      2 => _slot2[index], // 0x4000 - 0x5FFF
+      3 => _slot3[index], // 0x6000 - 0x7FFF
+      4 => _slot4[index], // 0x8000 - 0x9FFF
+      5 => _slot5[index], // 0xA000 - 0xBFFF
+      _ => _wram[index]   // 0xC000 - 0xDFFF (or 0xE000 - 0xFFFF mirror)
+    };
   }
-  
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByte(ushort address, byte value)
   {
-    if (address < PAGE_SIZE * 2)
-      return;
-
-    var index = address % PAGE_SIZE;
-
-    if (address < PAGE_SIZE * 3)
+    switch (_mapper)
     {
-      if (!_bankEnable)
-        return;
-
-      if (_bankSelect)
-        _ramBank0[index] = value;
-      else
-        _ramBank1[index] = value;
-
-      return;
+      case MapperType.SEGA:        WriteByteSEGA(address, value);        return;
+      case MapperType.Codemasters: WriteByteCodemasters(address, value); return;
+      case MapperType.Korean:      WriteByteKorean(address, value);      return;
+      case MapperType.MSX:         WriteByteMSX(address, value);         return;
+      case MapperType.Janggun:     WriteByteJanggun(address, value);     return;
     }
-
-    if (address >= MIRROR_START)
-      index -= MIRROR_SIZE;
-
-    if (address == BANK_CONTROL)
-    {
-      _bankEnable = value.TestBit(3);
-      _bankSelect = value.TestBit(2);
-    }
-    else if (address == PAGE0_CONTROL)
-      _page0 = (byte)(value & _pageMask);
-    else if (address == PAGE1_CONTROL)
-      _page1 = (byte)(value & _pageMask);
-    else if (address == PAGE2_CONTROL)
-      _page2 = (byte)(value & _pageMask);
-
-    _ram[index] = value;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public readonly ushort ReadWord(ushort address)
   {
-    var lowByte = ReadByte(address);
+    var lowByte  = ReadByte(address);
     var highByte = ReadByte(address.Increment());
     return highByte.Concat(lowByte);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteWord(ushort address, ushort word)
   {
     WriteByte(address, word.LowByte());
     WriteByte(address.Increment(), word.HighByte());
   }
-  
-  public void LoadState(Snapshot state)
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void WriteControl(byte value)
   {
-    state.RAM.AsSpan().CopyTo(_ram);
-    state.Bank0.AsSpan().CopyTo(_ramBank0);
-    state.Bank1.AsSpan().CopyTo(_ramBank1);
-    _page0 = state.Page0;
-    _page1 = state.Page1;
-    _page2 = state.Page2;
-    _bankEnable = state.BankEnable;
-    _bankSelect = state.BankSelect;
+    _memoryControl = value;
+    RemapSlots();
   }
 
-  public readonly void SaveState(Snapshot state)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly void WriteWRAM(ushort address, byte value)
   {
-    _ram.CopyTo(state.RAM);
-    _ramBank0.CopyTo(state.Bank0);
-    _ramBank1.CopyTo(state.Bank1);
-    state.Page0 = _page0;
-    state.Page1 = _page1;
-    state.Page2 = _page2;
-    state.BankEnable= _bankEnable;
-    state.BankSelect = _bankSelect;
+    var index = address & (BANK_SIZE - 1);
+    _wram[index] = value;
   }
 
-  public readonly void DumpRAM(string path)
+  private void InitializeSlots()
   {
-    var memory = new List<string>();
-    var row = string.Empty;
-
-    for (ushort address = 0; address < PAGE_SIZE; address++)
+    switch (_mapper)
     {
-      if (address % 64 == 0)
-      {
-        memory.Add(row);
-        row = string.Empty;
-      }
-      row += _ram[address].ToHex();
+      case MapperType.SEGA:        InitializeSlotsSEGA();        break;
+      case MapperType.Codemasters: InitializeSlotsCodemasters(); break;
+      case MapperType.Korean:      InitializeSlotsKorean();      break;
+      case MapperType.MSX:         InitializeSlotsMSX();         break;
+      case MapperType.Janggun:     InitializeSlotsJanggun();     break;
     }
-    
-    File.WriteAllLines(path, memory);
+    RemapSlots();
   }
 
-  public readonly void DumpROM(string path)
+  private void RemapSlots()
   {
-    var dump = new List<string>();
-    for (byte page = 0; page < 0x40; page++)
+    switch (_mapper)
     {
-      var row = $"PAGE {page.ToHex()}";
-      for (ushort index = 0; index < PAGE_SIZE; index++)
-      {
-        if (index % 16 == 0)
-        {
-          dump.Add(row);
-          row = $"{index.ToHex()} : ";
-        }
-        row += _rom[page,index].ToHex();
-      }
+      case MapperType.SEGA:        RemapSlotsSEGA();        return;
+      case MapperType.Codemasters: RemapSlotsCodemasters(); return;
+      case MapperType.Korean:      RemapSlotsKorean();      return;
+      case MapperType.MSX:         RemapSlotsMSX();         return;
+      case MapperType.Janggun:     RemapSlotsJanggun();     return;
     }
-    File.WriteAllLines(path, dump);
   }
 
-  public override readonly string ToString()
+  private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
   {
-    var banking = _bankEnable
-                ? $"enabled (Bank {_bankSelect.ToBit()})"
-                : "disabled";
-    return $"Memory: RAM banking {banking} | P0: {_page0.ToHex()}, P1: {_page1.ToHex()}, P2: {_page2.ToHex()}";
+    var index = controlByte & _bankMask;
+    var mirrored = index % _bankCount;
+    return _rom.Slice(mirrored * BANK_SIZE, BANK_SIZE);
+  }
+
+  private readonly void GetBankPair(byte controlByte,
+                                    out ReadOnlySpan<byte> lowBank,
+                                    out ReadOnlySpan<byte> highBank)
+  {
+    var lowIndex = (byte)(controlByte << 1);
+    lowBank  = GetBank(lowIndex);
+    highBank = GetBank(lowIndex.Increment());
+  }
+
+  private static byte GetBankMask(int bankCount)
+  {
+    return bankCount switch
+    {
+      <= 1   =>  0b_0000_0000,
+      <= 2   =>  0b_0000_0001,
+      <= 4   =>  0b_0000_0011,
+      <= 8   =>  0b_0000_0111,
+      <= 16  =>  0b_0000_1111,
+      <= 32  =>  0b_0001_1111,
+      <= 64  =>  0b_0011_1111,
+      <= 128 =>  0b_0111_1111,
+      _      =>  0b_1111_1111
+    };
+  }
+
+  private static MapperType DetectMapperType(byte[] rom)
+  {
+    if (rom.Length < BANK_SIZE * 4)
+      return MapperType.SEGA;
+
+    if (HasCodemastersHeader(rom))
+      return MapperType.Codemasters;
+
+    var hash = GetCRC32Hash(rom);
+
+    if (HasKnownKoreanHash(hash))
+      return MapperType.Korean;
+
+    if (HasKnownMSXHash(hash))
+      return MapperType.MSX;
+
+    if (HasJanggunHash(hash))
+      return MapperType.Janggun;
+
+    return MapperType.SEGA;
+  }
+
+  private static int GetHeaderOffset(ReadOnlySpan<byte> rom)
+  {
+    var containsHeader = rom.Length % BANK_SIZE == HEADER_SIZE;
+    return containsHeader
+         ? HEADER_SIZE
+         : 0;
+  }
+
+  private static uint GetCRC32Hash(ReadOnlySpan<byte> rom)
+  {
+    var headerOffset = GetHeaderOffset(rom);
+    var hash = Crc32.Hash(rom[headerOffset..]);
+    return BitConverter.ToUInt32(hash);
   }
   #endregion
 }
