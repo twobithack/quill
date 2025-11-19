@@ -20,13 +20,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\Quill.csproj" />
-    <None Update="frames/*">
+    <None Update="Data/Frames/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="roms/*">
+    <None Update="Data/States/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="states/*">
+    <None Update="Programs/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
