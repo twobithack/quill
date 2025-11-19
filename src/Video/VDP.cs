@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 using Quill.Common.Extensions;
@@ -48,7 +47,7 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadStatus()
   {
-    _controlWritePending = false;
+    _controlWriteLatch = false;
     _hLineInterruptPending = false;
     IRQ = false;
 
@@ -63,18 +62,18 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteControl(byte value)
   {
-    if (!_controlWritePending)
+    if (!_controlWriteLatch)
     {
       _addressBus &= 0b_1111_1111_0000_0000;
       _addressBus |= value;
-      _controlWritePending = true;
+      _controlWriteLatch = true;
       return;
     }
     
     _addressBus &= 0b_0000_0000_1111_1111;
     _addressBus |= (ushort)((value & 0b_0011_1111) << 8);
     _controlCode = (ControlCode)(value >> 6);
-    _controlWritePending = false;
+    _controlWriteLatch = false;
 
     if (_controlCode == ControlCode.ReadVRAM)
     {
@@ -94,7 +93,7 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public byte ReadData()
   {
-    _controlWritePending = false;
+    _controlWriteLatch = false;
 
     var data = _dataBuffer;
     _dataBuffer = _vram[_addressBus];
@@ -105,7 +104,7 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteData(byte value)
   {
-    _controlWritePending = false;
+    _controlWriteLatch = false;
 
     if (_controlCode == ControlCode.WriteCRAM)
     {
@@ -149,7 +148,16 @@ public sealed partial class VDP
   {
     IncrementScanline();
     UpdateInterrupts();
-    RasterizeScanline();
+
+    if (_vCounter >= VERTICAL_RESOLUTION)
+      return;
+
+    if (DisplayMode4)
+      RasterizeScanline();
+    else
+      RasterizeLegacyScanline();
+
+    CommitScanline();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -200,30 +208,15 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeScanline()
   {
-    if (_vCounter >= VERTICAL_RESOLUTION)
-      return;
-
     if (!DisplayEnabled || _vCounter > VCOUNTER_ACTIVE)
     {
       BlankScanline();
     }
-    else if (DisplayMode4)
+    else
     {
       RasterizeSprites();
       RasterizeBackground();
     }
-    else if (DisplayMode3)
-    {
-      RasterizeLegacySprites();
-      RasterizeMode3Background();
-    }
-    else
-    {
-      RasterizeLegacySprites();
-      RasterizeMode2Background();
-    }
-
-    CommitScanline();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -362,197 +355,6 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeLegacySprites()
-  {
-    var spriteHeight = TILE_SIZE;
-    if (StretchSprites)
-      spriteHeight <<= 1;
-
-    var spriteCount = 0;
-    for (int sprite = 0; sprite < 32; sprite++)
-    {
-      var baseAddress = SpriteAttributeTableAddress 
-                      + (sprite << 2);
-      ushort y = _vram[baseAddress];
-      
-      if (y == DISABLE_SPRITES)
-      {
-        if (!SpriteOverflow)
-          SetLastSpriteIndex(sprite);
-        return;
-      }
-
-      y++;
-      if (y >= DISABLE_SPRITES)
-        y -= 0x100;
-
-      if (y > _vCounter ||
-          y + spriteHeight <= _vCounter)
-        continue;
-
-      var x = _vram[baseAddress + 1];
-      var pattern = _vram[baseAddress + 2];
-      var color = _vram[baseAddress + 3];
-
-      if (color.TestBit(7))
-        x -= 32;
-
-      if (x < 0)
-        continue;
-
-      color &= 0b_0000_1111;
-      if (color == TRANSPARENT)
-        continue;
-
-      spriteCount++;
-      if (spriteCount > 4)
-      {
-        SetLastSpriteIndex(sprite);
-        SpriteOverflow = true;
-        return;
-      }
-      else
-        SpriteOverflow = false;
-
-      var offset = _vCounter - y;
-      if (spriteHeight == TILE_SIZE)
-      {
-        var address = LegacySpritePatternTableAddress 
-                    + (pattern << TILE_SHIFT);
-        RasterizeMode2Sprite(address, x, offset, color);
-      }
-      else
-      {
-        var address = LegacySpritePatternTableAddress 
-                    + ((pattern & 0b_1111_1100) << TILE_SHIFT);
-        RasterizeMode2Sprite(address, x, offset, color);
-        RasterizeMode2Sprite(address, x + TILE_SIZE, offset + 16, color);
-      }
-    }
-    
-    if (!SpriteOverflow)
-      SetLastSpriteIndex(31);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeMode2Sprite(int address, int x, int offset, byte color)
-  {
-    var data = _vram[address + offset];
-    for (byte i = 0; i < TILE_SIZE; i++)
-    {
-      if (x + i >= HORIZONTAL_RESOLUTION)
-        return;
-
-      if (_spriteMask[x + i])
-      {
-        SpriteCollision = true;
-        continue;
-      }
-
-      if (!data.TestBit(7 - i))
-        continue;
-
-      SetLegacySpritePixel(x + i, color);
-    }
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeMode2Background()
-  {
-    var colorMask = (_registers[0x3] << 1) | 1;
-    var row       = _vCounter >> 3;
-    var rowOffset = _vCounter & (TILE_SIZE - 1);
-
-    var tableAddressOffset = row switch
-    {
-      < 8   => 0x0,
-      < 16  => TestRegisterBit(0x4, 1) ? 0x800  : 0x0,
-      _     => TestRegisterBit(0x4, 0) ? 0x1000 : 0x0
-    };
-    
-    for (int column = 0; column < BACKGROUND_COLUMNS; column++)
-    {
-      var patternIndex = _vram[NameTableAddress + column + (row << 5)];
-      var patternAddress = PatternTableAddress
-                         + tableAddressOffset
-                         + rowOffset
-                         + (patternIndex << TILE_SHIFT);
-
-      var colorIndex = patternIndex & colorMask;
-      var colorAddress = ColorTableAddress
-                       + tableAddressOffset
-                       + rowOffset
-                       + (colorIndex << TILE_SHIFT);
-
-      var patternData = _vram[patternAddress];
-      var colorData = _vram[colorAddress];
-
-      var x = column << TILE_SHIFT;
-      var tileEnd = x + TILE_SIZE;
-      for (byte i = TILE_SIZE - 1; x < tileEnd; x++, i--)
-      {
-        if (x >= HORIZONTAL_RESOLUTION)
-          return;
-
-        if (_spriteMask[x])
-          continue;
-
-        var color = patternData.TestBit(i)
-                  ? colorData.HighNibble()
-                  : colorData.LowNibble();
-
-        if (color == TRANSPARENT)
-          color = LegacyBlankColor;
-
-        SetLegacyBackgroundPixel(x, color);
-      }
-    }
-  }
-  
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeMode3Background()
-  {
-    var row        = _vCounter >> TILE_SHIFT;
-    var rowOffset  = _vCounter & (TILE_SIZE - 1);
-    var pairOffset = (row & 0b_11) << 1;
-
-    for (int column = 0; column < BACKGROUND_COLUMNS; column++)
-    {
-      var patternIndex = _vram[NameTableAddress + column + (row << 5)];
-      var patternAddress = PatternTableAddress
-                         + (patternIndex << 3)
-                         + pairOffset;
-
-      if (rowOffset > 3)
-        patternAddress++;
-
-      var patternData = _vram[patternAddress];
-      var leftColor   = patternData.HighNibble();
-      var rightColor  = patternData.LowNibble();
-
-      var x = column << TILE_SHIFT;
-      var tileEnd = x + TILE_SIZE;
-      for (int i = 0; x < tileEnd; x++, i++)
-      {
-        if (x >= HORIZONTAL_RESOLUTION)
-          return;
-
-        if (_spriteMask[x])
-          continue;
-
-        var color = (i < 4)
-                  ? leftColor
-                  : rightColor;
-
-        if (color == TRANSPARENT)
-          color = LegacyBlankColor;
-
-        SetLegacyBackgroundPixel(x, color);
-      }
-    }
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private Pattern GetPatternData(int patternAddress) => new(_vram[patternAddress],
                                                             _vram[patternAddress + 1],
                                                             _vram[patternAddress + 2],
@@ -568,9 +370,7 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void BlankScanline()
   {
-    var fillColor = DisplayMode4
-                  ? _palette[BlankColor]
-                  : Color.ToLegacyRGBA(LegacyBlankColor);
+    var fillColor = _palette[BlankColor];
     Array.Fill(_scanline, fillColor);
   }
 
@@ -582,30 +382,13 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacySpritePixel(int x, byte color)
-  {
-    _scanline[x] = Color.ToLegacyRGBA(color);
-    _spriteMask[x] = true;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetBackgroundPixel(int x, int paletteIndex) => _scanline[x] = _palette[paletteIndex];
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacyBackgroundPixel(int x, byte color) => _scanline[x] = Color.ToLegacyRGBA(color);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void CommitScanline()
   {
     _framebuffer.BlitScanline(_vCounter, _scanline);
     Array.Clear(_spriteMask);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLastSpriteIndex(int value)
-  {
-    _status &= Status.All;
-    _status |= (Status)value;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

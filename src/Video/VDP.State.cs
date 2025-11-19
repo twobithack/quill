@@ -32,7 +32,7 @@ public sealed partial class VDP
   private byte _hLineCounter;
   private byte _vScroll;
 
-  private bool _controlWritePending;
+  private bool _controlWriteLatch;
   private bool _hLineInterruptPending;
   private bool _vCounterJumped;
   private bool _vBlankCompleted;
@@ -94,10 +94,8 @@ public sealed partial class VDP
   private ushort SpritePatternTableAddress => TestRegisterBit(0x6, 2)
                                             ? (ushort)0x2000
                                             : (ushort)0x0000;
-  private ushort LegacySpritePatternTableAddress => (ushort)((_registers[0x6] & 0b_0000_0111) << 11);
 
   private byte BlankColor => ((byte)(_registers[0x7] & 0b_1111)).SetBit(4);
-  private byte LegacyBlankColor => (byte)(_registers[0x7] & 0b_1111);
 
   private ushort HScroll => _registers[0x8];
   
@@ -120,7 +118,7 @@ public sealed partial class VDP
     _vScroll = snapshot.VScroll;
     _addressBus = (ushort)(snapshot.ControlWord & 0b_0011_1111_1111_1111);
     _controlCode = (ControlCode)(snapshot.ControlWord >> 14);
-    _controlWritePending = snapshot.ControlWritePending;
+    _controlWriteLatch = snapshot.ControlWriteLatch;
     IRQ = snapshot.IRQ;
   }
 
@@ -136,7 +134,7 @@ public sealed partial class VDP
     snapshot.VScroll = _vScroll;
     snapshot.ControlWord = _addressBus;
     snapshot.ControlWord |= (ushort)((byte)_controlCode << 14);
-    snapshot.ControlWritePending = _controlWritePending;
+    snapshot.ControlWriteLatch = _controlWriteLatch;
     snapshot.IRQ = IRQ;
   }
 
