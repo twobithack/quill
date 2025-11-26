@@ -26,7 +26,7 @@ public ref partial struct Mapper
               : (byte)0x0;
     _slot0 = GetBank(bank0);
     _slot1 = GetBank(0x1);
-    _vectors = _rom[..VECTORS_SIZE];
+    _vectors = _slot0[..VECTORS_SIZE];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
