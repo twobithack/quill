@@ -20,7 +20,7 @@ public class SoundTests
     }
     while (steps > 0);
 
-    var state = cpu.ReadState();
+    var state = cpu.SaveState();
     Assert.Equal(320, state.Tones[0]);
     Assert.Equal(320, state.Tones[1]);
     Assert.Equal(320, state.Tones[2]);
@@ -48,7 +48,7 @@ public class SoundTests
     }
     while (steps > 0);
 
-    var state = cpu.ReadState();
+    var state = cpu.SaveState();
     Assert.Equal(254, state.Tones[0]);
     Assert.Equal(254, state.Tones[1]);
     Assert.Equal(254, state.Tones[2]);
@@ -76,7 +76,7 @@ public class SoundTests
     }
     while (steps > 0);
 
-    var state = cpu.ReadState();
+    var state = cpu.SaveState();
     Assert.Equal(214, state.Tones[0]);
     Assert.Equal(214, state.Tones[1]);
     Assert.Equal(214, state.Tones[2]);
@@ -104,7 +104,7 @@ public class SoundTests
     }
     while (steps > 0);
 
-    var state = cpu.ReadState();
+    var state = cpu.SaveState();
     Assert.Equal(170, state.Tones[0]);
     Assert.Equal(170, state.Tones[1]);
     Assert.Equal(170, state.Tones[2]);

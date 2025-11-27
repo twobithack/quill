@@ -30,7 +30,7 @@ public ref partial struct Mapper
     program.AsSpan(headerOffset, romLength).CopyTo(paddedROM);
 
     _rom   = paddedROM;
-    _wram   = new byte[BANK_SIZE];
+    _wram  = new byte[BANK_SIZE];
     _sram0 = new byte[BANK_SIZE*2];
     _sram1 = new byte[BANK_SIZE*2];
     _sram  = _sram0;

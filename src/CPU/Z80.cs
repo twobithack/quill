@@ -276,7 +276,7 @@ unsafe public ref partial struct Z80
   private readonly byte ReadPort(byte port) => _bus.ReadPort(port);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private readonly void WritePort(byte port, byte value) => _bus.WritePort(port, value);
+  private void WritePort(byte port, byte value) => _bus.WritePort(port, value);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte ReadByteOperand(Operand operand)

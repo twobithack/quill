@@ -19,7 +19,7 @@ public class SnapshotTests
     var loadedState = TestHelpers.LoadState("SMSmemtest_RAM");
     cpu.LoadState(loadedState);
 
-    var savedState = cpu.ReadState();
+    var savedState = cpu.SaveState();
     Assert.Equal(loadedState, savedState);
   }
 
@@ -38,7 +38,7 @@ public class SnapshotTests
     }
     while (cpu.PC != SMSMEMTEST_RAM_TEST_HOOK);
 
-    var state = cpu.ReadState();
+    var state = cpu.SaveState();
     var targetState = TestHelpers.LoadState("SMSmemtest_RAM");
     Assert.Equal(state, targetState);
 
@@ -65,7 +65,7 @@ public class SnapshotTests
     }
     while (cpu.PC != SMSMEMTEST_VRAM_TEST_HOOK);
 
-    var state = cpu.ReadState();
+    var state = cpu.SaveState();
     var targetState = TestHelpers.LoadState("SMSmemtest_VRAM");
     Assert.Equal(state, targetState);
 
@@ -92,7 +92,7 @@ public class SnapshotTests
     }
     while (cpu.PC != SMSMEMTEST_SRAM_TEST_HOOK);
 
-    var state = cpu.ReadState();
+    var state = cpu.SaveState();
     var targetState = TestHelpers.LoadState("SMSmemtest_SRAM");
     Assert.Equal(state, targetState);
 
@@ -118,7 +118,7 @@ public class SnapshotTests
       }
       while (cpu.PC != ZEXDOC_TEST_CASE_HOOK);
 
-      var state = cpu.ReadState();
+      var state = cpu.SaveState();
       var targetState = TestHelpers.LoadState($"zexdoc_{testCase:D2}");
       Assert.Equal(state, targetState);
 
@@ -145,7 +145,7 @@ public class SnapshotTests
       }
       while (cpu.PC != ZEXDOC_TEST_CASE_HOOK);
 
-      var state = cpu.ReadState();
+      var state = cpu.SaveState();
       var targetState = TestHelpers.LoadState($"zexdoc_{testCase:D2}");
       Assert.Equal(state, targetState);
 

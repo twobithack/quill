@@ -73,7 +73,7 @@ public ref struct Bus
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public readonly void WritePort(byte port, byte value)
+  public void WritePort(byte port, byte value)
   {
     switch (port & PORT_MASK)
     {
