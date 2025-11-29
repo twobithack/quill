@@ -6,7 +6,7 @@ using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
-public ref partial struct Mapper
+public ref partial struct MemoryMap
 {
   #region Constants
   private const ushort JANGGUN_SLOT0_CONTROL = 0x4000;
@@ -17,14 +17,10 @@ public ref partial struct Mapper
   private const ushort JANGGUN_SLOT5_CONTROL = 0xFFFF;
   #endregion
 
+  private ReadOnlySpan<byte> _reversed;
+
   #region Methods
-  private void InitializeSlotsJanggun()
-  {
-    AllocateReversedROM();
-    _slot0 = GetBank(0x0);
-    _slot1 = GetBank(0x1);
-    _vectors = _rom[..VECTORS_SIZE];
-  }
+  private void InitializeMapperJanggun() => AllocateReversedBytes();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteJanggun(ushort address, byte value)
@@ -70,6 +66,9 @@ public ref partial struct Mapper
 
   private void RemapSlotsJanggun()
   {
+    _vectors = _rom[..VECTORS_SIZE];
+    _slot0 = GetBank(0x00);
+    _slot1 = GetBank(0x01);
     _slot2 = GetBankJanggun(_slotControl0);
     _slot3 = GetBankJanggun(_slotControl1);
     _slot4 = GetBankJanggun(_slotControl2);
@@ -80,13 +79,13 @@ public ref partial struct Mapper
   {
     var index = controlByte & _bankMask;
     return ReverseFlagSet(controlByte)
-         ? _romReversed.Slice(index * BANK_SIZE, BANK_SIZE)
+         ? _reversed.Slice(index * BANK_SIZE, BANK_SIZE)
          : _rom.Slice(index * BANK_SIZE, BANK_SIZE);
   }
 
   private readonly void SetSlot(ref byte slot, byte value) => slot = ReverseFlagSet(slot)
-                                                            ? value.SetBit(6)
-                                                            : value.ResetBit(6);
+                                                                   ? value.SetBit(6)
+                                                                   : value.ResetBit(6);
 
   private readonly void SetSlotPair(ref byte lowSlot, ref byte highSlot, byte value)
   {
@@ -96,12 +95,12 @@ public ref partial struct Mapper
     highSlot = (byte)(lowIndex.Increment() | reverseFlag);
   }
 
-  private void AllocateReversedROM()
+  private void AllocateReversedBytes()
   {
     var reversed = new byte[_rom.Length];
     for (var index = 0; index < _rom.Length; index++)
       reversed[index] = ReverseByte(_rom[index]);
-    _romReversed = reversed;
+    _reversed = reversed;
   }
 
   private static byte ReverseByte(byte value)

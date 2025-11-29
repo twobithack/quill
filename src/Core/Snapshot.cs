@@ -66,9 +66,9 @@ public sealed class Snapshot : IEquatable<Snapshot>
 
   public Snapshot()
   {
-    WRAM = new byte[Mapper.WRAM_SIZE];
-    SRAM0 = new byte[Mapper.SRAM_SIZE];
-    SRAM1 = new byte[Mapper.SRAM_SIZE];
+    WRAM = new byte[MemoryMap.WRAM_SIZE];
+    SRAM0 = new byte[MemoryMap.SRAM_SIZE];
+    SRAM1 = new byte[MemoryMap.SRAM_SIZE];
     Palette = new int[VDP.CRAM_SIZE];
     VRAM = new byte[VDP.VRAM_SIZE];
     VRegisters = new byte[VDP.REGISTER_COUNT];
@@ -131,7 +131,7 @@ public sealed class Snapshot : IEquatable<Snapshot>
     if (VScroll              != other.VScroll)                  return false;
     if (HLineCounter         != other.HLineCounter)             return false;
     if (HLinePending         != other.HLinePending)             return false;
-    if (ControlWriteLatch   != other.ControlWriteLatch)      return false;
+    if (ControlWriteLatch    != other.ControlWriteLatch)        return false;
     if (IRQ                  != other.IRQ)                      return false;
     if (ChannelLatch         != other.ChannelLatch)             return false;
     if (VolumeLatch          != other.VolumeLatch)              return false;

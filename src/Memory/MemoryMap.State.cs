@@ -8,9 +8,10 @@ using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
-unsafe public ref partial struct Mapper
+public ref partial struct MemoryMap
 {
   #region Fields
+  private readonly ReadOnlySpan<byte> _bios;
   private readonly ReadOnlySpan<byte> _rom;
   private readonly Span<byte> _sram0;
   private readonly Span<byte> _sram1;
@@ -23,9 +24,10 @@ unsafe public ref partial struct Mapper
   private ReadOnlySpan<byte> _slot3;
   private ReadOnlySpan<byte> _slot4;
   private ReadOnlySpan<byte> _slot5;
+  private Span<byte> _slot6;
   private Span<byte> _sram;
 
-  private readonly MapperType _mapper;
+  private readonly MapperType _cartridgeMapper;
   private readonly int _bankCount;
   private readonly byte _bankMask;
 
@@ -37,14 +39,15 @@ unsafe public ref partial struct Mapper
   private bool _sramEnable;
   private bool _sramSelect;
 
-  private ReadOnlySpan<byte> _romReversed;
+  private readonly bool _biosLoaded;
+  private readonly Span<byte> _unmapped = new byte[BANK_SIZE];
   #endregion
 
   #region Properties
-  private readonly bool EnableBIOS      => !_memoryControl.TestBit(3);
+  private readonly bool EnableBIOS      => !_memoryControl.TestBit(3) && _biosLoaded;
   private readonly bool EnableWRAM      => !_memoryControl.TestBit(4);
   private readonly bool EnableCard      => !_memoryControl.TestBit(5);
-  private readonly bool EnableCartridge => !_memoryControl.TestBit(6);
+  private readonly bool EnableCartridge => !_memoryControl.TestBit(6) || !_biosLoaded;
   private readonly bool EnableExpansion => !_memoryControl.TestBit(7);
   #endregion
 

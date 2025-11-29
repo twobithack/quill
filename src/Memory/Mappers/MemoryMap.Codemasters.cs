@@ -4,18 +4,18 @@ using Quill.Common.Extensions;
 
 namespace Quill.Memory;
 
-public ref partial struct Mapper
+public ref partial struct MemoryMap
 {
   #region Constants
   private const ushort CODEMASTERS_SLOT_SIZE = BANK_SIZE * 2;
   #endregion
 
   #region Methods
-  private void InitializeSlotsCodemasters()
+  private void InitializeMapperCodemasters()
   {
-    _slotControl0 = 0x0;
-    _slotControl1 = 0x1;
-    _slotControl2 = 0x1;
+    _slotControl0 = 0x00;
+    _slotControl1 = 0x01;
+    _slotControl2 = 0x01;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,7 +47,6 @@ public ref partial struct Mapper
     GetBankPair(_slotControl0, out _slot0, out _slot1);
     GetBankPair(_slotControl1, out _slot2, out _slot3);
     GetBankPair(_slotControl2, out _slot4, out _slot5);
-    
     _vectors = _slot0[..VECTORS_SIZE];
   }
 

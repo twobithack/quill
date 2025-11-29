@@ -27,10 +27,14 @@
       <IncludeInSingleFile>true</IncludeInSingleFile>
       <LogicalName>icon.rgba</LogicalName>
     </EmbeddedResource>
-    <Content Include="..\config.json" Link="config.json">
+    <None Include="..\bios.sms" Condition="Exists('..\bios.sms')">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </None>
+    <None Include="..\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-  </Content>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -40,7 +44,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <NoWarn>8509</NoWarn>
+    <NoWarn>CS0282,CA1869,CS8509</NoWarn>
   </PropertyGroup>
 
 </Project>

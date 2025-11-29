@@ -2,7 +2,7 @@ namespace Quill.Memory.Definitions;
 
 public enum MapperType
 {
-  SEGA,
+  Sega,
   Codemasters,
   Korean,
   MSX,

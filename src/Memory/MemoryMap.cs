@@ -7,7 +7,7 @@ using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
-public ref partial struct Mapper
+public ref partial struct MemoryMap
 {
   #region Constants
   public const ushort WRAM_SIZE     = 0x2000;
@@ -19,24 +19,24 @@ public ref partial struct Mapper
   private const ushort WRAM_BASE    = 0xC000;
   #endregion
 
-  public Mapper(byte[] program)
+  public MemoryMap(byte[] bios, byte[] program)
   {
     var headerOffset = GetHeaderOffset(program);
     var romLength = program.Length - headerOffset;
     _bankCount = (romLength + BANK_SIZE - 1) / BANK_SIZE;
     _bankMask = GetBankMask(_bankCount);
 
-    var paddedROM = new byte[_bankCount * BANK_SIZE];
-    program.AsSpan(headerOffset, romLength).CopyTo(paddedROM);
-
-    _rom   = paddedROM;
-    _wram  = new byte[BANK_SIZE];
-    _sram0 = new byte[BANK_SIZE*2];
-    _sram1 = new byte[BANK_SIZE*2];
+    _rom   = PadToBankSize(program);
+    _wram  = new byte[WRAM_SIZE];
+    _sram0 = new byte[SRAM_SIZE];
+    _sram1 = new byte[SRAM_SIZE];
     _sram  = _sram0;
 
-    _mapper = DetectMapperType(program);
-    InitializeSlots();
+    _bios = PadToBankSize(bios);
+    _biosLoaded = !_bios.IsEmpty;
+    _cartridgeMapper = DetectMapperType(program);
+    InitializeMapper();
+    RemapSlots();
   }
 
   #region Methods
@@ -57,16 +57,22 @@ public ref partial struct Mapper
       3 => _slot3[index], // 0x6000 - 0x7FFF
       4 => _slot4[index], // 0x8000 - 0x9FFF
       5 => _slot5[index], // 0xA000 - 0xBFFF
-      _ => _wram[index]   // 0xC000 - 0xDFFF (or 0xE000 - 0xFFFF mirror)
+      _ => _slot6[index]  // 0xC000 - 0xDFFF (or 0xE000 - 0xFFFF mirror)
     };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteByte(ushort address, byte value)
   {
-    switch (_mapper)
+    if (EnableBIOS)
     {
-      case MapperType.SEGA:        WriteByteSEGA(address, value);        return;
+      WriteByteBIOS(address, value);
+      return;
+    }
+
+    switch (_cartridgeMapper)
+    {
+      case MapperType.Sega:        WriteByteSega(address, value);        return;
       case MapperType.Codemasters: WriteByteCodemasters(address, value); return;
       case MapperType.Korean:      WriteByteKorean(address, value);      return;
       case MapperType.MSX:         WriteByteMSX(address, value);         return;
@@ -85,7 +91,7 @@ public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteWord(ushort address, ushort word)
   {
-    WriteByte(address, word.LowByte());
+    WriteByte(address,             word.LowByte());
     WriteByte(address.Increment(), word.HighByte());
   }
 
@@ -99,33 +105,61 @@ public ref partial struct Mapper
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private readonly void WriteWRAM(ushort address, byte value)
   {
+    if (!EnableWRAM)
+      return;
+
     var index = address & (BANK_SIZE - 1);
     _wram[index] = value;
   }
 
-  private void InitializeSlots()
+  private void InitializeMapper()
   {
-    switch (_mapper)
+    switch (_cartridgeMapper)
     {
-      case MapperType.SEGA:        InitializeSlotsSEGA();        break;
-      case MapperType.Codemasters: InitializeSlotsCodemasters(); break;
-      case MapperType.Korean:      InitializeSlotsKorean();      break;
-      case MapperType.MSX:         InitializeSlotsMSX();         break;
-      case MapperType.Janggun:     InitializeSlotsJanggun();     break;
+      case MapperType.Sega:        InitializeMapperSega();        break;
+      case MapperType.Codemasters: InitializeMapperCodemasters(); break;
+      case MapperType.Korean:      InitializeMapperKorean();      break;
+      case MapperType.MSX:         InitializeMapperMSX();         break;
+      case MapperType.Janggun:     InitializeMapperJanggun();     break;
     }
-    RemapSlots();
   }
 
   private void RemapSlots()
   {
-    switch (_mapper)
+    _slot6 = EnableWRAM
+           ? _wram
+           : _unmapped;
+
+    if (EnableBIOS)
     {
-      case MapperType.SEGA:        RemapSlotsSEGA();        return;
+      RemapSlotsBIOS();
+      return;
+    }
+    else if (!EnableCartridge)
+    {
+      UnmapSlots();
+      return;
+    }
+    
+    switch (_cartridgeMapper)
+    {
+      case MapperType.Sega:        RemapSlotsSega();        return;
       case MapperType.Codemasters: RemapSlotsCodemasters(); return;
       case MapperType.Korean:      RemapSlotsKorean();      return;
       case MapperType.MSX:         RemapSlotsMSX();         return;
       case MapperType.Janggun:     RemapSlotsJanggun();     return;
     }
+  }
+
+  private void UnmapSlots()
+  {
+    _vectors = _unmapped[..VECTORS_SIZE];
+    _slot0   = _unmapped;
+    _slot1   = _unmapped;
+    _slot2   = _unmapped;
+    _slot3   = _unmapped;
+    _slot4   = _unmapped;
+    _slot5   = _unmapped;
   }
 
   private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
@@ -163,7 +197,7 @@ public ref partial struct Mapper
   private static MapperType DetectMapperType(byte[] rom)
   {
     if (rom.Length < BANK_SIZE * 4)
-      return MapperType.SEGA;
+      return MapperType.Sega;
 
     if (HasCodemastersHeader(rom))
       return MapperType.Codemasters;
@@ -179,7 +213,7 @@ public ref partial struct Mapper
     if (HasJanggunHash(hash))
       return MapperType.Janggun;
 
-    return MapperType.SEGA;
+    return MapperType.Sega;
   }
 
   private static int GetHeaderOffset(ReadOnlySpan<byte> rom)
@@ -195,6 +229,19 @@ public ref partial struct Mapper
     var headerOffset = GetHeaderOffset(rom);
     var hash = Crc32.Hash(rom[headerOffset..]);
     return BitConverter.ToUInt32(hash);
+  }
+
+  private static ReadOnlySpan<byte> PadToBankSize(byte[] rom)
+  {
+    var remainder = rom.Length % BANK_SIZE;
+    if (remainder == 0)
+      return rom;
+
+    var padding = BANK_SIZE - remainder;
+    var paddedSize = rom.Length + padding;
+
+    Array.Resize(ref rom, paddedSize);
+    return rom.AsSpan();
   }
   #endregion
 }

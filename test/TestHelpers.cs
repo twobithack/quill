@@ -12,7 +12,7 @@ internal class TestHelpers
   internal static void BuildMachine(string program, out Z80 cpu, out VDP vdp)
   {
     var rom = LoadProgram(program);
-    var memory = new Mapper(rom);
+    var memory = new MemoryMap([], rom);
     var psg = new PSG(new NullAudioSink());
     vdp = new VDP(new Framebuffer());
     var bus = new Bus(memory, new(), psg, vdp);

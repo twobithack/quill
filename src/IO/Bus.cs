@@ -14,13 +14,13 @@ public ref struct Bus
   #endregion
 
   #region Fields
-  private Mapper _memory;
+  private MemoryMap _memory;
   private readonly Ports _io;
   private readonly PSG _psg;
   private readonly VDP _vdp;
   #endregion
 
-  public Bus(Mapper memory, Ports ports, PSG psg, VDP vdp)
+  public Bus(MemoryMap memory, Ports ports, PSG psg, VDP vdp)
   {
     _memory = memory;
     _io = ports;

@@ -4,23 +4,14 @@ using Quill.Memory.Definitions;
 
 namespace Quill.Memory;
 
-public ref partial struct Mapper
+public ref partial struct MemoryMap
 {
   #region Constants
-  private const ushort KOREAN_SLOT2_CONTROL = 0xA000;
+  private const ushort KOREAN_SLOT_CONTROL = 0xA000;
   #endregion
 
   #region Methods
-  private void InitializeSlotsKorean()
-  {
-    _slotControl2 = 0x1;
-    
-    _slot0 = GetBank(0x0);
-    _slot1 = GetBank(0x1);
-    _slot2 = GetBank(0x2);
-    _slot3 = GetBank(0x3);
-    _vectors = _rom[..VECTORS_SIZE];
-  }
+  private void InitializeMapperKorean() => _slotControl0 = 0x01;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void WriteByteKorean(ushort address, byte value)
@@ -29,14 +20,20 @@ public ref partial struct Mapper
     {
       WriteWRAM(address, value);
     }
-    else if (address == KOREAN_SLOT2_CONTROL)
+    else if (address == KOREAN_SLOT_CONTROL)
     {
-      _slotControl2 = value;
+      _slotControl0 = value;
       RemapSlotsKorean();
     }
   }
 
-  private void RemapSlotsKorean() => GetBankPair(_slotControl2, out _slot4, out _slot5);
+  private void RemapSlotsKorean()
+  {
+    _vectors = _rom[..VECTORS_SIZE];
+    GetBankPair(0x00,          out _slot0, out _slot1);
+    GetBankPair(0x01,          out _slot2, out _slot3);
+    GetBankPair(_slotControl0, out _slot4, out _slot5);
+  }
 
   private static bool HasKnownKoreanHash(uint crc) => Hashes.Korean.Contains(crc);
   #endregion

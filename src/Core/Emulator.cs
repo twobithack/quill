@@ -14,6 +14,7 @@ unsafe public sealed class Emulator
   private readonly Framebuffer _framebuffer;
   private readonly Resampler _resampler;
   private readonly Ports _ports;
+  private readonly byte[] _bios;
   private readonly byte[] _rom;
 
   private readonly RingBuffer<Snapshot> _history;
@@ -27,11 +28,12 @@ unsafe public sealed class Emulator
   private volatile bool _savingEnabled;
   #endregion
 
-  public Emulator(byte[] rom, string savePath, Configuration config)
+  public Emulator(byte[] bios, byte[] rom, string savePath, Configuration config)
   {
     _framebuffer = new Framebuffer();
     _resampler = new Resampler(config);
     _ports = new Ports();
+    _bios = bios;
     _rom = rom;
 
     _history = new RingBuffer<Snapshot>(config.Rewind.SnapshotCount);
@@ -42,14 +44,15 @@ unsafe public sealed class Emulator
   #region Methods
   public void Run()
   {
-    var memory = new Mapper(_rom);
+    var memory = new MemoryMap(_bios, _rom);
     var psg = new PSG(_resampler);
     var vdp = new VDP(_framebuffer);
     var bus = new Bus(memory, _ports, psg, vdp);
     var cpu = new Z80(bus);
-    var frameCounter = 0;
 
+    var frameCounter = 0;
     _running = true;
+
     while (_running)
     {
       while (!vdp.FrameCompleted())
