@@ -57,12 +57,13 @@ public ref partial struct MemoryMap
     state.WRAM.AsSpan(0, BANK_SIZE).CopyTo(_wram);
     state.SRAM0.AsSpan().CopyTo(_sram0);
     state.SRAM1.AsSpan().CopyTo(_sram1);
-    _slotControl0 = state.SlotControl0;
-    _slotControl1 = state.SlotControl1;
-    _slotControl2 = state.SlotControl2;
-    _slotControl3 = state.SlotControl3;
-    _sramEnable   = state.EnableSRAM;
-    _sramSelect   = state.SelectSRAM;
+    _memoryControl = state.MemoryControl;
+    _slotControl0  = state.SlotControl0;
+    _slotControl1  = state.SlotControl1;
+    _slotControl2  = state.SlotControl2;
+    _slotControl3  = state.SlotControl3;
+    _sramEnable    = state.EnableSRAM;
+    _sramSelect    = state.SelectSRAM;
     RemapSlots();
   }
 
@@ -71,12 +72,13 @@ public ref partial struct MemoryMap
     _wram.CopyTo(state.WRAM);
     _sram0.CopyTo(state.SRAM0);
     _sram1.CopyTo(state.SRAM1);
-    state.SlotControl0 = _slotControl0;
-    state.SlotControl1 = _slotControl1;
-    state.SlotControl2 = _slotControl2;
-    state.SlotControl3 = _slotControl3;
-    state.EnableSRAM   = _sramEnable;
-    state.SelectSRAM   = _sramSelect;
+    state.MemoryControl = _memoryControl;
+    state.SlotControl0  = _slotControl0;
+    state.SlotControl1  = _slotControl1;
+    state.SlotControl2  = _slotControl2;
+    state.SlotControl3  = _slotControl3;
+    state.EnableSRAM    = _sramEnable;
+    state.SelectSRAM    = _sramSelect;
   }
 
   public readonly void DumpWRAM(string path)
