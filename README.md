@@ -34,7 +34,7 @@ Configuration options can be found in [`config.json`](/config.json).
 
 ### BIOS
 
-Optionally, a BIOS may be provided by placing a file named `bios.sms` in the same directory as the executable (maximum size: 48 KB). If no BIOS is provided, the emulator will boot the ROM directly.
+Optionally, a BIOS may be provided by placing a file named `bios.sms` in the same directory as the executable. If no BIOS is provided, the emulator will boot the ROM directly.
 
 ## Keymap
 
