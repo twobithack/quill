@@ -21,19 +21,23 @@ public ref partial struct MemoryMap
 
   public MemoryMap(byte[] bios, byte[] program)
   {
-    var headerOffset = GetHeaderOffset(program);
-    var romLength = program.Length - headerOffset;
-    _bankCount = (romLength + BANK_SIZE - 1) / BANK_SIZE;
-    _bankMask = GetBankMask(_bankCount);
+    _bios = PadToBankSize(bios);
+    if (!_bios.IsEmpty)
+    {
+      _biosLoaded = true;
+      _biosBankCount = _bios.Length / BANK_SIZE;
+      _biosBankMask = GetBankMask(_biosBankCount);
+    }
 
-    _rom   = PadToBankSize(program);
+    _rom = PadToBankSize(program);
+    _romBankCount = _rom.Length / BANK_SIZE;
+    _romBankMask = GetBankMask(_romBankCount);
+
     _wram  = new byte[WRAM_SIZE];
     _sram0 = new byte[SRAM_SIZE];
     _sram1 = new byte[SRAM_SIZE];
     _sram  = _sram0;
-
-    _bios = PadToBankSize(bios);
-    _biosLoaded = !_bios.IsEmpty;
+    
     _cartridgeMapper = DetectMapperType(program);
     InitializeMapper();
     RemapSlots();
@@ -98,7 +102,12 @@ public ref partial struct MemoryMap
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void WriteControl(byte value)
   {
+    var biosToggled = value.TestBit(3) ^ _memoryControl.TestBit(3);
     _memoryControl = value;
+
+    if (biosToggled && _biosLoaded)
+      InitializeMapper();
+    
     RemapSlots();
   }
 
@@ -114,6 +123,12 @@ public ref partial struct MemoryMap
 
   private void InitializeMapper()
   {
+    if (EnableBIOS)
+    {
+      InitializeMapperBIOS();
+      return;
+    }
+
     switch (_cartridgeMapper)
     {
       case MapperType.Sega:        InitializeMapperSega();        break;
@@ -164,8 +179,8 @@ public ref partial struct MemoryMap
 
   private readonly ReadOnlySpan<byte> GetBank(byte controlByte)
   {
-    var index = controlByte & _bankMask;
-    var mirrored = index % _bankCount;
+    var index = controlByte & _romBankMask;
+    var mirrored = index % _romBankCount;
     return _rom.Slice(mirrored * BANK_SIZE, BANK_SIZE);
   }
 

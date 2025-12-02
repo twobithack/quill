@@ -28,8 +28,10 @@ public ref partial struct MemoryMap
   private Span<byte> _sram;
 
   private readonly MapperType _cartridgeMapper;
-  private readonly int _bankCount;
-  private readonly byte _bankMask;
+  private readonly int _biosBankCount;
+  private readonly byte _biosBankMask;
+  private readonly int _romBankCount;
+  private readonly byte _romBankMask;
 
   private byte _memoryControl;
   private byte _slotControl0;

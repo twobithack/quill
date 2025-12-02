@@ -77,7 +77,7 @@ public ref partial struct MemoryMap
 
   private readonly ReadOnlySpan<byte> GetBankJanggun(byte controlByte)
   {
-    var index = controlByte & _bankMask;
+    var index = controlByte & _romBankMask;
     return ReverseFlagSet(controlByte)
          ? _reversed.Slice(index * BANK_SIZE, BANK_SIZE)
          : _rom.Slice(index * BANK_SIZE, BANK_SIZE);
@@ -90,7 +90,7 @@ public ref partial struct MemoryMap
   private readonly void SetSlotPair(ref byte lowSlot, ref byte highSlot, byte value)
   {
     var reverseFlag = value & 0b_0100_0000;
-    var lowIndex = (byte)((value << 1) & _bankMask);
+    var lowIndex = (byte)((value << 1) & _romBankMask);
     lowSlot  = (byte)(lowIndex             | reverseFlag);
     highSlot = (byte)(lowIndex.Increment() | reverseFlag);
   }
