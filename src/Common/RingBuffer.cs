@@ -9,8 +9,8 @@ public sealed class RingBuffer<T> where T : new()
   public RingBuffer(int capacity)
   {
     _buffer = new T[capacity];
-    for (var i = 0; i < capacity; i++)
-      _buffer[i] = new T();
+    for (var slot = 0; slot < capacity; slot++)
+      _buffer[slot] = new T();
   }
 
   public ref T AcquireSlot()
