@@ -19,26 +19,26 @@ public ref partial struct MemoryMap
   private const ushort WRAM_BASE    = 0xC000;
   #endregion
 
-  public MemoryMap(byte[] bios, byte[] program)
+  public MemoryMap(byte[] bios, byte[] rom)
   {
-    _bios = PadToBankSize(bios);
-    if (!_bios.IsEmpty)
-    {
-      _biosLoaded = true;
-      _biosBankCount = _bios.Length / BANK_SIZE;
-      _biosBankMask = GetBankMask(_biosBankCount);
-    }
-
-    _rom = PadToBankSize(program);
-    _romBankCount = _rom.Length / BANK_SIZE;
-    _romBankMask = GetBankMask(_romBankCount);
-
     _wram  = new byte[WRAM_SIZE];
     _sram0 = new byte[SRAM_SIZE];
     _sram1 = new byte[SRAM_SIZE];
     _sram  = _sram0;
-    
-    _cartridgeMapper = DetectMapperType(program);
+
+    if (bios.Length != 0)
+    {
+      _bios = PadToBankSize(bios);
+      _biosBankCount = _bios.Length / BANK_SIZE;
+      _biosBankMask = GetBankMask(_biosBankCount);
+      _biosLoaded = true;
+    }
+
+    _rom = PadToBankSize(rom);
+    _romBankCount = _rom.Length / BANK_SIZE;
+    _romBankMask = GetBankMask(_romBankCount);
+
+    _cartridgeMapper = DetectMapperType(rom);
     InitializeMapper();
     RemapSlots();
   }
@@ -107,7 +107,7 @@ public ref partial struct MemoryMap
 
     if (biosToggled && _biosLoaded)
       InitializeMapper();
-    
+
     RemapSlots();
   }
 
@@ -155,7 +155,7 @@ public ref partial struct MemoryMap
       UnmapSlots();
       return;
     }
-    
+
     switch (_cartridgeMapper)
     {
       case MapperType.Sega:        RemapSlotsSega();        return;
