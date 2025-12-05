@@ -1,11 +1,4 @@
-﻿using Quill.Core;
-using Quill.CPU;
-using Quill.IO;
-using Quill.Memory;
-using Quill.Sound;
-using Quill.Video;
-
-namespace Quill.Tests;
+﻿namespace Quill.Tests;
 
 public class SnapshotTests
 {
@@ -19,14 +12,21 @@ public class SnapshotTests
   #endregion
 
   [Fact]
+  public void SerializationTest()
+  {
+    TestHelpers.BuildMachine("SMSmemtest", out var cpu, out _);
+
+    var loadedState = TestHelpers.LoadState("SMSmemtest_RAM");
+    cpu.LoadState(loadedState);
+
+    var savedState = cpu.SaveState();
+    Assert.Equal(loadedState, savedState);
+  }
+
+  [Fact]
   public void SMSmemtestRAM()
   {
-    var rom = LoadROM("SMSmemtest");
-    var memory = new Mapper(rom);
-    var psg = new PSG(new NullAudioSink());
-    var vdp = new VDP(new Framebuffer());
-    var bus = new Bus(memory, new(), psg, vdp);
-    var cpu = new Z80(bus);
+    TestHelpers.BuildMachine("SMSmemtest", out var cpu, out var vdp);
 
     var steps = TEST_CASE_STEP_LIMIT;
     do
@@ -38,26 +38,21 @@ public class SnapshotTests
     }
     while (cpu.PC != SMSMEMTEST_RAM_TEST_HOOK);
 
-    var state = cpu.ReadState();
-    var targetState = LoadState("SMSmemtest_RAM");
+    var state = cpu.SaveState();
+    var targetState = TestHelpers.LoadState("SMSmemtest_RAM");
     Assert.Equal(state, targetState);
 
     var frame = vdp.ReadFramebuffer();
-    var targetFrame = LoadFrame("SMSmemtest_RAM");
+    var targetFrame = TestHelpers.LoadFrame("SMSmemtest_RAM");
     Assert.Equal(frame, targetFrame);
   }
 
   [Fact]
   public void SMSmemtestVRAM()
   {
-    var rom = LoadROM("SMSmemtest");
-    var memory = new Mapper(rom);
-    var psg = new PSG(new NullAudioSink());
-    var vdp = new VDP(new Framebuffer());
-    var bus = new Bus(memory, new(), psg, vdp);
-    var cpu = new Z80(bus);
+    TestHelpers.BuildMachine("SMSmemtest", out var cpu, out var vdp);
 
-    var initialState = LoadState("SMSmemtest_VRAM_init");
+    var initialState = TestHelpers.LoadState("SMSmemtest_VRAM_init");
     cpu.LoadState(initialState);
 
     var steps = TEST_CASE_STEP_LIMIT;
@@ -70,26 +65,21 @@ public class SnapshotTests
     }
     while (cpu.PC != SMSMEMTEST_VRAM_TEST_HOOK);
 
-    var state = cpu.ReadState();
-    var targetState = LoadState("SMSmemtest_VRAM");
+    var state = cpu.SaveState();
+    var targetState = TestHelpers.LoadState("SMSmemtest_VRAM");
     Assert.Equal(state, targetState);
 
     var frame = vdp.ReadFramebuffer();
-    var targetFrame = LoadFrame("SMSmemtest_VRAM");
+    var targetFrame = TestHelpers.LoadFrame("SMSmemtest_VRAM");
     Assert.Equal(frame, targetFrame);
   }
 
   [Fact]
   public void SMSmemtestSRAM()
   {
-    var rom = LoadROM("SMSmemtest");
-    var memory = new Mapper(rom);
-    var psg = new PSG(new NullAudioSink());
-    var vdp = new VDP(new Framebuffer());
-    var bus = new Bus(memory, new(), psg, vdp);
-    var cpu = new Z80(bus);
+    TestHelpers.BuildMachine("SMSmemtest", out var cpu, out var vdp);
 
-    var initialState = LoadState("SMSmemtest_SRAM_init");
+    var initialState = TestHelpers.LoadState("SMSmemtest_SRAM_init");
     cpu.LoadState(initialState);
 
     var steps = TEST_CASE_STEP_LIMIT;
@@ -102,24 +92,19 @@ public class SnapshotTests
     }
     while (cpu.PC != SMSMEMTEST_SRAM_TEST_HOOK);
 
-    var state = cpu.ReadState();
-    var targetState = LoadState("SMSmemtest_SRAM");
+    var state = cpu.SaveState();
+    var targetState = TestHelpers.LoadState("SMSmemtest_SRAM");
     Assert.Equal(state, targetState);
-    
+
     var frame = vdp.ReadFramebuffer();
-    var targetFrame = LoadFrame("SMSmemtest_SRAM");
+    var targetFrame = TestHelpers.LoadFrame("SMSmemtest_SRAM");
     Assert.Equal(frame, targetFrame);
   }
 
   [Fact]
   public void Zexdoc()
   {
-    var rom = LoadROM("zexdoc");
-    var memory = new Mapper(rom);
-    var psg = new PSG(new NullAudioSink());
-    var vdp = new VDP(new Framebuffer());
-    var bus = new Bus(memory, new(), psg, vdp);
-    var cpu = new Z80(bus);
+    TestHelpers.BuildMachine("zexdoc", out var cpu, out var vdp);
 
     for (int testCase = 0; testCase < 50; testCase++)
     {
@@ -133,12 +118,12 @@ public class SnapshotTests
       }
       while (cpu.PC != ZEXDOC_TEST_CASE_HOOK);
 
-      var state = cpu.ReadState();
-      var targetState = LoadState($"zexdoc_{testCase:D2}");
+      var state = cpu.SaveState();
+      var targetState = TestHelpers.LoadState($"zexdoc_{testCase:D2}");
       Assert.Equal(state, targetState);
 
       var frame = vdp.ReadFramebuffer();
-      var targetFrame = LoadFrame($"zexdoc_{testCase:D2}");
+      var targetFrame = TestHelpers.LoadFrame($"zexdoc_{testCase:D2}");
       Assert.Equal(frame, targetFrame);
     }
   }
@@ -146,12 +131,7 @@ public class SnapshotTests
   [Fact, Trait("Category", "Long")]
   public void ZexdocFull()
   {
-    var rom = LoadROM("zexdoc");
-    var memory = new Mapper(rom);
-    var psg = new PSG(new NullAudioSink());
-    var vdp = new VDP(new Framebuffer());
-    var bus = new Bus(memory, new(), psg, vdp);
-    var cpu = new Z80(bus);
+    TestHelpers.BuildMachine("zexdoc", out var cpu, out var vdp);
 
     for (int testCase = 0; testCase < 79; testCase++)
     {
@@ -165,17 +145,13 @@ public class SnapshotTests
       }
       while (cpu.PC != ZEXDOC_TEST_CASE_HOOK);
 
-      var state = cpu.ReadState();
-      var targetState = LoadState($"zexdoc_{testCase:D2}");
+      var state = cpu.SaveState();
+      var targetState = TestHelpers.LoadState($"zexdoc_{testCase:D2}");
       Assert.Equal(state, targetState);
 
       var frame = vdp.ReadFramebuffer();
-      var targetFrame = LoadFrame($"zexdoc_{testCase:D2}");
+      var targetFrame = TestHelpers.LoadFrame($"zexdoc_{testCase:D2}");
       Assert.Equal(frame, targetFrame);
     }
   }
-
-  private static byte[] LoadROM(string name) => File.ReadAllBytes($"roms/{name}.sms");
-  private static Snapshot LoadState(string name) => Snapshot.ReadFromFile($"states/{name}.state");
-  private static byte[] LoadFrame(string name) => File.ReadAllBytes($"frames/{name}.frame");
 }

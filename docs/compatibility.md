@@ -2,6 +2,7 @@
 
 ## WORKING
 * 20-em-1
+* Ace of Aces
 * Action Fighter
 * Addams Family
 * Aerial Assault
@@ -259,13 +260,12 @@
 * Zillion II: The Tri-Formation Cycle
 
 ## NOT WORKING
-* Ace of Aces (PAL)
 * Alex Kidd BMX Trial (paddle)
 * Alibaba and 40 Thieves
 * Block Hole
-* California Games II (PAL)
+* California Games II
 * Cosmic Spacehead
-* Desert Speedtrap Starring Roadrunner (PAL)
+* Desert Speedtrap Starring Roadrunner
 * Excellent Dizzy Collection
 * Galactic Protector (paddle)
 * Gangster Town (phaser)
@@ -278,14 +278,14 @@
 * Rambo III (phaser)
 * Rescue Mission (phaser)
 * Safari Hunt (phaser)
-* Sega Chess (PAL)
+* Sega Chess
 * Shooting Galery (phaser)
 * Space Gun (phaser)
 * Trap Shooting (phaser)
 * Wanted! (phaser)
 * Woody Pop (paddle)
 * Xyzolog
-* Zool: Warrior of the "Nth" Dimension (PAL)
+* Zool: Warrior of the "Nth" Dimension
 
 # SG-1000
 

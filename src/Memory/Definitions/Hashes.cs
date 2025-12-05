@@ -9,7 +9,7 @@ public static class Hashes
     0x61e8806f, // Flashpoint
     0x929222c4, // Jang Pung II
     0x18fb98a3, // Jang Pung 3
-    0x97d03541, // Samgukji III
+    0x97d03541  // Samgukji III
   ];
 
   public static readonly HashSet<uint> MSX = [
@@ -21,7 +21,7 @@ public static class Hashes
     0x445525e2, // Penguin Adventure
     0x83f0eede, // Street Master
     0x9195c34c, // Super Boy 3
-    0xa05258f5, // Wonsiin
+    0xa05258f5  // Wonsiin
   ];
 
   public static readonly uint Nemesis = 0xe316c06d;

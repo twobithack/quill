@@ -252,38 +252,12 @@ unsafe public ref partial struct Z80
     _bus.SaveState(state);
   }
 
-  public readonly Snapshot ReadState()
-  {
-    var state = new Snapshot
-    {
-      AF = AF,
-      BC = BC,
-      DE = DE,
-      HL = HL,
-      IX = IX,
-      IY = IY,
-      I = _i,
-      R = _r,
-      PC = _pc,
-      SP = _sp,
-      AFs = _afShadow,
-      BCs = _bcShadow,
-      DEs = _deShadow,
-      HLs = _hlShadow,
-      Halt = _halt,
-      IFF1 = _iff1,
-      IFF2 = _iff2
-    };
-    _bus.SaveState(state);
-    return state;
-  }
-
   public readonly string DumpRegisters()
   {
     return "╒══════════╤══════════╤══════════╤══════════╤═══════════╕\r\n" +
-           $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {IX.ToHex()} │ IY: {IY.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
-           $"│ AF: {AF.ToHex()} │ BC: {BC.ToHex()} │ DE: {DE.ToHex()} │ HL: {HL.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
-           $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
+          $"│ PC: {_pc.ToHex()} │ SP: {_sp.ToHex()} │ IX: {IX.ToHex()} │ IY: {IY.ToHex()} │ R: {_r.ToHex()}     │\r\n" +
+          $"│ AF: {AF.ToHex()} │ BC: {BC.ToHex()} │ DE: {DE.ToHex()} │ HL: {HL.ToHex()} │ IFF1: {_iff1.ToBit()}   │\r\n" +
+          $"│     {_afShadow.ToHex()} │     {_bcShadow.ToHex()} │     {_deShadow.ToHex()} │     {_hlShadow.ToHex()} │ IFF2: {_iff2.ToBit()}   │\r\n" +
            "╘══════════╧══════════╧══════════╧══════════╧═══════════╛";
   }
 

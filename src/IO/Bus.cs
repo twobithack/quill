@@ -14,13 +14,13 @@ public ref struct Bus
   #endregion
 
   #region Fields
-  private Mapper _memory;
+  private MemoryMap _memory;
   private readonly Ports _io;
   private readonly PSG _psg;
   private readonly VDP _vdp;
   #endregion
 
-  public Bus(Mapper memory, Ports ports, PSG psg, VDP vdp)
+  public Bus(MemoryMap memory, Ports ports, PSG psg, VDP vdp)
   {
     _memory = memory;
     _io = ports;
@@ -73,7 +73,7 @@ public ref struct Bus
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public readonly void WritePort(byte port, byte value)
+  public void WritePort(byte port, byte value)
   {
     switch (port & PORT_MASK)
     {

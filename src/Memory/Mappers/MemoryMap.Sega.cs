@@ -1,0 +1,81 @@
+using System.Runtime.CompilerServices;
+
+using Quill.Common.Extensions;
+
+namespace Quill.Memory;
+
+public ref partial struct MemoryMap
+{
+  #region Constants
+  private const ushort SEGA_SLOT_SIZE     = BANK_SIZE * 2;
+  private const ushort SEGA_SRAM_CONTROL  = 0xFFFC;
+  private const ushort SEGA_SLOT0_CONTROL = 0xFFFD;
+  private const ushort SEGA_SLOT1_CONTROL = 0xFFFE;
+  private const ushort SEGA_SLOT2_CONTROL = 0xFFFF;
+  #endregion
+
+  #region Methods
+  private void InitializeMapperSega()
+  {
+    _slotControl0 = 0x00;
+    _slotControl1 = 0x01;
+    _slotControl2 = 0x02;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void WriteByteSega(ushort address, byte value)
+  {
+    if (address == SEGA_SRAM_CONTROL)
+    {
+      _sramEnable = value.TestBit(3);
+      _sramSelect = value.TestBit(2);
+      RemapSlotsSega();
+    }
+    else if (address == SEGA_SLOT0_CONTROL)
+    {
+      _slotControl0 = value;
+      RemapSlotsSega();
+    }
+    else if (address == SEGA_SLOT1_CONTROL)
+    {
+      _slotControl1 = value;
+      RemapSlotsSega();
+    }
+    else if (address == SEGA_SLOT2_CONTROL)
+    {
+      _slotControl2 = value;
+      RemapSlotsSega();
+    }
+
+    if (address >= WRAM_BASE)
+    {
+      WriteWRAM(address, value);
+    }
+    else if (_sramEnable &&
+             address >= SEGA_SLOT_SIZE * 2)
+    {
+      var index = address & (SEGA_SLOT_SIZE - 1);
+      _sram[index] = value;
+    }
+  }
+
+  private void RemapSlotsSega()
+  {
+    _vectors = _rom[..VECTORS_SIZE];
+    GetBankPair(_slotControl0, out _slot0, out _slot1);
+    GetBankPair(_slotControl1, out _slot2, out _slot3);
+
+    if (!_sramEnable)
+    {
+      GetBankPair(_slotControl2, out _slot4, out _slot5);
+      return;
+    }
+
+    _sram = _sramSelect
+          ? _sram1
+          : _sram0;
+    _slot4 = _sram.Slice(0,         BANK_SIZE);
+    _slot5 = _sram.Slice(BANK_SIZE, BANK_SIZE);
+  }
+  #endregion
+}

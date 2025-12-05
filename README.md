@@ -1,7 +1,7 @@
 # Quill &middot; [![build](https://github.com/twobithack/quill/actions/workflows/dotnet.yml/badge.svg)](https://github.com/twobithack/quill/actions/workflows/dotnet.yml)
 A cross-platform Sega Master System emulator built on .NET and OpenTK.
 
-![Screenshot](/docs/screenshots/Power%20Strike%20II.png)
+![Japanese BIOS screenshot](/docs/screenshots/Japanese%20BIOS.png)
 
 ## Features
 
@@ -31,6 +31,10 @@ $ dotnet run --project src/Quill.csproj -c Release /path/to/rom.sms
 ### Configuration
 
 Configuration options can be found in [`config.json`](/config.json).
+
+### BIOS
+
+Optionally, a BIOS may be provided by placing a file named `bios.sms` in the same directory as the executable. If no BIOS is provided, the emulator will boot the ROM directly.
 
 ## Keymap
 
