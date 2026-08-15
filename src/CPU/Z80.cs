@@ -21,17 +21,19 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Step()
   {
+    _additionalTStates = 0;
+    
     HandleInterrupts();
     if (_halt)
     {
       _r++;
-      _bus.Step(0x04);
+      _bus.Step(4);
       return;
     }
     DecodeInstruction();
     ExecuteInstruction();
 
-    _bus.Step(_instruction.Cycles);
+    _bus.Step(_instruction.TStates + _additionalTStates);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -45,6 +47,7 @@ unsafe public ref partial struct Z80
       _iff2 = _iff1;
       _iff1 = false;
       _bus.ClearNMI();
+      _bus.Step(11);
     }
 
     if (_eiPending)
@@ -63,6 +66,7 @@ unsafe public ref partial struct Z80
       _iff1 = false;
       _iff2 = false;
       _r++;
+      _bus.Step(13);
     }
   }
 
@@ -101,10 +105,19 @@ unsafe public ref partial struct Z80
         _memPtr = (ushort)(IX + FetchSignedByte());
         return Opcodes.DDCB[FetchByte()];
 
-      case 0xDD: return DecodeDDInstruction();
-      case 0xED: return DecodeEDInstruction();
-      case 0xFD: return DecodeFDInstruction();
-      default:   return Opcodes.DD[op];
+      case 0xDD:
+        _additionalTStates += 4;
+        return DecodeDDInstruction();
+
+      case 0xED:
+        _additionalTStates += 4;
+        return DecodeEDInstruction();
+
+      case 0xFD:
+        _additionalTStates += 4;
+        return DecodeFDInstruction();
+
+      default: return Opcodes.DD[op];
     };
   }
 
@@ -127,10 +140,19 @@ unsafe public ref partial struct Z80
         _memPtr = (ushort)(IY + FetchSignedByte());
         return Opcodes.FDCB[FetchByte()];
 
-      case 0xDD: return DecodeDDInstruction();
-      case 0xED: return DecodeEDInstruction();
-      case 0xFD: return DecodeFDInstruction();
-      default:   return Opcodes.FD[op];
+      case 0xDD:
+        _additionalTStates += 4;
+        return DecodeDDInstruction();
+
+      case 0xED:
+        _additionalTStates += 4;
+        return DecodeEDInstruction();
+
+      case 0xFD:
+        _additionalTStates += 4;
+        return DecodeFDInstruction();
+
+      default: return Opcodes.FD[op];
     };
 
   }

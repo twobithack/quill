@@ -13,6 +13,8 @@ unsafe public ref partial struct Z80
   private Bus _bus;
 
   private Instruction _instruction;
+  private ushort _additionalTStates;
+
   private ushort? _memPtr = null;
   private ushort _pc = 0x0000;
   private ushort _sp = 0xFFFF;
