@@ -44,21 +44,21 @@ public sealed class Ports
 
   public void UpdateInput(InputState input)
   {
-    if (input.IsP1ButtonDown(PadButtons.Up))      SetPin(PortA.Pad1Up);
-    if (input.IsP1ButtonDown(PadButtons.Down))    SetPin(PortA.Pad1Down);
-    if (input.IsP1ButtonDown(PadButtons.Left))    SetPin(PortA.Pad1Left);
-    if (input.IsP1ButtonDown(PadButtons.Right))   SetPin(PortA.Pad1Right);
-    if (input.IsP1ButtonDown(PadButtons.FireA))   SetPin(PortA.Pad1FireA);
-    if (input.IsP1ButtonDown(PadButtons.FireB))   SetPin(PortA.Pad1FireB);
+    SetPin(PortA.Pad1Up,    input.IsP1ButtonDown(PadButtons.Up));
+    SetPin(PortA.Pad1Down,  input.IsP1ButtonDown(PadButtons.Down));
+    SetPin(PortA.Pad1Left,  input.IsP1ButtonDown(PadButtons.Left));
+    SetPin(PortA.Pad1Right, input.IsP1ButtonDown(PadButtons.Right));
+    SetPin(PortA.Pad1FireA, input.IsP1ButtonDown(PadButtons.FireA));
+    SetPin(PortA.Pad1FireB, input.IsP1ButtonDown(PadButtons.FireB));
 
-    if (input.IsP2ButtonDown(PadButtons.Up))      SetPin(PortA.Pad2Up);
-    if (input.IsP2ButtonDown(PadButtons.Down))    SetPin(PortA.Pad2Down);
-    if (input.IsP2ButtonDown(PadButtons.Left))    SetPin(PortB.Pad2Left);
-    if (input.IsP2ButtonDown(PadButtons.Right))   SetPin(PortB.Pad2Right);
-    if (input.IsP2ButtonDown(PadButtons.FireA))   SetPin(PortB.Pad2FireA);
-    if (input.IsP2ButtonDown(PadButtons.FireB))   SetPin(PortB.Pad2FireB);
+    SetPin(PortA.Pad2Up,    input.IsP2ButtonDown(PadButtons.Up));
+    SetPin(PortA.Pad2Down,  input.IsP2ButtonDown(PadButtons.Down));
+    SetPin(PortB.Pad2Left,  input.IsP2ButtonDown(PadButtons.Left));
+    SetPin(PortB.Pad2Right, input.IsP2ButtonDown(PadButtons.Right));
+    SetPin(PortB.Pad2FireA, input.IsP2ButtonDown(PadButtons.FireA));
+    SetPin(PortB.Pad2FireB, input.IsP2ButtonDown(PadButtons.FireB));
 
-    if (input.IsButtonDown(ConsoleButtons.Reset)) SetPin(PortB.Reset);
+    SetPin(PortB.Reset, input.IsButtonDown(ConsoleButtons.Reset));
 
     if (!input.IsButtonDown(ConsoleButtons.Pause))
     {
@@ -75,10 +75,9 @@ public sealed class Ports
   private bool GetPin(ControlPort pin) => (_control & pin) != 0;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPin(PortA pin) => _portA |= pin;
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetPin(PortB pin) => _portB |= pin;
+  private void SetPin(PortA pin, bool state) => _portA = state
+                                                       ? (_portA | pin)
+                                                       : (_portA & ~pin);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetPin(PortB pin, bool state) => _portB = state
