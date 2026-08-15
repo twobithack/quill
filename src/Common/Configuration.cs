@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+
 namespace Quill.Common;
 
 public readonly record struct Configuration
@@ -33,4 +36,11 @@ public readonly record struct RewindOptions
 public readonly record struct SystemOptions
 {
   public int ClockRate          { get; init; }
+}
+
+[JsonSerializable(typeof(Configuration))]
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+internal partial class ConfigurationJsonContext : JsonSerializerContext
+{
+  internal static JsonTypeInfo<Configuration> TypeInfo => Default.Configuration;
 }

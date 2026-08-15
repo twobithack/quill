@@ -3,10 +3,12 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Common.Input;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using Quill.Common;
 using Quill.Core;
 
@@ -43,6 +45,7 @@ public sealed class Window : GameWindow
   #region Methods
   protected override void OnLoad()
   {
+    GL.LoadBindings(new GLFWBindingsContext());
     base.OnLoad();
     _emulationThread.Start();
     _renderer.Initialize();
@@ -94,6 +97,7 @@ public sealed class Window : GameWindow
     {
       APIVersion = new Version(3, 3),
       AspectRatio = (clientWidth, clientHeight),
+      AutoLoadBindings = false,
       ClientSize = new Vector2i(clientWidth, clientHeight),
       Icon = LoadIcon(),
       Profile = ContextProfile.Core,
@@ -107,9 +111,9 @@ public sealed class Window : GameWindow
   {
     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
       return null;
-
+    
     var bytes = File.ReadAllBytes("assets/icon.rgba");
-    var image = new Image(128, 128, bytes);
+    var image = new OpenTK.Windowing.Common.Input.Image(128, 128, bytes);
     return new WindowIcon(image);
   }
   #endregion

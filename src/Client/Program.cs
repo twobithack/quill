@@ -41,12 +41,7 @@ public static class Program
       return new Configuration();
 
     var config = File.ReadAllText(filepath);
-    var options = new JsonSerializerOptions
-    {
-      PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
-    return JsonSerializer.Deserialize<Configuration>(config, options);
+    return JsonSerializer.Deserialize(config, ConfigurationJsonContext.TypeInfo);
   }
   
   private static string BuildSavePath(string romPath)
