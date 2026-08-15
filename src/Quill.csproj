@@ -4,34 +4,29 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <RollForward>Major</RollForward>
+
     <PublishAot>true</PublishAot>
     <OptimizationPreference>Speed</OptimizationPreference>
-    <TieredCompilation>true</TieredCompilation>
+
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>CS0282,CA1869,CS8509</NoWarn>
   </PropertyGroup>
 
-  <PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <ApplicationIcon>../assets/icon.ico</ApplicationIcon>
     <ApplicationManifest>../app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="../assets/icon.bmp">
-      <IncludeInSingleFile>true</IncludeInSingleFile>
-      <LogicalName>icon.bmp</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="../assets/icon.ico">
-      <IncludeInSingleFile>true</IncludeInSingleFile>
-      <LogicalName>icon.ico</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="../assets/icon.rgba">
-      <IncludeInSingleFile>true</IncludeInSingleFile>
-      <LogicalName>icon.rgba</LogicalName>
-    </EmbeddedResource>
+    <EmbeddedResource Include="../assets/icon.bmp"  LogicalName="icon.bmp" />
+    <EmbeddedResource Include="../assets/icon.ico"  LogicalName="icon.ico" />
+    <EmbeddedResource Include="../assets/icon.rgba" LogicalName="icon.rgba" />
+
     <None Include="..\bios.sms" Condition="Exists('..\bios.sms')">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </None>
+    
     <None Include="..\config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -44,8 +39,32 @@
     <PackageReference Include="System.IO.Hashing" Version="10.0.0" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <NoWarn>CS0282,CA1869,CS8509</NoWarn>
-  </PropertyGroup>
+  <Target Name="GenerateMacAppBundle"
+          AfterTargets="Publish"
+          Condition="'$(RuntimeIdentifier)' == 'osx-arm64' Or
+                     '$(RuntimeIdentifier)' == 'osx-x64'">
+    <PropertyGroup>
+      <_MacAppBundle>$(PublishDir)Quill.app</_MacAppBundle>
+      <_MacAppContents>$(_MacAppBundle)/Contents</_MacAppContents>
+    </PropertyGroup>
+    
+    <RemoveDir Directories="$(_MacAppBundle)" />
+    <MakeDir Directories="$(_MacAppContents)/MacOS;
+                          $(_MacAppContents)/Resources" />
+
+    <ItemGroup>
+      <_MacPublishedFiles Include="$(PublishDir)**/*"
+                          Exclude="$(_MacAppBundle)/**/*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_MacPublishedFiles)"
+          DestinationFiles="@(_MacPublishedFiles->'$(_MacAppContents)/MacOS/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="../assets/macos/Info.plist"
+          DestinationFolder="$(_MacAppContents)" />
+    <Copy SourceFiles="../assets/icon.icns"
+          DestinationFolder="$(_MacAppContents)/Resources" />
+          
+    <Exec Command="chmod +x &quot;$(_MacAppContents)/MacOS/Quill&quot;" />
+  </Target>
 
 </Project>
