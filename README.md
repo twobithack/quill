@@ -19,7 +19,7 @@ Supports most Master System and SG-1000 titles (see [`docs/compatibility.md`](/d
 ## Getting Started
 
 ### Prerequisites
-* .NET SDK 9.0+
+* .NET SDK 10.0+
 * OpenAL runtime (`openal`/`libopenal1`)
 
 ### Build & Run
