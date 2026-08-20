@@ -55,7 +55,7 @@ unsafe public sealed class Emulator
 
     while (_running)
     {
-      while (!vdp.FrameCompleted())
+      while (!vdp.PollFrameCompletion())
         cpu.Step();
 
       frameCounter++;

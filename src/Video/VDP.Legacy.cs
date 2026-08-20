@@ -9,9 +9,17 @@ namespace Quill.Video;
 public sealed partial class VDP
 {
   #region Properties
-  private ushort LegacySpritePatternTableAddress => (ushort)((_registers[0x6] & 0b_0000_0111) << 11);
+  private ushort LegacyColorTableBaseAddress => TestRegisterBit(0x3, 7)
+                                              ? (ushort)0x2000
+                                              : (ushort)0x0000;
+
+  private ushort LegacyPatternGeneratorTableBaseAddress => TestRegisterBit(0x4, 2)
+                                                         ? (ushort)0x2000
+                                                         : (ushort)0x0000;
+
+  private ushort LegacySpritePatternGeneratorTableBaseAddress => (ushort)((_registers[0x6] & 0b_0000_0111) << 11);
   
-  private byte LegacyBlankColor => (byte)(_registers[0x7] & 0b_1111);
+  private byte LegacyBackdropColorIndex => (byte)(_registers[0x7] & 0b_1111);
   #endregion
 
   #region Methods
@@ -41,186 +49,187 @@ public sealed partial class VDP
     if (StretchSprites)
       spriteHeight <<= 1;
 
-    var spriteCount = 0;
-    for (int sprite = 0; sprite < 32; sprite++)
+    var spritesOnScanline = 0;
+    for (int spriteIndex = 0; spriteIndex < 32; spriteIndex++)
     {
-      var baseAddress = SpriteAttributeTableAddress 
-                      + (sprite << 2);
-      ushort y = _vram[baseAddress];
-      
-      if (y == DISABLE_SPRITES)
+      var attributeAddress = SpriteAttributeTableBaseAddress
+                           + (spriteIndex << 2);
+      int spriteY = _vram[attributeAddress];
+
+      if (spriteY == SPRITE_TERMINATOR)
       {
         if (!SpriteOverflow)
-          SetLastSpriteIndex(sprite);
+          SetLastSpriteIndex(spriteIndex);
         return;
       }
 
-      y++;
-      if (y >= DISABLE_SPRITES)
-        y -= 0x100;
+      spriteY++;
+      if (spriteY >= SPRITE_TERMINATOR)
+        spriteY -= 0x100;
 
-      if (y > _vCounter ||
-          y + spriteHeight <= _vCounter)
+      if (spriteY > _vCounter ||
+          spriteY + spriteHeight <= _vCounter)
         continue;
 
-      var x = _vram[baseAddress + 1];
-      var pattern = _vram[baseAddress + 2];
-      var color = _vram[baseAddress + 3];
+      int spriteX = _vram[attributeAddress + 1];
+      var patternIndex = _vram[attributeAddress + 2];
+      var colorAttribute = _vram[attributeAddress + 3];
 
-      if (color.TestBit(7))
-        x -= 32;
+      if (colorAttribute.TestBit(7))
+        spriteX -= 32;
 
-      if (x < 0)
+      if (spriteX < 0)
         continue;
 
-      color &= 0b_0000_1111;
-      if (color == TRANSPARENT)
+      var colorIndex = (byte)(colorAttribute & 0b_0000_1111);
+      if (colorIndex == TRANSPARENT_COLOR_INDEX)
         continue;
 
-      spriteCount++;
-      if (spriteCount > 4)
+      spritesOnScanline++;
+      if (spritesOnScanline > 4)
       {
-        SetLastSpriteIndex(sprite);
+        SetLastSpriteIndex(spriteIndex);
         SpriteOverflow = true;
         return;
       }
       else
         SpriteOverflow = false;
 
-      var offset = _vCounter - y;
+      var patternRow = _vCounter - spriteY;
       if (spriteHeight == TILE_SIZE)
       {
-        var address = LegacySpritePatternTableAddress 
-                    + (pattern << TILE_SHIFT);
-        RasterizeMode2Sprite(address, x, offset, color);
+        var patternAddress = LegacySpritePatternGeneratorTableBaseAddress
+                           + (patternIndex << TILE_SHIFT);
+        RasterizeMode2Sprite(patternAddress, spriteX, patternRow, colorIndex);
       }
       else
       {
-        var address = LegacySpritePatternTableAddress 
-                    + ((pattern & 0b_1111_1100) << TILE_SHIFT);
-        RasterizeMode2Sprite(address, x, offset, color);
-        RasterizeMode2Sprite(address, x + TILE_SIZE, offset + 16, color);
+        var patternAddress = LegacySpritePatternGeneratorTableBaseAddress
+                           + ((patternIndex & 0b_1111_1100) << TILE_SHIFT);
+        RasterizeMode2Sprite(patternAddress, spriteX, patternRow, colorIndex);
+        RasterizeMode2Sprite(patternAddress, spriteX + TILE_SIZE, patternRow + 16, colorIndex);
       }
     }
-    
+
     if (!SpriteOverflow)
       SetLastSpriteIndex(31);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeMode2Sprite(int address, int x, int offset, byte color)
+  private void RasterizeMode2Sprite(int patternAddress, int spriteX, int patternRow, byte colorIndex)
   {
-    var data = _vram[address + offset];
-    for (byte i = 0; i < TILE_SIZE; i++)
+    var patternData = _vram[patternAddress + patternRow];
+    for (byte pixelOffset = 0; pixelOffset < TILE_SIZE; pixelOffset++)
     {
-      if (x + i >= HORIZONTAL_RESOLUTION)
+      var screenX = spriteX + pixelOffset;
+      if (screenX >= HORIZONTAL_RESOLUTION)
         return;
 
-      if (_spriteMask[x + i])
+      if (_spriteMask[screenX])
       {
         SpriteCollision = true;
         continue;
       }
 
-      if (!data.TestBit(7 - i))
+      if (!patternData.TestBit(7 - pixelOffset))
         continue;
 
-      SetLegacySpritePixel(x + i, color);
+      SetLegacySpritePixel(screenX, colorIndex);
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeMode2Background()
   {
-    var colorMask = (_registers[0x3] << 1) | 1;
-    var row       = _vCounter >> 3;
-    var rowOffset = _vCounter & (TILE_SIZE - 1);
+    var colorTableMask = (_registers[0x3] << 1) | 1;
+    var nameTableRow = _vCounter >> TILE_SHIFT;
+    var patternRow = _vCounter & (TILE_SIZE - 1);
 
-    var tableAddressOffset = row switch
+    var tableSectionOffset = nameTableRow switch
     {
-      < 8   => 0x0,
-      < 16  => TestRegisterBit(0x4, 1) ? 0x800  : 0x0,
-      _     => TestRegisterBit(0x4, 0) ? 0x1000 : 0x0
+      < 8  => 0x0,
+      < 16 => TestRegisterBit(0x4, 1) ? 0x800  : 0x0,
+      _    => TestRegisterBit(0x4, 0) ? 0x1000 : 0x0
     };
-    
-    for (int column = 0; column < BACKGROUND_COLUMNS; column++)
+
+    for (int nameTableColumn = 0; nameTableColumn < BACKGROUND_COLUMNS; nameTableColumn++)
     {
-      var patternIndex = _vram[NameTableAddress + column + (row << 5)];
-      var patternAddress = PatternTableAddress
-                         + tableAddressOffset
-                         + rowOffset
+      var patternIndex = _vram[NameTableBaseAddress + nameTableColumn + (nameTableRow << 5)];
+      var patternAddress = LegacyPatternGeneratorTableBaseAddress
+                         + tableSectionOffset
+                         + patternRow
                          + (patternIndex << TILE_SHIFT);
 
-      var colorIndex = patternIndex & colorMask;
-      var colorAddress = ColorTableAddress
-                       + tableAddressOffset
-                       + rowOffset
-                       + (colorIndex << TILE_SHIFT);
+      var colorTableIndex = patternIndex & colorTableMask;
+      var colorAddress = LegacyColorTableBaseAddress
+                       + tableSectionOffset
+                       + patternRow
+                       + (colorTableIndex << TILE_SHIFT);
 
       var patternData = _vram[patternAddress];
-      var colorData = _vram[colorAddress];
+      var colorPair = _vram[colorAddress];
 
-      var x = column << TILE_SHIFT;
-      var tileEnd = x + TILE_SIZE;
-      for (byte i = TILE_SIZE - 1; x < tileEnd; x++, i--)
+      var screenX = nameTableColumn << TILE_SHIFT;
+      var characterRight = screenX + TILE_SIZE;
+      for (byte patternBit = TILE_SIZE - 1; screenX < characterRight; screenX++, patternBit--)
       {
-        if (x >= HORIZONTAL_RESOLUTION)
+        if (screenX >= HORIZONTAL_RESOLUTION)
           return;
 
-        if (_spriteMask[x])
+        if (_spriteMask[screenX])
           continue;
 
-        var color = patternData.TestBit(i)
-                  ? colorData.HighNibble()
-                  : colorData.LowNibble();
+        var colorIndex = patternData.TestBit(patternBit)
+                       ? colorPair.HighNibble()
+                       : colorPair.LowNibble();
 
-        if (color == TRANSPARENT)
-          color = LegacyBlankColor;
+        if (colorIndex == TRANSPARENT_COLOR_INDEX)
+          colorIndex = LegacyBackdropColorIndex;
 
-        SetLegacyBackgroundPixel(x, color);
+        SetLegacyBackgroundPixel(screenX, colorIndex);
       }
     }
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RasterizeMode3Background()
   {
-    var row        = _vCounter >> TILE_SHIFT;
-    var rowOffset  = _vCounter & (TILE_SIZE - 1);
-    var pairOffset = (row & 0b_11) << 1;
+    var nameTableRow = _vCounter >> TILE_SHIFT;
+    var patternRow = _vCounter & (TILE_SIZE - 1);
+    var colorPairOffset = (nameTableRow & 0b_11) << 1;
 
-    for (int column = 0; column < BACKGROUND_COLUMNS; column++)
+    for (int nameTableColumn = 0; nameTableColumn < BACKGROUND_COLUMNS; nameTableColumn++)
     {
-      var patternIndex = _vram[NameTableAddress + column + (row << 5)];
-      var patternAddress = PatternTableAddress
-                         + (patternIndex << 3)
-                         + pairOffset;
+      var patternIndex = _vram[NameTableBaseAddress + nameTableColumn + (nameTableRow << 5)];
+      var colorPairAddress = LegacyPatternGeneratorTableBaseAddress
+                           + (patternIndex << TILE_SHIFT)
+                           + colorPairOffset;
 
-      if (rowOffset > 3)
-        patternAddress++;
+      if (patternRow > 3)
+        colorPairAddress++;
 
-      var patternData = _vram[patternAddress];
-      var leftColor   = patternData.HighNibble();
-      var rightColor  = patternData.LowNibble();
+      var colorPair = _vram[colorPairAddress];
+      var leftColorIndex = colorPair.HighNibble();
+      var rightColorIndex = colorPair.LowNibble();
 
-      var x = column << TILE_SHIFT;
-      var tileEnd = x + TILE_SIZE;
-      for (int i = 0; x < tileEnd; x++, i++)
+      var screenX = nameTableColumn << TILE_SHIFT;
+      var characterRight = screenX + TILE_SIZE;
+      for (int pixelOffset = 0; screenX < characterRight; screenX++, pixelOffset++)
       {
-        if (x >= HORIZONTAL_RESOLUTION)
+        if (screenX >= HORIZONTAL_RESOLUTION)
           return;
 
-        if (_spriteMask[x])
+        if (_spriteMask[screenX])
           continue;
 
-        var color = (i < 4)
-                  ? leftColor
-                  : rightColor;
+        var colorIndex = pixelOffset < 4
+                       ? leftColorIndex
+                       : rightColorIndex;
 
-        if (color == TRANSPARENT)
-          color = LegacyBlankColor;
+        if (colorIndex == TRANSPARENT_COLOR_INDEX)
+          colorIndex = LegacyBackdropColorIndex;
 
-        SetLegacyBackgroundPixel(x, color);
+        SetLegacyBackgroundPixel(screenX, colorIndex);
       }
     }
   }
@@ -228,24 +237,24 @@ public sealed partial class VDP
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void BlankLegacyScanline()
   {
-    var fillColor = Color.ToLegacyRGBA(LegacyBlankColor);
-    Array.Fill(_scanline, fillColor);
+    var fillColor = Color.ToLegacyRGBA(LegacyBackdropColorIndex);
+    Array.Fill(_scanlinePixels, fillColor);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacySpritePixel(int x, byte color)
+  private void SetLegacySpritePixel(int screenX, byte colorIndex)
   {
-    _scanline[x] = Color.ToLegacyRGBA(color);
-    _spriteMask[x] = true;
+    _scanlinePixels[screenX] = Color.ToLegacyRGBA(colorIndex);
+    _spriteMask[screenX] = true;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetLegacyBackgroundPixel(int x, byte color) => _scanline[x] = Color.ToLegacyRGBA(color);
+  private void SetLegacyBackgroundPixel(int screenX, byte colorIndex) => _scanlinePixels[screenX] = Color.ToLegacyRGBA(colorIndex);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetLastSpriteIndex(int value)
   {
-    _status &= Status.All;
+    _status &= Status.Flags;
     _status |= (Status)value;
   }
   #endregion

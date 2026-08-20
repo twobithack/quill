@@ -100,10 +100,10 @@ public ref partial struct MemoryMap
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void WriteControl(byte value)
+  public void WriteControl(byte controlByte)
   {
-    var biosToggled = value.TestBit(3) ^ _memoryControl.TestBit(3);
-    _memoryControl = value;
+    var biosToggled = controlByte.TestBit(3) ^ _memoryControl.TestBit(3);
+    _memoryControl = controlByte;
 
     if (biosToggled && _biosLoaded)
       InitializeMapper();
