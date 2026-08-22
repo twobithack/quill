@@ -106,9 +106,8 @@ unsafe public ref partial struct Z80
   private void BIT()
   {
     var value = ReadByteOperand(_instruction.Source);
-    var index = (byte)_instruction.Destination;
+    var index = _instruction.Parameter.Value;
 
-    // TODO: Handle undocumented flags for HLi and indexed cases
     var flags = Flags.Halfcarry;
     if (!value.TestBit(index))
     {
@@ -378,7 +377,7 @@ unsafe public ref partial struct Z80
   private readonly void IM()
   {
     #if DEBUG
-    if (_instruction.Destination != (Operand)0x1)
+    if (_instruction.Parameter.Value != 1)
       throw new Exception("Only interrupt mode 1 is supported.");
     #endif
   }
@@ -622,7 +621,7 @@ unsafe public ref partial struct Z80
   {
     var port = ReadByteOperand(_instruction.Destination);
     var value = _instruction.Source == Operand.Implied
-              ? (byte)0x00
+              ? _instruction.Parameter.Value
               : ReadByteOperand(_instruction.Source);
 
     WritePort(port, value);
@@ -701,8 +700,9 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RES(byte index)
+  private void RES()
   {
+    var index = _instruction.Parameter.Value;
     var value = ReadByteOperand(_instruction.Destination).ResetBit(index);
     WriteByteResult(value);
 
@@ -945,7 +945,7 @@ unsafe public ref partial struct Z80
   private void RST()
   {
     PushToStack(_pc);
-    _pc = (ushort)_instruction.Destination;
+    _pc = _instruction.Parameter.Value;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -998,8 +998,9 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SET(byte index)
+  private void SET()
   {
+    var index = _instruction.Parameter.Value;
     var value = ReadByteOperand(_instruction.Destination).SetBit(index);
     WriteByteResult(value);
 
