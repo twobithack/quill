@@ -137,7 +137,7 @@ unsafe public ref partial struct Z80
     _pc = address;
 
     if (_instruction.Source != Operand.Implied)
-      _additionalTStates += 7;
+      AdvanceTStates(7);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -197,11 +197,11 @@ unsafe public ref partial struct Z80
   private void CPDR()
   {
     CPD();
-    if (BC != 0 && !ZeroFlag)
-    {
-      _pc -= 2;
-      _additionalTStates += 5;
-    }
+    if (BC == 0 || ZeroFlag)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -230,11 +230,11 @@ unsafe public ref partial struct Z80
   private void CPIR()
   {
     CPI();
-    if (BC != 0 && !ZeroFlag)
-    {
-      _pc -= 2;
-      _additionalTStates += 5;
-    }
+    if (BC == 0 || ZeroFlag)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -321,7 +321,7 @@ unsafe public ref partial struct Z80
       return;
 
     _pc = (ushort)(_pc + displacement);
-    _additionalTStates += 5;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -454,11 +454,11 @@ unsafe public ref partial struct Z80
   private void INDR()
   {
     IND();
-    if (_b != 0)
-    {
-      _pc -= 2;
-      _additionalTStates += 5;
-    }
+    if (_b == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -483,11 +483,11 @@ unsafe public ref partial struct Z80
   private void INIR()
   {
     INI();
-    if (_b != 0)
-    {
-      _pc -= 2;
-      _additionalTStates += 5;
-    }
+    if (_b == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -508,7 +508,7 @@ unsafe public ref partial struct Z80
     _pc = (ushort)(_pc + displacement);
 
     if (_instruction.Source != Operand.Implied)
-      _additionalTStates += 5;
+      AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -546,11 +546,11 @@ unsafe public ref partial struct Z80
   private void LDDR()
   {
     LDD();
-    if (BC != 0)
-    {
-      _pc -= 2;
-      _additionalTStates += 5;
-    }
+    if (BC == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -574,11 +574,11 @@ unsafe public ref partial struct Z80
   private void LDIR()
   {
     LDI();
-    if (BC != 0)
-    {
-      _pc -= 2;
-      _additionalTStates += 5;
-    }
+    if (BC == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -649,11 +649,11 @@ unsafe public ref partial struct Z80
   private void OTDR()
   {
     OUTD();
-    if (_b != 0)
-    {
-      _pc -= 2;
-      _additionalTStates += 5;
-    }
+    if (_b == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -678,11 +678,11 @@ unsafe public ref partial struct Z80
   private void OTIR()
   {
     OUTI();
-    if (_b != 0)
-    {
-      _pc -= 2;
-      _additionalTStates += 5;
-    }
+    if (_b == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -719,7 +719,7 @@ unsafe public ref partial struct Z80
     _pc = PopFromStack();
 
     if (_instruction.Source != Operand.Implied)
-      _additionalTStates += 6;
+      AdvanceTStates(6);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
