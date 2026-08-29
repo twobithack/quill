@@ -274,6 +274,7 @@
 * King & Balloon
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
+* Micro Machines
 * Missile Defence 3D (phaser)
 * Operation: Wolf (phaser)
 * Parlour Games
