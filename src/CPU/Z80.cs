@@ -25,13 +25,11 @@ unsafe public ref partial struct Z80
     if (_halt)
     {
       _r++;
-      _bus.Step(0x04);
+      AdvanceTStates(4);
       return;
     }
     DecodeInstruction();
     ExecuteInstruction();
-
-    _bus.Step(_instruction.Cycles);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -45,6 +43,7 @@ unsafe public ref partial struct Z80
       _iff2 = _iff1;
       _iff1 = false;
       _bus.ClearNMI();
+      AdvanceTStates(11);
     }
 
     if (_eiPending)
@@ -63,6 +62,7 @@ unsafe public ref partial struct Z80
       _iff1 = false;
       _iff2 = false;
       _r++;
+      AdvanceTStates(13);
     }
   }
 
@@ -101,10 +101,19 @@ unsafe public ref partial struct Z80
         _memPtr = (ushort)(IX + FetchSignedByte());
         return Opcodes.DDCB[FetchByte()];
 
-      case 0xDD: return DecodeDDInstruction();
-      case 0xED: return DecodeEDInstruction();
-      case 0xFD: return DecodeFDInstruction();
-      default:   return Opcodes.DD[op];
+      case 0xDD:
+        AdvanceTStates(4);
+        return DecodeDDInstruction();
+
+      case 0xED:
+        AdvanceTStates(4);
+        return DecodeEDInstruction();
+
+      case 0xFD:
+        AdvanceTStates(4);
+        return DecodeFDInstruction();
+
+      default: return Opcodes.DD[op];
     };
   }
 
@@ -127,17 +136,27 @@ unsafe public ref partial struct Z80
         _memPtr = (ushort)(IY + FetchSignedByte());
         return Opcodes.FDCB[FetchByte()];
 
-      case 0xDD: return DecodeDDInstruction();
-      case 0xED: return DecodeEDInstruction();
-      case 0xFD: return DecodeFDInstruction();
-      default:   return Opcodes.FD[op];
-    };
+      case 0xDD:
+        AdvanceTStates(4);
+        return DecodeDDInstruction();
 
+      case 0xED:
+        AdvanceTStates(4);
+        return DecodeEDInstruction();
+
+      case 0xFD:
+        AdvanceTStates(4);
+        return DecodeFDInstruction();
+
+      default: return Opcodes.FD[op];
+    };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void ExecuteInstruction()
   {
+    AdvanceTStates(_instruction.TStates);
+
     switch (_instruction.Operation)
     {
       case Operation.ADC8:  ADC8();  return;
@@ -189,14 +208,7 @@ unsafe public ref partial struct Z80
       case Operation.OUTI:  OUTI();  return;
       case Operation.POP:   POP();   return;
       case Operation.PUSH:  PUSH();  return;
-      case Operation.RES0:  RES(0);  return;
-      case Operation.RES1:  RES(1);  return;
-      case Operation.RES2:  RES(2);  return;
-      case Operation.RES3:  RES(3);  return;
-      case Operation.RES4:  RES(4);  return;
-      case Operation.RES5:  RES(5);  return;
-      case Operation.RES6:  RES(6);  return;
-      case Operation.RES7:  RES(7);  return;
+      case Operation.RES:   RES();   return;
       case Operation.RET:   RET();   return;
       case Operation.RETI:  RETI();  return;
       case Operation.RETN:  RETN();  return;
@@ -214,14 +226,7 @@ unsafe public ref partial struct Z80
       case Operation.SBC8:  SBC8();  return;
       case Operation.SBC16: SBC16(); return;
       case Operation.SCF:   SCF();   return;
-      case Operation.SET0:  SET(0);  return;
-      case Operation.SET1:  SET(1);  return;
-      case Operation.SET2:  SET(2);  return;
-      case Operation.SET3:  SET(3);  return;
-      case Operation.SET4:  SET(4);  return;
-      case Operation.SET5:  SET(5);  return;
-      case Operation.SET6:  SET(6);  return;
-      case Operation.SET7:  SET(7);  return;
+      case Operation.SET:   SET();   return;
       case Operation.SLA:   SLA();   return;
       case Operation.SLL:   SLL();   return;
       case Operation.SRA:   SRA();   return;
@@ -230,6 +235,9 @@ unsafe public ref partial struct Z80
       case Operation.XOR:   XOR();   return;
     }
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private readonly void AdvanceTStates(int cycles) => _bus.Step(cycles);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private byte FetchByte() => ReadByte(_pc++);

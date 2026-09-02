@@ -41,24 +41,24 @@ public sealed class Ports
     SetPin(PortB.TH1, TH1);
     SetPin(PortB.TH2, TH2);
   }
-  
+
   public void UpdateInput(InputState input)
   {
-    SetPin(PortA.Joy1Up,    input.IsJ1ButtonDown(JoypadButtons.Up));
-    SetPin(PortA.Joy1Down,  input.IsJ1ButtonDown(JoypadButtons.Down));
-    SetPin(PortA.Joy1Left,  input.IsJ1ButtonDown(JoypadButtons.Left));
-    SetPin(PortA.Joy1Right, input.IsJ1ButtonDown(JoypadButtons.Right));
-    SetPin(PortA.Joy1FireA, input.IsJ1ButtonDown(JoypadButtons.FireA));
-    SetPin(PortA.Joy1FireB, input.IsJ1ButtonDown(JoypadButtons.FireB));
+    SetPin(PortA.Pad1Up,    input.IsP1ButtonDown(PadButtons.Up));
+    SetPin(PortA.Pad1Down,  input.IsP1ButtonDown(PadButtons.Down));
+    SetPin(PortA.Pad1Left,  input.IsP1ButtonDown(PadButtons.Left));
+    SetPin(PortA.Pad1Right, input.IsP1ButtonDown(PadButtons.Right));
+    SetPin(PortA.Pad1FireA, input.IsP1ButtonDown(PadButtons.FireA));
+    SetPin(PortA.Pad1FireB, input.IsP1ButtonDown(PadButtons.FireB));
 
-    SetPin(PortA.Joy2Up,    input.IsJ2ButtonDown(JoypadButtons.Up));
-    SetPin(PortA.Joy2Down,  input.IsJ2ButtonDown(JoypadButtons.Down));
-    SetPin(PortB.Joy2Left,  input.IsJ2ButtonDown(JoypadButtons.Left));
-    SetPin(PortB.Joy2Right, input.IsJ2ButtonDown(JoypadButtons.Right));
-    SetPin(PortB.Joy2FireA, input.IsJ2ButtonDown(JoypadButtons.FireA));
-    SetPin(PortB.Joy2FireB, input.IsJ2ButtonDown(JoypadButtons.FireB));
-    
-    SetPin(PortB.Reset,     input.IsButtonDown(ConsoleButtons.Reset));
+    SetPin(PortA.Pad2Up,    input.IsP2ButtonDown(PadButtons.Up));
+    SetPin(PortA.Pad2Down,  input.IsP2ButtonDown(PadButtons.Down));
+    SetPin(PortB.Pad2Left,  input.IsP2ButtonDown(PadButtons.Left));
+    SetPin(PortB.Pad2Right, input.IsP2ButtonDown(PadButtons.Right));
+    SetPin(PortB.Pad2FireA, input.IsP2ButtonDown(PadButtons.FireA));
+    SetPin(PortB.Pad2FireB, input.IsP2ButtonDown(PadButtons.FireB));
+
+    SetPin(PortB.Reset, input.IsButtonDown(ConsoleButtons.Reset));
 
     if (!input.IsButtonDown(ConsoleButtons.Pause))
     {
@@ -78,10 +78,10 @@ public sealed class Ports
   private void SetPin(PortA pin, bool state) => _portA = state
                                                        ? (_portA | pin)
                                                        : (_portA & ~pin);
-  
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]                                         
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void SetPin(PortB pin, bool state) => _portB = state
-                                                       ? (_portB | pin) 
+                                                       ? (_portB | pin)
                                                        : (_portB & ~pin);
   #endregion
 }

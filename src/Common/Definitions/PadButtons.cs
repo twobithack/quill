@@ -3,7 +3,7 @@ using System;
 namespace Quill.Common.Definitions;
 
 [Flags]
-public enum JoypadButtons : byte
+public enum PadButtons : byte
 {
   None  = 0,
   Up    = 1 << 0,

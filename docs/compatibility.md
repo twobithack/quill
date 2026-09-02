@@ -201,6 +201,7 @@
 * Sapo Xulé: S.O.S. Lagoa Poluida
 * Scramble Spirits
 * SDI: Strategic Defense Initiative
+* Sega Chess
 * Sega World Tournament Golf
 * Sensible Soccer
 * Shanghai
@@ -258,6 +259,7 @@
 * Ys: The Vanished Omens
 * Zillion
 * Zillion II: The Tri-Formation Cycle
+* Zool: Warrior of the "Nth" Dimension
 
 ## NOT WORKING
 * Alex Kidd BMX Trial (paddle)
@@ -272,20 +274,19 @@
 * King & Balloon
 * Marksman Shooting (phaser)
 * Megumi Rescue (paddle)
+* Micro Machines
 * Missile Defence 3D (phaser)
 * Operation: Wolf (phaser)
 * Parlour Games
 * Rambo III (phaser)
 * Rescue Mission (phaser)
 * Safari Hunt (phaser)
-* Sega Chess
 * Shooting Galery (phaser)
 * Space Gun (phaser)
 * Trap Shooting (phaser)
 * Wanted! (phaser)
 * Woody Pop (paddle)
 * Xyzolog
-* Zool: Warrior of the "Nth" Dimension
 
 # SG-1000
 

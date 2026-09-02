@@ -21,14 +21,14 @@ public sealed partial class VDP
   private const byte VCOUNTER_ACTIVE = 191;
   private const byte VCOUNTER_JUMP_FROM = 218;
   private const byte VCOUNTER_JUMP_TO = 213;
-  private const int HSCROLL_LIMIT = 1;
-  private const int VSCROLL_LIMIT = 24;
+  private const int HSCROLL_INHIBIT_END_ROW = 1;
+  private const int VSCROLL_INHIBIT_START_COLUMN = 24;
   private const int HCOUNT_PER_CYCLE = 3;
   private const int HCOUNTER_MAX = 684;
   private const int VCOUNTER_MAX = byte.MaxValue;
   
-  private const byte DISABLE_SPRITES = 0xD0;
-  private const byte TRANSPARENT = 0x00;
+  private const byte SPRITE_TERMINATOR = 0xD0;
+  private const byte TRANSPARENT_COLOR_INDEX = 0x00;
   private const int TILE_SIZE = 8;
   private const int TILE_SHIFT = 3;
   #endregion
@@ -39,7 +39,7 @@ public sealed partial class VDP
     _vram = new byte[VRAM_SIZE];
     _palette = new int[CRAM_SIZE];
     _registers = new byte[REGISTER_COUNT];
-    _scanline = new int[HORIZONTAL_RESOLUTION];
+    _scanlinePixels = new int[HORIZONTAL_RESOLUTION];
     _spriteMask = new bool[HORIZONTAL_RESOLUTION];
   }
 
@@ -48,45 +48,45 @@ public sealed partial class VDP
   public byte ReadStatus()
   {
     _controlWriteLatch = false;
-    _hLineInterruptPending = false;
+    _lineInterruptPending = false;
     IRQ = false;
 
-    var value = (byte)_status;
+    var status = (byte)_status;
     if (DisplayMode4)
-      _status &= ~Status.All;
+      _status &= ~Status.Flags;
     else
-      _status &= ~(Status.Collision | Status.VBlank);
-    return value;
+      _status &= ~(Status.SpriteCollision | Status.VBlank);
+    return status;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void WriteControl(byte value)
+  public void WriteControl(byte controlByte)
   {
     if (!_controlWriteLatch)
     {
-      _addressBus &= 0b_1111_1111_0000_0000;
-      _addressBus |= value;
+      _addressRegister &= 0b_1111_1111_0000_0000;
+      _addressRegister |= controlByte;
       _controlWriteLatch = true;
       return;
     }
     
-    _addressBus &= 0b_0000_0000_1111_1111;
-    _addressBus |= (ushort)((value & 0b_0011_1111) << 8);
-    _controlCode = (ControlCode)(value >> 6);
+    _addressRegister &= 0b_0000_0000_1111_1111;
+    _addressRegister |= (ushort)((controlByte & 0b_0011_1111) << 8);
+    _controlCode = (ControlCode)(controlByte >> 6);
     _controlWriteLatch = false;
 
     if (_controlCode == ControlCode.ReadVRAM)
     {
-      _dataBuffer = _vram[_addressBus];
-      IncrementAddress();
+      _dataBuffer = _vram[_addressRegister];
+      IncrementAddressRegister();
     }
     else if (_controlCode == ControlCode.WriteRegister)
     {
-      var register = _addressBus.HighByte().LowNibble();
+      var register = _addressRegister.HighByte().LowNibble();
       if (register >= REGISTER_COUNT)
         return;
 
-      WriteRegister(register, _addressBus.LowByte());
+      WriteRegister(register, _addressRegister.LowByte());
     }
   }
 
@@ -96,8 +96,8 @@ public sealed partial class VDP
     _controlWriteLatch = false;
 
     var data = _dataBuffer;
-    _dataBuffer = _vram[_addressBus];
-    IncrementAddress();
+    _dataBuffer = _vram[_addressRegister];
+    IncrementAddressRegister();
     return data;
   }
 
@@ -108,14 +108,14 @@ public sealed partial class VDP
 
     if (_controlCode == ControlCode.WriteCRAM)
     {
-      var index = _addressBus & 0b_0001_1111;
-      _palette[index] = Color.ToRGBA(value);
+      var colorIndex = _addressRegister & 0b_0001_1111;
+      _palette[colorIndex] = Color.ToRGBA(value);
     }
     else
-      _vram[_addressBus] = value;
+      _vram[_addressRegister] = value;
 
     _dataBuffer = value;
-    IncrementAddress();
+    IncrementAddressRegister();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -131,12 +131,12 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public bool FrameCompleted()
+  public bool PollFrameCompletion()
   {
-    if (!_vBlankCompleted)
+    if (!_frameCompleted)
       return false;
       
-    _vBlankCompleted = false;
+    _frameCompleted = false;
     return true;
   }
 
@@ -153,7 +153,7 @@ public sealed partial class VDP
       return;
 
     if (DisplayMode4)
-      RasterizeScanline();
+      RasterizeMode4Scanline();
     else
       RasterizeLegacyScanline();
 
@@ -181,7 +181,7 @@ public sealed partial class VDP
       _framebuffer.PresentFrame();
       _vScroll = _registers[0x9];
       _vCounterJumped = false;
-      _vBlankCompleted = true;
+      _frameCompleted = true;
     }
     
     _vCounter++;
@@ -192,202 +192,205 @@ public sealed partial class VDP
   {
     if (_vCounter > VCOUNTER_ACTIVE + 1)
     {
-      _hLineCounter = _registers[0xA];
+      _lineCounter = _registers[0xA];
     }
-    else if (_hLineCounter == 0)
+    else if (_lineCounter == 0)
     {
-      _hLineCounter = _registers[0xA];
-      _hLineInterruptPending = HLineInterruptEnabled;
+      _lineCounter = _registers[0xA];
+      _lineInterruptPending = LineInterruptEnabled;
     }
     else
-      _hLineCounter--;
+      _lineCounter--;
 
-    IRQ = VSyncPending || HLinePending;
+    IRQ = VBlankInterruptAsserted || LineInterruptAsserted;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeScanline()
+  private void RasterizeMode4Scanline()
   {
     if (!DisplayEnabled || _vCounter > VCOUNTER_ACTIVE)
     {
-      BlankScanline();
+      BlankMode4Scanline();
     }
     else
     {
-      RasterizeSprites();
-      RasterizeBackground();
+      RasterizeMode4Sprites();
+      RasterizeMode4Background();
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeSprites()
+  private void RasterizeMode4Sprites()
   {
     var spriteHeight = TILE_SIZE;
-    if (StretchSprites || ZoomSprites)
+    if (StretchSprites || MagnifySprites)
       spriteHeight <<= 1;
 
-    var spriteCount = 0;
-    for (int sprite = 0; sprite < 64; sprite++)
+    var spritesOnScanline = 0;
+    for (int spriteIndex = 0; spriteIndex < 64; spriteIndex++)
     {
-      ushort y = _vram[SpriteAttributeTableAddress + sprite];
-      if (y == DISABLE_SPRITES)
+      int spriteY = _vram[SpriteAttributeTableBaseAddress + spriteIndex];
+      if (spriteY == SPRITE_TERMINATOR)
         return;
 
-      y++;
-      if (y >= DISABLE_SPRITES)
-        y -= 0x100;
+      spriteY++;
+      if (spriteY >= SPRITE_TERMINATOR)
+        spriteY -= 0x100;
 
-      if (y > _vCounter ||
-          y + spriteHeight <= _vCounter)
+      if (spriteY > _vCounter ||
+          spriteY + spriteHeight <= _vCounter)
         continue;
 
-      spriteCount++;
-      if (spriteCount > 8)
+      spritesOnScanline++;
+      if (spritesOnScanline > 8)
         SpriteOverflow = true;
 
-      var offset = 0x80 + (sprite << 1);
-      int x = _vram[SpriteAttributeTableAddress + offset];
-      int patternIndex = _vram[SpriteAttributeTableAddress + offset + 1];
+      var attributeOffset = 0x80 + (spriteIndex << 1);
+      int spriteX = _vram[SpriteAttributeTableBaseAddress + attributeOffset];
+      int patternIndex = _vram[SpriteAttributeTableBaseAddress + attributeOffset + 1];
 
-      if (SpriteShift)
-        x -= TILE_SIZE;
+      if (ShiftSprites)
+        spriteX -= TILE_SIZE;
 
-      if (StretchSprites && y <= _vCounter + TILE_SIZE)
+      if (StretchSprites && spriteY <= _vCounter + TILE_SIZE)
         patternIndex &= 0b_1111_1111_1111_1110;
 
-      var rowOffset = (_vCounter - y) << 2;
+      var patternRowOffset = (_vCounter - spriteY) << 2;
       var patternOffset = patternIndex << 5;
-      var patternAddress = SpritePatternTableAddress 
-                         + rowOffset 
+      var patternAddress = SpritePatternGeneratorTableBaseAddress
+                         + patternRowOffset
                          + patternOffset;
-      var patternData = GetPatternData(patternAddress);
+      var patternRow = ReadPatternRow(patternAddress);
 
-      var spriteEnd = x + TILE_SIZE;
-      for (byte i = TILE_SIZE - 1; x < spriteEnd; x++, i--)
+      var spriteRight = spriteX + TILE_SIZE;
+      for (byte patternBit = TILE_SIZE - 1; spriteX < spriteRight; spriteX++, patternBit--)
       {
-        if (x >= HORIZONTAL_RESOLUTION)
+        if (spriteX >= HORIZONTAL_RESOLUTION)
           break;
 
-        if (BlankLeftColumn && x < TILE_SIZE)
+        if (spriteX < 0)
           continue;
 
-        var paletteIndex = patternData.GetPaletteIndex(i);
-        if (paletteIndex == TRANSPARENT)
+        if (BlankLeftColumn && spriteX < TILE_SIZE)
           continue;
-        paletteIndex += 16;
 
-        if (_spriteMask[x])
+        var colorIndex = patternRow.GetColorIndex(patternBit);
+        if (colorIndex == TRANSPARENT_COLOR_INDEX)
+          continue;
+        colorIndex += 16;
+
+        if (_spriteMask[spriteX])
         {
           SpriteCollision = true;
           continue;
         }
 
-        SetSpritePixel(x, paletteIndex);
+        SetMode4SpritePixel(spriteX, colorIndex);
       }
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RasterizeBackground()
+  private void RasterizeMode4Background()
   {
-    var allowHScroll = !HScrollInhibit ||
-                       (_vCounter >> TILE_SHIFT) > HSCROLL_LIMIT;
+    var applyHorizontalScroll = !HScrollInhibit ||
+                                (_vCounter >> TILE_SHIFT) > HSCROLL_INHIBIT_END_ROW;
 
-    for (int backgroundColumn = 0; backgroundColumn < BACKGROUND_COLUMNS; backgroundColumn++)
+    for (int screenColumn = 0; screenColumn < BACKGROUND_COLUMNS; screenColumn++)
     {
-      ushort tilemapY = _vCounter;
+      ushort nameTableY = _vCounter;
       if (!VScrollInhibit ||
-          backgroundColumn < VSCROLL_LIMIT)
-        tilemapY += _vScroll;
+          screenColumn < VSCROLL_INHIBIT_START_COLUMN)
+        nameTableY += _vScroll;
 
-      var tilemapRow = tilemapY >> TILE_SHIFT;
-      if (tilemapRow >= BACKGROUND_ROWS) 
-        tilemapRow -= BACKGROUND_ROWS;
-                    
-      var tilemapColumn = backgroundColumn;
-      if (allowHScroll)
-        tilemapColumn += BACKGROUND_COLUMNS - (HScroll >> TILE_SHIFT);
-      tilemapColumn &= BACKGROUND_COLUMNS - 1;
+      var nameTableRow = nameTableY >> TILE_SHIFT;
+      if (nameTableRow >= BACKGROUND_ROWS)
+        nameTableRow -= BACKGROUND_ROWS;
 
-      var tileAddress = NameTableAddress 
-                      + (tilemapRow    << 6)
-                      + (tilemapColumn << 1);
+      var nameTableColumn = screenColumn;
+      if (applyHorizontalScroll)
+        nameTableColumn += BACKGROUND_COLUMNS - (HScroll >> TILE_SHIFT);
+      nameTableColumn &= BACKGROUND_COLUMNS - 1;
 
-      var tileData = GetTileData(tileAddress);
-      var tileOffset = tileData.VerticalFlip
-                     ? 7 - (tilemapY & (TILE_SIZE - 1))
-                     : tilemapY & (TILE_SIZE - 1);
+      var nameTableEntryAddress = NameTableBaseAddress
+                                + (nameTableRow    << 6)
+                                + (nameTableColumn << 1);
 
-      var patternAddress = (tileData.PatternIndex << 5) 
-                         + (tileOffset << 2);
-      var patternData = GetPatternData(patternAddress);
+      var nameTableEntry = ReadNameTableEntry(nameTableEntryAddress);
+      var patternRowIndex = nameTableEntry.VerticalFlip
+                          ? 7 - (nameTableY & (TILE_SIZE - 1))
+                          : nameTableY & (TILE_SIZE - 1);
 
-      for (int i = 0; i < TILE_SIZE; i++)
+      var patternAddress = (nameTableEntry.PatternIndex << 5)
+                         + (patternRowIndex << 2);
+      var patternRow = ReadPatternRow(patternAddress);
+
+      for (int patternColumn = 0; patternColumn < TILE_SIZE; patternColumn++)
       {
-        var columnOffset = tileData.HorizontalFlip
-                         ? 7 - i
-                         : i;
+        var screenColumnOffset = nameTableEntry.HorizontalFlip
+                               ? 7 - patternColumn
+                               : patternColumn;
 
-        var x = (tilemapColumn << TILE_SHIFT) 
-              + columnOffset;
-        if (allowHScroll)
-          x += HScroll;
-        x &= HORIZONTAL_RESOLUTION - 1;
+        var screenX = (nameTableColumn << TILE_SHIFT)
+                    + screenColumnOffset;
+        if (applyHorizontalScroll)
+          screenX += HScroll;
+        screenX &= HORIZONTAL_RESOLUTION - 1;
 
-        if (BlankLeftColumn && x < TILE_SIZE)
+        if (BlankLeftColumn && screenX < TILE_SIZE)
         {
-          SetBackgroundPixel(x, BlankColor);
+          SetMode4BackgroundPixel(screenX, BackdropColorIndex);
           continue;
         }
 
-        var paletteIndex = patternData.GetPaletteIndex(7 - i);
+        var colorIndex = patternRow.GetColorIndex(7 - patternColumn);
 
-        if (_spriteMask[x] &&
-            (!tileData.HighPriority || paletteIndex == TRANSPARENT))
+        if (_spriteMask[screenX] &&
+            (!nameTableEntry.HighPriority || colorIndex == TRANSPARENT_COLOR_INDEX))
           continue;
 
-        if (tileData.UseSpritePalette)
-          paletteIndex += 16;
+        if (nameTableEntry.UseSecondPalette)
+          colorIndex += 16;
 
-        SetBackgroundPixel(x, paletteIndex);
+        SetMode4BackgroundPixel(screenX, colorIndex);
       }
     }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private Pattern GetPatternData(int patternAddress) => new(_vram[patternAddress],
-                                                            _vram[patternAddress + 1],
-                                                            _vram[patternAddress + 2],
-                                                            _vram[patternAddress + 3]);
+  private PatternRow ReadPatternRow(int patternAddress) => new(_vram[patternAddress],
+                                                               _vram[patternAddress + 1],
+                                                               _vram[patternAddress + 2],
+                                                               _vram[patternAddress + 3]);
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private Tile GetTileData(int tileAddress)
+  private NameTableEntry ReadNameTableEntry(int address)
   {
-    var data = _vram[tileAddress + 1].Concat(_vram[tileAddress]);
-    return new Tile(data);
+    var data = _vram[address + 1].Concat(_vram[address]);
+    return new NameTableEntry(data);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void BlankScanline()
+  private void BlankMode4Scanline()
   {
-    var fillColor = _palette[BlankColor];
-    Array.Fill(_scanline, fillColor);
+    var fillColor = _palette[BackdropColorIndex];
+    Array.Fill(_scanlinePixels, fillColor);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetSpritePixel(int x, int paletteIndex)
+  private void SetMode4SpritePixel(int x, int paletteIndex)
   {
-    _scanline[x] = _palette[paletteIndex];
+    _scanlinePixels[x] = _palette[paletteIndex];
     _spriteMask[x] = true;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SetBackgroundPixel(int x, int paletteIndex) => _scanline[x] = _palette[paletteIndex];
+  private void SetMode4BackgroundPixel(int x, int paletteIndex) => _scanlinePixels[x] = _palette[paletteIndex];
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void CommitScanline()
   {
-    _framebuffer.BlitScanline(_vCounter, _scanline);
+    _framebuffer.BlitScanline(_vCounter, _scanlinePixels);
     Array.Clear(_spriteMask);
   }
 
@@ -406,7 +409,7 @@ public sealed partial class VDP
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void IncrementAddress() => _addressBus = (ushort)((_addressBus + 1) & (VRAM_SIZE - 1));
+  private void IncrementAddressRegister() => _addressRegister = (ushort)((_addressRegister + 1) & (VRAM_SIZE - 1));
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private bool TestRegisterBit(byte register, byte bit) => _registers[register].TestBit(bit);
@@ -418,14 +421,14 @@ public sealed partial class VDP
 
     if (register == 0x0)
     {
-      if (IRQ && !HLineInterruptEnabled)
-        IRQ = VSyncPending;
+      if (IRQ && !LineInterruptEnabled)
+        IRQ = VBlankInterruptAsserted;
       UpdateDisplayMode();
     }
     else if (register == 0x1)
     {
       if (IRQ && !VBlankInterruptEnabled)
-        IRQ = HLinePending;
+        IRQ = LineInterruptAsserted;
       UpdateDisplayMode();
     }
   }

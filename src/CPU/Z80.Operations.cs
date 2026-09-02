@@ -106,9 +106,8 @@ unsafe public ref partial struct Z80
   private void BIT()
   {
     var value = ReadByteOperand(_instruction.Source);
-    var index = (byte)_instruction.Destination;
+    var index = _instruction.Parameter.Value;
 
-    // TODO: Handle undocumented flags for HLi and indexed cases
     var flags = Flags.Halfcarry;
     if (!value.TestBit(index))
     {
@@ -136,6 +135,9 @@ unsafe public ref partial struct Z80
 
     PushToStack(_pc);
     _pc = address;
+
+    if (_instruction.Source != Operand.Implied)
+      AdvanceTStates(7);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -195,8 +197,11 @@ unsafe public ref partial struct Z80
   private void CPDR()
   {
     CPD();
-    if (ParityFlag && !ZeroFlag)
-      _pc -= 2;
+    if (BC == 0 || ZeroFlag)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -225,8 +230,11 @@ unsafe public ref partial struct Z80
   private void CPIR()
   {
     CPI();
-    if (ParityFlag && !ZeroFlag)
-      _pc -= 2;
+    if (BC == 0 || ZeroFlag)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -308,8 +316,12 @@ unsafe public ref partial struct Z80
   private void DJNZ()
   {
     var displacement = FetchSignedByte();
-    if (--_b != 0)
-      _pc = (ushort)(_pc + displacement);
+
+    if (--_b == 0)
+      return;
+
+    _pc = (ushort)(_pc + displacement);
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -365,7 +377,7 @@ unsafe public ref partial struct Z80
   private readonly void IM()
   {
     #if DEBUG
-    if (_instruction.Destination != (Operand)0x1)
+    if (_instruction.Parameter.Value != 1)
       throw new Exception("Only interrupt mode 1 is supported.");
     #endif
   }
@@ -442,8 +454,11 @@ unsafe public ref partial struct Z80
   private void INDR()
   {
     IND();
-    if (!ZeroFlag)
-      _pc -= 2;
+    if (_b == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -468,8 +483,11 @@ unsafe public ref partial struct Z80
   private void INIR()
   {
     INI();
-    if (!ZeroFlag)
-      _pc -= 2;
+    if (_b == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -484,8 +502,13 @@ unsafe public ref partial struct Z80
   private void JR()
   {
     var displacement = FetchSignedByte();
-    if (EvaluateCondition())
-      _pc = (ushort)(_pc + displacement);
+    if (!EvaluateCondition())
+      return;
+
+    _pc = (ushort)(_pc + displacement);
+
+    if (_instruction.Source != Operand.Implied)
+      AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -523,8 +546,11 @@ unsafe public ref partial struct Z80
   private void LDDR()
   {
     LDD();
-    if (ParityFlag)
-      _pc -= 2;
+    if (BC == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -548,8 +574,11 @@ unsafe public ref partial struct Z80
   private void LDIR()
   {
     LDI();
-    if (ParityFlag)
-      _pc -= 2;
+    if (BC == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -592,7 +621,7 @@ unsafe public ref partial struct Z80
   {
     var port = ReadByteOperand(_instruction.Destination);
     var value = _instruction.Source == Operand.Implied
-              ? (byte)0x00
+              ? _instruction.Parameter.Value
               : ReadByteOperand(_instruction.Source);
 
     WritePort(port, value);
@@ -620,8 +649,11 @@ unsafe public ref partial struct Z80
   private void OTDR()
   {
     OUTD();
-    if (!ZeroFlag)
-      _pc -= 2;
+    if (_b == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -646,8 +678,11 @@ unsafe public ref partial struct Z80
   private void OTIR()
   {
     OUTI();
-    if (!ZeroFlag)
-      _pc -= 2;
+    if (_b == 0)
+      return;
+
+    _pc -= 2;
+    AdvanceTStates(5);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -665,8 +700,9 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void RES(byte index)
+  private void RES()
   {
+    var index = _instruction.Parameter.Value;
     var value = ReadByteOperand(_instruction.Destination).ResetBit(index);
     WriteByteResult(value);
 
@@ -677,8 +713,13 @@ unsafe public ref partial struct Z80
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   private void RET()
   {
-    if (EvaluateCondition())
-      _pc = PopFromStack();
+    if (!EvaluateCondition())
+      return;
+
+    _pc = PopFromStack();
+
+    if (_instruction.Source != Operand.Implied)
+      AdvanceTStates(6);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -904,7 +945,7 @@ unsafe public ref partial struct Z80
   private void RST()
   {
     PushToStack(_pc);
-    _pc = (ushort)_instruction.Destination;
+    _pc = _instruction.Parameter.Value;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -957,8 +998,9 @@ unsafe public ref partial struct Z80
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  private void SET(byte index)
+  private void SET()
   {
+    var index = _instruction.Parameter.Value;
     var value = ReadByteOperand(_instruction.Destination).SetBit(index);
     WriteByteResult(value);
 
