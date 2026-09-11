@@ -9,6 +9,8 @@ namespace Quill.Video;
 public sealed partial class VDP
 {
   #region Properties
+  private bool UseLargeSprites => TestRegisterBit(0x1, 1);
+
   private ushort LegacyColorTableBaseAddress => TestRegisterBit(0x3, 7)
                                               ? (ushort)0x2000
                                               : (ushort)0x0000;
@@ -46,7 +48,7 @@ public sealed partial class VDP
   private void RasterizeLegacySprites()
   {
     var spriteHeight = TILE_SIZE;
-    if (StretchSprites)
+    if (UseLargeSprites)
       spriteHeight <<= 1;
 
     var spritesOnScanline = 0;

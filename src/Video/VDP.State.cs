@@ -68,14 +68,8 @@ public sealed partial class VDP
     set => SetFlag(Status.VBlank, value);
   }
   
-  private bool ShiftSprites            => TestRegisterBit(0x0, 3);
   private bool LineInterruptEnabled    => TestRegisterBit(0x0, 4);
-  private bool BlankLeftColumn         => TestRegisterBit(0x0, 5);
-  private bool HScrollInhibit          => TestRegisterBit(0x0, 6);
-  private bool VScrollInhibit          => TestRegisterBit(0x0, 7);
-
-  private bool MagnifySprites          => TestRegisterBit(0x1, 0);
-  private bool StretchSprites          => TestRegisterBit(0x1, 1);
+  
   private bool VBlankInterruptEnabled  => TestRegisterBit(0x1, 5);
   private bool DisplayEnabled          => TestRegisterBit(0x1, 6);
 
@@ -83,18 +77,9 @@ public sealed partial class VDP
   
   private ushort SpriteAttributeTableBaseAddress => (ushort)((_registers[0x5] & 0b_0111_1110) << 7);
 
-  private ushort SpritePatternGeneratorTableBaseAddress => TestRegisterBit(0x6, 2)
-                                                          ? (ushort)0x2000
-                                                          : (ushort)0x0000;
-
-  private byte BackdropColorIndex => ((byte)(_registers[0x7] & 0b_1111)).SetBit(4);
-
-  private ushort HScroll => _registers[0x8];
-  
   private bool LineInterruptAsserted   => _lineInterruptPending && LineInterruptEnabled;
   private bool VBlankInterruptAsserted => VBlank && VBlankInterruptEnabled;
   private bool DisplayMode3            => (_displayMode & DisplayMode.Mode_3) != 0;
-  private bool DisplayMode4            => (_displayMode & DisplayMode.Mode_4) != 0;
   #endregion
 
   #region Methods
